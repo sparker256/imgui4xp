@@ -1,0 +1,57 @@
+# This makefile has been modified to accept
+# external environment variables
+
+
+OS ?= MACOSX
+
+
+ifeq ($(OS), MACOSX)
+CC ?= gcc-4.2
+DEFINES += -DAPL=1 -DIBM=0 -DLIN=0 -DXPLM200 -DXPLM210 -DXPLM300 -DXPLM301
+SDK ?= /Developer/SDKs/MacOSX10.5.sdk
+ARCH ?= -arch x86_64 -mmacosx-version-min=10.10
+INC += -I/opt/XSDK/CHeaders/XPLM
+INC += -I/opt/XSDK/CHeaders/Widgets
+CFLAGS += -Wall -O2 $(ARCH) -D$(OS) -isysroot $(SDK) $(INC) -fvisibility=hidden
+LDFLAGS += $(ARCH) -isysroot $(SDK)
+LDDYNFLAGS += -bundle -undefined dynamic_lookup -single_module
+LIBS += -framework IOKit -framework CoreFoundation -framework OpenGL
+TARGET ?= mac.xpl
+endif
+
+
+all:imgui4xp.xpl
+
+OBJS = src/imgui4xp.o src/imgui_starter_window.o src/imgui/imgui.o src/imgui/imgui_demo.o src/imgui/imgui_draw.o src/ImgWindow/ImgWindow.o
+
+
+imgui4xp.xpl: $(OBJS)
+	$(CC) $(LDFLAGS) $(LDDYNFLAGS) $(OBJS) -o imgui4xp.xpl $(LIBS)
+	cp imgui4xp.xpl $(TARGET)
+
+src/imgui4xp.o: src/imgui4xp.cpp
+	 $(CC) -c -pipe $(CFLAGS) $(SDK) $(INC) $(DEFINES) -o src/imgui4xp.o src/imgui4xp.cpp
+
+src/imgui_starter_window.o: src/imgui_starter_window.cpp
+	 $(CC) -c -pipe $(CFLAGS) $(SDK) $(INC) $(DEFINES) -o src/imgui_starter_window.o src/imgui_starter_window.cpp
+
+
+src/imgui/imgui.o: src/imgui/imgui.cpp
+	 $(CC) -c -pipe $(CFLAGS) $(SDK) $(INC) $(DEFINES) -o src/imgui/imgui.o src/imgui/imgui.cpp
+
+
+src/imgui/imgui_demo.o: src/imgui/imgui_demo.cpp
+	 $(CC) -c -pipe $(CFLAGS) $(SDK) $(INC) $(DEFINES) -o src/imgui/imgui_demo.o src/imgui/imgui_demo.cpp
+
+
+src/imgui/imgui_draw.o: src/imgui/imgui_draw.cpp
+	 $(CC) -c -pipe $(CFLAGS) $(SDK) $(INC) $(DEFINES) -o src/imgui/imgui_draw.o src/imgui/imgui_draw.cpp
+
+
+src/ImgWindow/ImgWindow.o: src/ImgWindow/ImgWindow.cpp
+	 $(CC) -c -pipe $(CFLAGS) $(SDK) $(INC) $(DEFINES) -o src/ImgWindow/ImgWindow.o src/ImgWindow/ImgWindow.cpp
+
+
+
+clean:
+	rm -f src/*.o src/imgui/*.o src/ImgWindow/*.o *.xpl

@@ -1,0 +1,18 @@
+#!/bin/bash
+#
+make distclean >/dev/null
+rm -rf release
+mkdir -p release/imgui4xp/lin_x64 &&
+
+
+qmake -spec linux-g++-4.8-64 imgui4xp_lin_x64.pro && make &&
+cp plugin_lin_x64/liblin.xpl.so release/imgui4xp/lin_x64/imgui4xp.xpl
+if [ $? != 0 ] ; then
+  exit
+fi
+
+
+make distclean >/dev/null
+
+#
+

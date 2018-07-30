@@ -1,0 +1,10 @@
+#!/bin/bash
+#
+cd X-Plane_Github_Plugins/imgui4xp &&
+./build_lin &&
+./Make_WinOnLinux
+./Make_MacOnLinux &&
+
+exec $SHELL
+#
+
