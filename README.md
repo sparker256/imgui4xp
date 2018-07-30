@@ -34,4 +34,4 @@ You will next need the current X-Plane SDK which can be found at https://develop
 
 On my system I have renamed the main SDK folder to XSDK and it resides in /opt so the full path is /opt/XSDK
 
-Since I develop on Linux my IDE of choice is QT Crearor which is installed from my package manager.
+Since I develop on Linux my IDE of choice is QT Creator which is installed from my package manager.
