@@ -1,4 +1,4 @@
-I made these changes to these two file to get it to build corectly on my system.
+I made changes to these two file to get it to build corectly on my system.
 William R. Good (sparker)
 
 ***************************************************************
