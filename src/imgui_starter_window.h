@@ -14,12 +14,16 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <stdint.h>     // uint64_t
+#include <cstring> // memcpy
+#include <string.h>
 #include "../src/ImgWindow/ImgWindow.h"
+
+
 
 
 class ImguiWidget: public ImgWindow {
 public:
-
     ImguiWidget(int left, int top, int right, int bot, int decoration);
 protected:
     void buildInterface() override;

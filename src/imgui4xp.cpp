@@ -33,6 +33,7 @@ XPLMDataRef g_vr_dref;
 static bool g_in_vr = false;
 int vr_is_enabled = 0;
 
+std::shared_ptr<ImguiWidget> imguiPtr;
 
 PLUGIN_API int XPluginStart(char * outName, char * outSig, char * outDesc) {
     // Plugin details
@@ -66,7 +67,7 @@ PLUGIN_API void XPluginReceiveMessage(XPLMPluginID, intptr_t inMessage, void * i
         XPLMGetScreenBoundsGlobal(&left, &top, &right, &bot);
 
         int width = 800;
-        int height = 600;
+        int height = 450;
         int pad = 75;
         int x = left + pad;
         int y = top - pad;
@@ -76,7 +77,7 @@ PLUGIN_API void XPluginReceiveMessage(XPLMPluginID, intptr_t inMessage, void * i
         // WindowDecorationSelfDecorated = 2
         // WindowDecorationSelfDecoratedResizable = 3
         int decorate = 1;
-        ImguiWidget *imguiWidget = new ImguiWidget(x, y, x + width, y - height, decorate);
+        imguiPtr = std::make_shared<ImguiWidget>(x, y, x + width, y - height, decorate);
 
     }
 }

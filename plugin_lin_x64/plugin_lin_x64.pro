@@ -10,6 +10,9 @@ VERSION = 1.0.0
 INCLUDEPATH += /opt/XSDK/CHeaders/XPLM
 INCLUDEPATH += /opt/XSDK/CHeaders/Wrappers
 INCLUDEPATH += /opt/XSDK/CHeaders/Widgets
+INCLUDEPATH += ../src
+INCLUDEPATH += ../src/ImgWindow
+INCLUDEPATH += ../src/imgui
 INCLUDEPATH += ..
 VPATH = ..
 
@@ -35,6 +38,8 @@ unix:!macx {
 
 HEADERS +=  ../src/imgui4xp.h \
             ../src/imgui_starter_window.h \
+            ../src/SysOpenGL.h \
+            ../src/XOGLUtils.h \
             ../src/imgui/imconfig.h \
             ../src/imgui/imgui.h \
             ../src/imgui/imgui_internal.h \
