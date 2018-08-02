@@ -29,8 +29,8 @@ void xtextedit4vr_create_imgui_window();
 
 XPLMWindowID xtextedit4vr_window;
 
-XPLMDataRef g_vr_dref;
-static bool g_in_vr = false;
+// XPLMDataRef g_vr_dref;
+// static bool g_in_vr = false;
 int vr_is_enabled = 0;
 
 std::shared_ptr<ImguiWidget> imguiPtr;
@@ -45,7 +45,7 @@ PLUGIN_API int XPluginStart(char * outName, char * outSig, char * outDesc) {
     // You probably want this on
 	XPLMEnableFeature("XPLM_USE_NATIVE_PATHS", 1);
 
-    g_vr_dref = XPLMFindDataRef("sim/graphics/VR/enabled");
+    // g_vr_dref = XPLMFindDataRef("sim/graphics/VR/enabled");
 
 	return 1;
 }

@@ -23,7 +23,7 @@ int choice = 1;
 float win_width = 0;
 float win_height = 0;
 float cursor_posy = 0;
-const ImVec2 text_size;
+ImVec2 text_size;
 float center;
 bool makeRed = false;
 
