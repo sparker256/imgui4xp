@@ -5,31 +5,6 @@ I am documenting the process I took to get a multiplatform stand alone plugin th
 
 First clone or download this site and put the resulting imgui4xp folder wherever you like. 
 
-Next you will need to download or clone the imgui GitHub site found at https://github.com/ocornut/imgui.
-
-After you have un zipped or cloned copy following files
-
-    imgui.cpp
-    imgui.h
-    imgui_demo.cpp
-    imgui_draw.cpp
-    imgui_internal.h
-    imconfig.h (empty by default, user-editable)
-    stb_rect_pack.h
-    stb_textedit.h
-    stb_truetype.h
-
-To the imgui4xp/src/imgui folder.
-
-Next you will need to download or clone the xsb_public GitHub site found at https://github.com/kuroneko/xsb_public.
-
-After you have un zipped or cloned copy following files
-
-	ImgWindow.cpp	
- 	ImgWindow.h
-
-To the imgui4xp/src/ImgWindow folder.
-
 You will next need the current X-Plane SDK which can be found at https://developer.x-plane.com/sdk/plugin-sdk-downloads/.
 
 On my system I have renamed the main SDK folder to XSDK and it resides in /opt so the full path is /opt/XSDK
