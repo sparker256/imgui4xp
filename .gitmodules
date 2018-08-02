@@ -1,0 +1,6 @@
+[submodule "src/imgui"]
+	path = src/imgui
+	url = https://github.com/ocornut/imgui.git
+[submodule "src/ImgWindow"]
+	path = src/ImgWindow
+	url = https://github.com/kuroneko/xsb_public.git
