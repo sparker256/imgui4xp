@@ -1,6 +1,12 @@
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -fPIC -Wno-reorder")
 
+if(APPLE)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -fPIC -Wno-reorder")
+elseif(UNIX)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -fPIC -Wno-reorder")
+elseif(WIN32)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -Wno-reorder")
+endif()
 
 include_directories("/opt/XSDK/CHeaders/XPLM")
 include_directories("/opt/XSDK/CHeaders/Wrappers")
@@ -28,7 +34,7 @@ if(WIN32)
         -static-libgcc
         -static-libstdc++
         XPLM_64
-
+		opengl32
     )
 elseif(APPLE)
 target_link_libraries(imgui4xp
@@ -56,5 +62,5 @@ if(APPLE)
 elseif(UNIX)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DAPL=0 -DIBM=0 -DLIN=1")
 elseif(WIN32)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DAPL=0 -DIBM=1 -DLIN=0 -D_CRT_SECURE_NO_WARNINGS /bigobj")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DAPL=0 -DIBM=1 -DLIN=0")
 endif()
