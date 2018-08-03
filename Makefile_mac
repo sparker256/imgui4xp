@@ -12,7 +12,14 @@ SDK ?= /Developer/SDKs/MacOSX10.5.sdk
 ARCH ?= -arch x86_64 -mmacosx-version-min=10.10
 INC += -I/opt/XSDK/CHeaders/XPLM
 INC += -I/opt/XSDK/CHeaders/Widgets
-CFLAGS += -Wall -O2 $(ARCH) -D$(OS) -isysroot $(SDK) $(INC) -fvisibility=hidden
+INC += -I/opt/XSDK/CHeaders/Wrappers
+
+INC += -Isrc
+INC += -Isrc/ImgWindow
+INC += -Isrc/imgui
+
+
+CFLAGS += -Wall -O2 $(ARCH) -D$(OS) -isysroot $(SDK) $(INC) -fvisibility=hidden -std=c++11
 LDFLAGS += $(ARCH) -isysroot $(SDK)
 LDDYNFLAGS += -bundle -undefined dynamic_lookup -single_module
 LIBS += -framework IOKit -framework CoreFoundation -framework OpenGL
