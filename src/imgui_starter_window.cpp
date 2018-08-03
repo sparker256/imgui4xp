@@ -115,4 +115,59 @@ void ImguiWidget::buildInterface() {
 
         ImGui::TreePop();
     }
+
+    if (ImGui::TreeNode("Sliders")) {
+        static float sliderVal;
+        ImGui::SliderFloat("Slider Caption", &sliderVal, 0, 100000, "Value %.2f");
+
+        static float sliderVal2;
+        ImGui::SliderFloat("Power Slider", &sliderVal2, 0, 100000, "Value %.2f", 3.0);
+
+        static int sliderVal3;
+        ImGui::SliderInt("Int Slider", &sliderVal3, 0, 100000, "Value %.0f");
+
+        static float angle;
+        ImGui::SliderAngle("Angle Slider", &angle, -180, 180);
+
+
+        ImGui::TreePop();
+    }
+
+    if (ImGui::TreeNode("ComboBox")) {
+        static const char * choices[] = {"Choice 1", "Choice 2", "Choice 3"};
+        if (ImGui::BeginCombo("Combo Box", choices[choice])) {
+            int i;
+            for (i = 0; i < 3; i++) {
+                if (ImGui::Selectable(choices[i], choice == i)) {
+                    choice = i;
+                }
+            }
+            ImGui::EndCombo();
+        }
+
+        if (ImGui::BeginCombo("Combo Box 2", "", ImGuiComboFlags_NoPreview)) {
+            if (ImGui::Selectable("Choice A", choice == 1)) {
+                choice = 1;
+            }
+            if (ImGui::Selectable("Choice B", choice == 2)) {
+                choice = 2;
+            }
+            if (ImGui::Selectable("Choice C", choice == 3)) {
+                choice = 3;
+            }
+            ImGui::EndCombo();
+        }
+
+        ImGui::TreePop();
+    }
+
+    if (ImGui::TreeNode("Drag Controls")) {
+        static float sliderVal;
+        ImGui::DragFloat("Drag Float", &sliderVal, 1.0, 0, 1000, "%.2f", 1.0);
+
+        static int sliderVal2;
+        ImGui::DragInt("Drag Int", &sliderVal2, 1.0, 0, 1000, "%.2f");
+
+        ImGui::TreePop();
+    }
 }
