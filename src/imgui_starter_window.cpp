@@ -26,6 +26,7 @@ float cursor_posy = 0;
 ImVec2 text_size;
 float center;
 bool makeRed = false;
+ImTextureID image_id = "./Resources/plugins/imgui4xp/imgui_demo.jpg";
 
 ImguiWidget::ImguiWidget(int left, int top, int right, int bot, int decoration):
     ImgWindow(left, top, right, bot, decoration)
@@ -164,9 +165,110 @@ void ImguiWidget::buildInterface() {
     if (ImGui::TreeNode("Drag Controls")) {
         static float sliderVal;
         ImGui::DragFloat("Drag Float", &sliderVal, 1.0, 0, 1000, "%.2f", 1.0);
-
         static int sliderVal2;
         ImGui::DragInt("Drag Int", &sliderVal2, 1.0, 0, 1000, "%.2f");
+        ImGui::TreePop();
+    }
+
+    if (ImGui::TreeNode("Plots")) {
+        static float values[] = {1, 3, 2, 5, 0, 6, -3};
+        ImGui::PlotLines("Value Plot", values, IM_ARRAYSIZE(values));
+        ImGui::PlotLines("", values, IM_ARRAYSIZE(values) - 1, 1, "Plot", -10, FLT_MAX, ImVec2(win_width, 100));
+        ImGui::PlotHistogram("Value Histogram", values, IM_ARRAYSIZE(values));
+        ImGui::TreePop();
+    }
+
+    if (ImGui::TreeNode("Input")) {
+        static char text[255];
+        ImGui::InputText("Text", text, IM_ARRAYSIZE(text));
+
+        static int i0 = 123;
+        ImGui::InputInt("Input int", &i0);
+
+        static int i02 = 1234;
+        ImGui::InputInt("Input int2", &i02, 10);
+
+        ImGui::TreePop();
+    }
+
+    if (ImGui::TreeNode("Drawing")) {
+        // local cx, cy = imgui.GetCursorScreenPos()
+        static ImVec2 pos = ImGui::GetCursorScreenPos();
+
+        // -- Create a kind of canvas of size 100x100.
+        // -- The previous variable remembers the top left
+        // -- edge of the canvas so we can use it as relative
+        // -- coordinates to draw inside the widget using
+        // -- absolute coordinates.
+        // imgui.Dummy(100, 100)
+        ImVec2 canvas_size(100, 100);
+        ImGui::Dummy(canvas_size);
+
+        ImDrawList* draw_list = ImGui::GetWindowDrawList();
+
+        float thickness = 2.0;
+        // -- Parameters: x1, y1, x2, y2, color, thickness
+        // ImGui::DrawList_AddLine(cx, cy, cx + 20, cy + 20, 0xFF0000FF, 2);
+        // ImGui::DrawList_AddLine(cx, cy + 20, cx + 20, cy, 0xFF0000FF, 2);
+        draw_list->AddLine(ImVec2(pos.x, pos.y), ImVec2(pos.x + 20, pos.y + 20), IM_COL32(255, 0, 0, 255), thickness);
+        draw_list->AddLine(ImVec2(pos.x, pos.y + 20), ImVec2(pos.x + 20, pos.y), IM_COL32(255, 0, 0, 255), thickness);
+
+        float roundness = 0.5;
+        // -- Prameters: x1, y1, x2, y2, color, roundness
+        // imgui.DrawList_AddRect(cx, cy, cx + 20, cy + 20, 0xFFFF0000, 0.5);
+        draw_list->AddRect(ImVec2(pos.x, pos.y), ImVec2(pos.x + 20, pos.y + 20), IM_COL32(0, 0, 255, 255), roundness);
+
+        // -- Prameters: x1, y1, x2, y2, color, roundness
+        // imgui.DrawList_AddRectFilled(cx + 20, cy, cx + 40, cy + 20, 0xFFFF0000, 0.5);
+        draw_list->AddRectFilled(ImVec2(pos.x + 20, pos.y), ImVec2(pos.x + 40, pos.y + 20), IM_COL32(0, 0, 255, 255), roundness);
+
+        // -- Parameters: x1, y1, x2, y2, x3, y3, color
+        // imgui.DrawList_AddTriangle(cx, cy + 50, cx + 40, cy + 50, cx + 20, cy + 20, 0xFF00FF00);
+        draw_list->AddTriangle(ImVec2(pos.x, pos.y + 50), ImVec2(pos.x + 40, pos.y + 50), ImVec2(pos.x + 20, pos.y + 20), IM_COL32(0, 255, 0, 255), thickness);
+
+        // -- Parameters: x1, y1, x2, y2, x3, y3, color
+        // imgui.DrawList_AddTriangleFilled(cx + 40, cy + 50, cx + 80, cy + 50, cx + 40, cy + 20, 0xFF00FF00);
+        draw_list->AddTriangleFilled(ImVec2(pos.x + 40, pos.y + 50), ImVec2(pos.x + 80, pos.y + 50), ImVec2(pos.x + 40, pos.y + 20), IM_COL32(0, 255, 0, 255));
+
+        // -- Parameters: x1, y1, r, color
+        // imgui.DrawList_AddCircle(cx + 80, cy + 20, 20, 0xFF00FF00);
+        draw_list->AddCircle(ImVec2(pos.x + 80, pos.y + 20), 20, IM_COL32(0, 255, 0, 255));
+
+        // -- Parameters: x1, y1, r, color
+        // imgui.DrawList_AddCircleFilled(cx + 80, cy + 20, 10, 0xFF00FF00);
+        draw_list->AddCircleFilled(ImVec2(pos.x + 80, pos.y + 20), 10, IM_COL32(0, 255, 0, 255));
+
+        ImGui::TreePop();
+    }
+
+    if (ImGui::TreeNode("Images")) {
+        // Draw a previously loaded image
+        ImGui::Image(image_id, ImVec2(win_width, 450 / 800 * win_width), ImVec2(0,0), ImVec2(1,1), ImColor(255,255,255,255), ImColor(255,255,255,128));
+        // Prameters: image id returned by float_wnd_load_image, diplay width, display height
+
+        ImGui::TreePop();
+    }
+
+    if (ImGui::TreeNode("Misc")) {
+        // Create a bullet style enumeration
+        ImGui::Bullet(); ImGui::TextUnformatted("Bullet");
+        ImGui::Bullet(); ImGui::TextUnformatted("Style");
+        ImGui::Bullet(); ImGui::TextUnformatted("Enumeration");
+
+        // Draw a separation line
+        ImGui::Separator();
+
+        // Show a progress bar, 1 = 100%
+        ImGui::ProgressBar(0.5);
+
+        ImGui::Button("Button##1");
+        ImGui::Button("Button##2");
+
+        for (int i = 0; i < 5; i++) {
+            ImGui::PushID(i);
+            ImGui::Button("Button");
+            ImGui::PopID();
+        }
 
         ImGui::TreePop();
     }
