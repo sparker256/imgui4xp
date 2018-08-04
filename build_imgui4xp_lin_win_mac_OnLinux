@@ -18,8 +18,9 @@ make --trace
 cd /home/bill/xp11_imgui4xp_plugin/imgui4xp
 cp build/src/imgui4xp.xpl release/imgui4xp/win_x64/
 
-
 ./Make_MacOnLinux &&
+
+cp imgui_demo.jpg release/imgui4xp/
 
 exec $SHELL
 #

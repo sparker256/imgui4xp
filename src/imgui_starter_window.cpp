@@ -13,10 +13,18 @@
 #include "../src/imgui/imgui.h"
 #include "../src/ImgWindow/ImgWindow.h"
 
+#include <vector>
+#include <memory>
+#include <stdexcept>
 #include <stdint.h>     // uint64_t
 #include <cstring> // memcpy
 #include <string.h>
 #include <string>
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+std::vector<GLuint> textureIDs;
 
 int count;
 int choice = 1;
@@ -26,14 +34,56 @@ float cursor_posy = 0;
 ImVec2 text_size;
 float center;
 bool makeRed = false;
-ImTextureID image_id = "./Resources/plugins/imgui4xp/imgui_demo.jpg";
+
+
+// Trying to find a way to get a image to be displayed
+ImTextureID Imimage_id;
+int image_id;
+std::string image_name = "./Resources/plugins/imgui4xp/imgui_demo.jpg";
+
+
+int loadImage(const std::string&fileName) {
+    int imgWidth, imgHeight, nComps;
+    uint8_t *data = stbi_load(fileName.c_str(), &imgWidth, &imgHeight, &nComps, sizeof(uint32_t));
+
+    if (!data) {
+        throw std::runtime_error(std::string("Couldn't load image: ") + stbi_failure_reason());
+    }
+
+    int id;
+    XPLMGenerateTextureNumbers(&id, 1);
+    XPLMBindTexture2d(id, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0,
+            GL_RGBA, imgWidth, imgHeight, 0,
+            GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+    stbi_image_free(data);
+    textureIDs.push_back(id);
+
+    return id;
+}
+
+int try2load_image() {
+    try {
+        image_id = loadImage(image_name);
+        return 1;
+    } catch (const std::exception &e) {
+        std::string err = std::string("imgui4xp Error: ") + e.what() + " in " + image_name + "\n";
+        XPLMDebugString(err.c_str());
+        return 0;
+    }
+}
+
 
 ImguiWidget::ImguiWidget(int left, int top, int right, int bot, int decoration):
     ImgWindow(left, top, right, bot, decoration)
 {
     SetWindowTitle("Imgui for X-Plane  by William Good");
     SetVisible(true);
-
+    try2load_image();
 }
 
 void ImguiWidget::buildInterface() {
@@ -242,8 +292,10 @@ void ImguiWidget::buildInterface() {
     }
 
     if (ImGui::TreeNode("Images")) {
+        ImGui::Text("image_id = %d", image_id);
         // Draw a previously loaded image
-        ImGui::Image(image_id, ImVec2(win_width, 450 / 800 * win_width), ImVec2(0,0), ImVec2(1,1), ImColor(255,255,255,255), ImColor(255,255,255,128));
+        // ImGui::Image((void*)(intptr_t)my_opengl_texture, ImVec2(my_image_width, my_image_height));
+        ImGui::Image((void*)(intptr_t)image_id, ImVec2(800, 450));
         // Prameters: image id returned by float_wnd_load_image, diplay width, display height
 
         ImGui::TreePop();

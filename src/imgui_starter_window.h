@@ -19,7 +19,10 @@
 #include <string.h>
 #include "../src/ImgWindow/ImgWindow.h"
 
-
+#include <XPLMGraphics.h>
+#include <XPLMDisplay.h>
+#include <XPLMDataAccess.h>
+#include <XPLMUtilities.h>
 
 
 class ImguiWidget: public ImgWindow {

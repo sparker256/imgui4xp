@@ -40,6 +40,7 @@ HEADERS +=  ../src/imgui4xp.h \
             ../src/imgui_starter_window.h \
             ../src/SysOpenGL.h \
             ../src/XOGLUtils.h \
+            ../src/stb_image.h \
             ../src/imgui/imconfig.h \
             ../src/imgui/imgui.h \
             ../src/imgui/imgui_internal.h \
