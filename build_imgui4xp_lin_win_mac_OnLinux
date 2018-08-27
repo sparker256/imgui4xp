@@ -4,21 +4,31 @@ cd xp11_imgui4xp_plugin/imgui4xp &&
 mkdir -p release/imgui4xp/lin_x64 &&
 mkdir -p release/imgui4xp/win_x64 &&
 git pull
+
 rm -r build/*
 cd build
 cmake ..
-make --trace
+make VERBOSE=1
 cd /home/bill/xp11_imgui4xp_plugin/imgui4xp
 cp build/src/imgui4xp.xpl release/imgui4xp/lin_x64/
 
 rm -r build/*
 cd build
 cmake -DCMAKE_TOOLCHAIN_FILE=~/xp11_imgui4xp_plugin/imgui4xp/Toolchain-mingw-w64-x86-64.cmake ..
-make --trace
+make VERBOSE=1
 cd /home/bill/xp11_imgui4xp_plugin/imgui4xp
 cp build/src/imgui4xp.xpl release/imgui4xp/win_x64/
 
 ./Make_MacOnLinux &&
+
+cd /home/bill/xp11_imgui4xp_plugin/imgui4xp
+rm -r build/*
+cd build
+cmake -DCMAKE_TOOLCHAIN_FILE=~/xp11_imgui4xp_plugin/imgui4xp/Toolchain-ubuntu-osxcross-10.11.cmake ..
+make VERBOSE=1
+
+# cd /home/bill/xp11_imgui4xp_plugin/imgui4xp
+# cp build/src/imgui4xp.xpl release/imgui4xp/win_x64/
 
 cp imgui_demo.jpg release/imgui4xp/
 
