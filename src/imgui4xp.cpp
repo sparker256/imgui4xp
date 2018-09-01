@@ -68,9 +68,10 @@ PLUGIN_API void XPluginReceiveMessage(XPLMPluginID, intptr_t inMessage, void * i
 
         int width = 800;
         int height = 450;
-        int pad = 75;
-        int x = left + pad;
-        int y = top - pad;
+        int left_pad = 175;
+        int top_pad = 75;
+        int x = left + left_pad;
+        int y = top - top_pad;
         // WindowDecoration decorate
         // WindowDecorationNone = 0
         // WindowDecorationRoundRectangle = 1
