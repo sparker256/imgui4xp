@@ -29,9 +29,11 @@ class ImguiWidget: public ImgWindow {
 public:
     ImguiWidget(int left, int top, int right, int bot, int decoration);
 protected:
+    void configureImguiContext() override;
     void buildInterface() override;
 private:
-
+    ImFont* font2;
+    ImFont* font3;
 };
 
 #endif /* SRC_IMGUIWIDGET_H_ */

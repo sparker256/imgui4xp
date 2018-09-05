@@ -1,4 +1,4 @@
-﻿/*
+s﻿/*
  *   Imgui Starter Window for X-Plane
  *   William Good
  *
@@ -79,6 +79,13 @@ int try2load_image() {
     }
 }
 
+void ImguiWidget::configureImguiContext()
+{
+    ImGuiIO& io = ImGui::GetIO();
+    io.Fonts->AddFontDefault();
+    font2 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSans.ttf", 10.0f);
+    font3 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", 14.0f);
+}
 
 ImguiWidget::ImguiWidget(int left, int top, int right, int bot, int decoration):
     ImgWindow(left, top, right, bot, decoration)
@@ -86,14 +93,6 @@ ImguiWidget::ImguiWidget(int left, int top, int right, int bot, int decoration):
     SetWindowTitle("Imgui for X-Plane  by William Good");
     SetVisible(true);
     try2load_image();
-    ImGuiIO& io = ImGui::GetIO();
-    (void)io;
-    io.Fonts->AddFontDefault();
-    font2 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSans.ttf", 14.0f);
-    font3 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", 10.0f);
-
-    configureImguiContext();
-
 }
 
 void ImguiWidget::buildInterface() {
@@ -339,16 +338,6 @@ void ImguiWidget::buildInterface() {
 
         ImGui::Text("");
         ImGui::ShowStyleEditor();
-
-        ImGui::Text("");
-        // Select font at runtime
-        ImGui::Text("Hello with default font");	// use the default font (which is the first loaded font)
-        // ImGui::PushFont(font2);
-        ImGui::Text("Hello with font2");
-        // ImGui::PushFont(font3);
-        ImGui::Text("Hello with font3");
-        // ImGui::PopFont();
-
         ImGui::TreePop();
     }
 
