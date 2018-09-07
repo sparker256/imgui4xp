@@ -1,4 +1,4 @@
-s﻿/*
+﻿/*
  *   Imgui Starter Window for X-Plane
  *   William Good
  *

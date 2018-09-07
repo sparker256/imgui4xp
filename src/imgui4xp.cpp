@@ -78,7 +78,8 @@ PLUGIN_API void XPluginReceiveMessage(XPLMPluginID, intptr_t inMessage, void * i
         // WindowDecorationSelfDecorated = 2
         // WindowDecorationSelfDecoratedResizable = 3
         int decorate = 1;
-        imguiPtr = std::make_shared<ImguiWidget>(x, y, x + width, y - height, decorate);
+        imguiPtr = std::make_shared<ImguiWidget>(x, y, x + width, y - height, decorate);  // calls constructor
+        imguiPtr->init(); // calls ImgWindow::init from the base class which in turn virtually calls the overridden function
 
     }
 }
