@@ -28,8 +28,3 @@ And follow there instructions and then you will need to install the clang compil
 sudo apt-get install clang-3.8
 
 With all this correctly installed you to should be able to build for all three platforms on Ubuntu.
-
-
-Currently (08-02-18) you need to make the following change to line 97 of src/ImgWindow/ImgWindow.cpp because of a name change at imgui to prevent a build error.
-
-io.ConfigMacOSXBehaviors = false;  // io.OptMacOSXBehaviors = false;
