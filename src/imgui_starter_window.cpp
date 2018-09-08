@@ -84,7 +84,11 @@ void ImguiWidget::configureImguiContext()
     ImGuiIO& io = ImGui::GetIO();
     io.Fonts->AddFontDefault();
     font2 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSans.ttf", 10.0f);
-    font3 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", 14.0f);
+    font3 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSans.ttf", 12.0f);
+    font4 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSans.ttf", 14.0f);
+    font5 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", 10.0f);
+    font6 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", 12.0f);
+    font7 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", 14.0f);
 }
 
 ImguiWidget::ImguiWidget(int left, int top, int right, int bot, int decoration):

@@ -34,6 +34,12 @@ protected:
 private:
     ImFont* font2;
     ImFont* font3;
+    ImFont* font4;
+    ImFont* font5;
+    ImFont* font6;
+    ImFont* font7;
+    ImFont* font8;
+    ImFont* font9;
 };
 
 #endif /* SRC_IMGUIWIDGET_H_ */
