@@ -83,12 +83,16 @@ void ImguiWidget::configureImguiContext()
 {
     ImGuiIO& io = ImGui::GetIO();
     io.Fonts->AddFontDefault();
-    font2 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSans.ttf", 10.0f);
-    font3 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSans.ttf", 12.0f);
-    font4 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSans.ttf", 14.0f);
-    font5 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", 10.0f);
-    font6 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", 12.0f);
-    font7 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", 14.0f);
+    font2 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSans.ttf", 8.0f);
+    font3 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSans.ttf", 10.0f);
+    font4 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSans.ttf", 12.0f);
+    font5 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", 14.0f);
+    font6 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", 16.0f);
+    font7 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", 18.0f);
+    font8 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/Inconsolata.ttf", 20.0f);
+    font9 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/Inconsolata.ttf", 22.0f);
+    font10 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/Inconsolata.ttf", 24.0f);
+
 }
 
 ImguiWidget::ImguiWidget(int left, int top, int right, int bot, int decoration):
@@ -340,6 +344,42 @@ void ImguiWidget::buildInterface() {
 
     if (ImGui::TreeNode("Fonts")) {
 
+        ImGui::Text("");
+        ImGui::PushFont(font2);
+        ImGui::Text("Hello");
+        ImGui::PopFont();
+        ImGui::PushFont(font3);
+        ImGui::SameLine();
+        ImGui::Text("  Hello");
+        ImGui::PopFont();
+        ImGui::PushFont(font4);
+        ImGui::SameLine();
+        ImGui::Text("  Hello");
+        ImGui::PopFont();
+        ImGui::PushFont(font5);
+        ImGui::SameLine();
+        ImGui::Text("  Hello");
+        ImGui::PopFont();
+        ImGui::PushFont(font6);
+        ImGui::SameLine();
+        ImGui::Text("  Hello");
+        ImGui::PopFont();
+        ImGui::PushFont(font7);
+        ImGui::SameLine();
+        ImGui::Text("  Hello");
+        ImGui::PopFont();
+        ImGui::PushFont(font8);
+        ImGui::SameLine();
+        ImGui::Text("  Hello");
+        ImGui::PopFont();
+        ImGui::PushFont(font9);
+        ImGui::SameLine();
+        ImGui::Text("  Hello");
+        ImGui::PopFont();
+        ImGui::PushFont(font10);
+        ImGui::SameLine();
+        ImGui::Text("  Hello");
+        ImGui::PopFont();
         ImGui::Text("");
         ImGui::ShowStyleEditor();
         ImGui::TreePop();

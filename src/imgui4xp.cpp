@@ -67,7 +67,7 @@ PLUGIN_API void XPluginReceiveMessage(XPLMPluginID, intptr_t inMessage, void * i
         XPLMGetScreenBoundsGlobal(&left, &top, &right, &bot);
 
         int width = 800;
-        int height = 450;
+        int height = 550;
         int left_pad = 175;
         int top_pad = 75;
         int x = left + left_pad;

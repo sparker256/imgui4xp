@@ -40,6 +40,13 @@ private:
     ImFont* font7;
     ImFont* font8;
     ImFont* font9;
+    ImFont* font10;
+    ImFont* font11;
+    ImFont* font12;
+    ImFont* font13;
+    ImFont* font14;
+    ImFont* font15;
+
 };
 
 #endif /* SRC_IMGUIWIDGET_H_ */
