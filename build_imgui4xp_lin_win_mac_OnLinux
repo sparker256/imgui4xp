@@ -1,5 +1,8 @@
 #!/bin/bash
 #
+
+./home/bill/xp11_imgui4xp_plugin/imgui4xp/build_imgui4xp_all_OnLinux
+
 cd xp11_imgui4xp_plugin/imgui4xp &&
 mkdir -p release/imgui4xp/lin_x64 &&
 mkdir -p release/imgui4xp/win_x64 &&

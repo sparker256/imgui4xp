@@ -32,21 +32,15 @@ protected:
     void configureImguiContext() override;
     void buildInterface() override;
 private:
-    ImFont* font2;
-    ImFont* font3;
-    ImFont* font4;
-    ImFont* font5;
-    ImFont* font6;
-    ImFont* font7;
-    ImFont* font8;
-    ImFont* font9;
-    ImFont* font10;
-    ImFont* font11;
-    ImFont* font12;
-    ImFont* font13;
-    ImFont* font14;
-    ImFont* font15;
-
+    ImFont* DejaVuSans;
+    ImFont* DejaVuSansMono;
+    ImFont* Inconsolata;
+    ImFont* ProFontWindows;
+    ImFont* Roboto_Bold;
+    ImFont* RobotoCondensed_Regular;
+    ImFont* Roboto_Light;
+    ImFont* Roboto_Regular;
+    ImFont* tahomabd;
 };
 
 #endif /* SRC_IMGUIWIDGET_H_ */

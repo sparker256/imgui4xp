@@ -83,15 +83,15 @@ void ImguiWidget::configureImguiContext()
 {
     ImGuiIO& io = ImGui::GetIO();
     io.Fonts->AddFontDefault();
-    font2 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSans.ttf", 8.0f);
-    font3 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSans.ttf", 10.0f);
-    font4 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSans.ttf", 12.0f);
-    font5 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", 14.0f);
-    font6 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", 16.0f);
-    font7 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", 18.0f);
-    font8 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/Inconsolata.ttf", 20.0f);
-    font9 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/Inconsolata.ttf", 22.0f);
-    font10 = io.Fonts->AddFontFromFileTTF("./Resources/fonts/Inconsolata.ttf", 24.0f);
+    DejaVuSans = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSans.ttf", 13.0f);
+    DejaVuSansMono = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", 13.0f);
+    Inconsolata = io.Fonts->AddFontFromFileTTF("./Resources/fonts/Inconsolata.ttf", 13.0f);
+    ProFontWindows = io.Fonts->AddFontFromFileTTF("./Resources/fonts/ProFontWindows.ttf", 13.0f);
+    Roboto_Bold = io.Fonts->AddFontFromFileTTF("./Resources/fonts/Roboto-Bold.ttf", 13.0f);
+    RobotoCondensed_Regular = io.Fonts->AddFontFromFileTTF("./Resources/fonts/RobotoCondensed-Regular.ttf", 13.0f);
+    Roboto_Light = io.Fonts->AddFontFromFileTTF("./Resources/fonts/Roboto-Light.ttf", 13.0f);
+    Roboto_Regular = io.Fonts->AddFontFromFileTTF("./Resources/fonts/Roboto-Regular.ttf", 13.0f);
+    tahomabd = io.Fonts->AddFontFromFileTTF("./Resources/fonts/tahomabd.ttf", 13.0f);
 
 }
 
@@ -345,41 +345,59 @@ void ImguiWidget::buildInterface() {
     if (ImGui::TreeNode("Fonts")) {
 
         ImGui::Text("");
-        ImGui::PushFont(font2);
-        ImGui::Text("Hello");
+        ImGui::PushFont(DejaVuSans);
+        ImGui::SetWindowFontScale(1.0);
+        ImGui::Text("DejaVuSans FontScale(1.0)");
         ImGui::PopFont();
-        ImGui::PushFont(font3);
+
+        ImGui::PushFont(DejaVuSansMono);
         ImGui::SameLine();
-        ImGui::Text("  Hello");
+        ImGui::SetWindowFontScale(1.0);
+        ImGui::Text("  DejaVuSansMono FontScale(1.0)");
         ImGui::PopFont();
-        ImGui::PushFont(font4);
+
+        ImGui::PushFont(Inconsolata);
         ImGui::SameLine();
-        ImGui::Text("  Hello");
+        ImGui::SetWindowFontScale(1.0);
+        ImGui::Text("  Inconsolata FontScale(1.0)");
         ImGui::PopFont();
-        ImGui::PushFont(font5);
+
+        ImGui::PushFont(ProFontWindows);
         ImGui::SameLine();
-        ImGui::Text("  Hello");
+        ImGui::SetWindowFontScale(1.0);
+        ImGui::Text("  ProFontWindows FontScale(1.0)");
         ImGui::PopFont();
-        ImGui::PushFont(font6);
+
+        ImGui::PushFont(Roboto_Bold);
+        // ImGui::SameLine();
+        ImGui::SetWindowFontScale(1.0);
+        ImGui::Text("Roboto-Bold FontScale(1.0)");
+        ImGui::PopFont();
+
+        ImGui::PushFont(RobotoCondensed_Regular);
         ImGui::SameLine();
-        ImGui::Text("  Hello");
+        ImGui::SetWindowFontScale(1.0);
+        ImGui::Text("  RobotoCondensed-Regular FontScale(1.0)");
         ImGui::PopFont();
-        ImGui::PushFont(font7);
+
+        ImGui::PushFont(Roboto_Light);
         ImGui::SameLine();
-        ImGui::Text("  Hello");
+        ImGui::SetWindowFontScale(1.0);
+        ImGui::Text("  Roboto-Light FontScale(1.0)");
         ImGui::PopFont();
-        ImGui::PushFont(font8);
+
+        ImGui::PushFont(Roboto_Regular);
         ImGui::SameLine();
-        ImGui::Text("  Hello");
+        ImGui::SetWindowFontScale(1.0);
+        ImGui::Text("  Roboto-Regular FontScale(1.0)");
         ImGui::PopFont();
-        ImGui::PushFont(font9);
-        ImGui::SameLine();
-        ImGui::Text("  Hello");
+
+        ImGui::PushFont(tahomabd);
+        // ImGui::SameLine();
+        ImGui::SetWindowFontScale(1.0);
+        ImGui::Text("  tahomabd FontScale(1.0)");
         ImGui::PopFont();
-        ImGui::PushFont(font10);
-        ImGui::SameLine();
-        ImGui::Text("  Hello");
-        ImGui::PopFont();
+
         ImGui::Text("");
         ImGui::ShowStyleEditor();
         ImGui::TreePop();
