@@ -348,55 +348,129 @@ void ImguiWidget::buildInterface() {
         ImGui::PushFont(DejaVuSans);
         ImGui::SetWindowFontScale(1.0);
         ImGui::Text("DejaVuSans FontScale(1.0)");
+
+        ImGui::SameLine();
+        ImGui::SetWindowFontScale(1.50);
+        ImGui::Text("  DejaVuSans FontScale(1.50)");
+
+        ImGui::SameLine();
+        ImGui::SetWindowFontScale(2.00);
+        ImGui::Text("  DejaVuSans FontScale(2.00)");
         ImGui::PopFont();
+
 
         ImGui::PushFont(DejaVuSansMono);
-        ImGui::SameLine();
         ImGui::SetWindowFontScale(1.0);
-        ImGui::Text("  DejaVuSansMono FontScale(1.0)");
+        ImGui::Text("DejaVuSansMono FontScale(1.0)");
+
+        ImGui::SameLine();
+        ImGui::SetWindowFontScale(1.50);
+        ImGui::Text("  DejaVuSansMono FontScale(1.50)");
+
+        ImGui::SameLine();
+        ImGui::SetWindowFontScale(2.00);
+        ImGui::Text("  DejaVuSansMono FontScale(2.00)");
         ImGui::PopFont();
+
 
         ImGui::PushFont(Inconsolata);
-        ImGui::SameLine();
         ImGui::SetWindowFontScale(1.0);
-        ImGui::Text("  Inconsolata FontScale(1.0)");
+        ImGui::Text("Inconsolata FontScale(1.0)");
+
+        ImGui::SameLine();
+        ImGui::SetWindowFontScale(1.50);
+        ImGui::Text("  Inconsolata FontScale(1.50)");
+
+        ImGui::SameLine();
+        ImGui::SetWindowFontScale(2.00);
+        ImGui::Text("  Inconsolata FontScale(2.00)");
         ImGui::PopFont();
+
 
         ImGui::PushFont(ProFontWindows);
-        ImGui::SameLine();
         ImGui::SetWindowFontScale(1.0);
-        ImGui::Text("  ProFontWindows FontScale(1.0)");
+        ImGui::Text("ProFontWindows FontScale(1.0)");
+
+        ImGui::SameLine();
+        ImGui::SetWindowFontScale(1.50);
+        ImGui::Text("  ProFontWindows FontScale(1.50)");
+
+        ImGui::SameLine();
+        ImGui::SetWindowFontScale(2.00);
+        ImGui::Text("  ProFontWindows FontScale(2.00)");
         ImGui::PopFont();
+
 
         ImGui::PushFont(Roboto_Bold);
-        // ImGui::SameLine();
         ImGui::SetWindowFontScale(1.0);
         ImGui::Text("Roboto-Bold FontScale(1.0)");
+
+        ImGui::SameLine();
+        ImGui::SetWindowFontScale(1.50);
+        ImGui::Text("  Roboto-Bold FontScale(1.50)");
+
+        ImGui::SameLine();
+        ImGui::SetWindowFontScale(2.00);
+        ImGui::Text("  Roboto-Bold FontScale(2.00)");
         ImGui::PopFont();
+
 
         ImGui::PushFont(RobotoCondensed_Regular);
-        ImGui::SameLine();
         ImGui::SetWindowFontScale(1.0);
-        ImGui::Text("  RobotoCondensed-Regular FontScale(1.0)");
+        ImGui::Text("RobotoCondensed-Regular FontScale(1.0)");
+
+        ImGui::SameLine();
+        ImGui::SetWindowFontScale(1.50);
+        ImGui::Text("  RobotoCondensed-Regular FontScale(1.50)");
+
+        ImGui::SameLine();
+        ImGui::SetWindowFontScale(2.00);
+        ImGui::Text("  RobotoCondensed-Regular FontScale(2.00)");
         ImGui::PopFont();
+
 
         ImGui::PushFont(Roboto_Light);
-        ImGui::SameLine();
         ImGui::SetWindowFontScale(1.0);
-        ImGui::Text("  Roboto-Light FontScale(1.0)");
+        ImGui::Text("Roboto-Light FontScale(1.0)");
+
+        ImGui::SameLine();
+        ImGui::SetWindowFontScale(1.50);
+        ImGui::Text("  Roboto-Light FontScale(1.50)");
+
+        ImGui::SameLine();
+        ImGui::SetWindowFontScale(2.00);
+        ImGui::Text("  Roboto-Light FontScale(2.00)");
         ImGui::PopFont();
+
 
         ImGui::PushFont(Roboto_Regular);
-        ImGui::SameLine();
         ImGui::SetWindowFontScale(1.0);
-        ImGui::Text("  Roboto-Regular FontScale(1.0)");
+        ImGui::Text("Roboto-Regular FontScale(1.0)");
+
+        ImGui::SameLine();
+        ImGui::SetWindowFontScale(1.50);
+        ImGui::Text("  Roboto-Regular FontScale(1.50)");
+
+        ImGui::SameLine();
+        ImGui::SetWindowFontScale(2.00);
+        ImGui::Text("  Roboto-Regular FontScale(2.00)");
         ImGui::PopFont();
 
+
         ImGui::PushFont(tahomabd);
-        // ImGui::SameLine();
         ImGui::SetWindowFontScale(1.0);
-        ImGui::Text("  tahomabd FontScale(1.0)");
+        ImGui::Text("tahomabd FontScale(1.0)");
+
+        ImGui::SameLine();
+        ImGui::SetWindowFontScale(1.50);
+        ImGui::Text("  tahomabd FontScale(1.50)");
+
+        ImGui::SameLine();
+        ImGui::SetWindowFontScale(2.00);
+        ImGui::Text("  tahomabd FontScale(2.00)");
         ImGui::PopFont();
+
+        ImGui::SetWindowFontScale(1.0);
 
         ImGui::Text("");
         ImGui::ShowStyleEditor();
