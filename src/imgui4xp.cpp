@@ -18,7 +18,7 @@
 #include "XPLMPlugin.h"     // for XPLM_MSG_SCENERY_LOADED message
 #include "XPLMUtilities.h"
 #include "XPLMMenus.h"
-#include "../src/ImgWindow/ImgWindow.h"
+#include "ImgWindow.h"
 
 #include "imgui4xp.h"
 #include "imgui_starter_window.h"

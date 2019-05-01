@@ -1,0 +1,39 @@
+#!/bin/bash
+#
+# How to run
+# ./xp11_imgui4xp_plugin_builder/imgui4xp/build_imgui4xp_all_OnLinux_WithCmake
+
+cd xp11_imgui4xp_plugin_builder/imgui4xp &&
+mkdir -p release/imgui4xp/lin_x64 &&
+mkdir -p release/imgui4xp/win_x64 &&
+mkdir -p release/imgui4xp/mac_x64 &&
+
+cd src
+rm -r build/*
+cd build
+cmake ..
+make VERBOSE=1
+cd /home/bill/xp11_imgui4xp_plugin_builder/imgui4xp
+cp src/build/imgui4xp.xpl release/imgui4xp/lin_x64/
+
+cd src
+rm -r build/*
+cd build
+cmake -DCMAKE_TOOLCHAIN_FILE=~/xp11_imgui4xp_plugin_builder/imgui4xp/src/Toolchain-mingw-w64-x86-64.cmake ..
+make VERBOSE=1
+cd /home/bill/xp11_imgui4xp_plugin_builder/imgui4xp
+cp src/build/imgui4xp.xpl release/imgui4xp/win_x64/
+
+cd src
+rm -r build/*
+cd build
+cmake -DCMAKE_TOOLCHAIN_FILE=~/xp11_imgui4xp_plugin_builder/imgui4xp/src/Toolchain-ubuntu-osxcross-10.11.cmake ..
+make VERBOSE=1
+cd /home/bill/xp11_imgui4xp_plugin_builder/imgui4xp
+cp src/build/imgui4xp.xpl release/imgui4xp/mac_x64/
+
+cp imgui_demo.jpg release/imgui4xp/
+
+exec $SHELL
+#
+

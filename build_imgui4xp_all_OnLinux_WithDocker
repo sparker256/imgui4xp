@@ -1,0 +1,29 @@
+#!/bin/bash
+#
+# How to run
+# ./xp11_imgui4xp_plugin_builder/imgui4xp/build_imgui4xp_all_OnLinux_WithDocker
+
+cd xp11_imgui4xp_plugin_builder/imgui4xp &&
+mkdir -p imgui4xp/lin_x64 &&
+mkdir -p imgui4xp/win_x64 &&
+mkdir -p imgui4xp/mac_x64 &&
+ 
+rm -r src/build-lin/*
+rm -r src/build-win/*
+rm -r src/build-mac/*
+
+rm -r imgui4xp/lin_x64/*
+rm -r imgui4xp/win_x64/*
+rm -r imgui4xp/mac_x64/*
+
+(cd docker; make)
+
+cp src/build-lin/imgui4xp.xpl imgui4xp/lin_x64/imgui4xp.xpl
+cp src/build-win/imgui4xp.xpl imgui4xp/win_x64/imgui4xp.xpl
+cp src/build-mac/imgui4xp.xpl imgui4xp/mac_x64/imgui4xp.xpl
+
+cp imgui_demo.jpg imgui4xp/
+
+exec $SHELL
+#
+
