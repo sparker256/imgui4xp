@@ -5,10 +5,6 @@ I am documenting the process I took to get a multiplatform stand alone plugin th
 
 First clone imgui4xp using this command "git clone --recursive https://github.com/sparker256/imgui4xp.git" and put the resulting imgui4xp folder wherever you like. I normanly put myself in the folder where I want the repository folder to reside first. You need to use --recursive because I am using two submodules and if you do a normal clone they will be empty. 
 
-You will next need the current X-Plane SDK which can be found at https://developer.x-plane.com/sdk/plugin-sdk-downloads/.
-
-On my system I have renamed the main SDK folder to XSDK and it resides in /opt so the full path is /opt/XSDK
-
 Since I develop on Linux my IDE of choice is QT Creator which is installed from my package manager.
 
 I have scripts and make files that alow me to click on one button on my desktop and automaticly build for all three platforms.
@@ -27,4 +23,6 @@ And follow there instructions and then you will need to install the clang compil
 
 sudo apt-get install clang-3.8
 
-With all this correctly installed you to should be able to build for all three platforms on Ubuntu.
+With all this correctly installed you to should be able to build for all three platforms on Ubuntu using Cmake.
+
+I have now also added the ability of using Docker to build for all three platforms.
