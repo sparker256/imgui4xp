@@ -7,6 +7,7 @@ cd xp11_imgui4xp_plugin_builder/imgui4xp &&
 mkdir -p release/imgui4xp/lin_x64 &&
 mkdir -p release/imgui4xp/win_x64 &&
 mkdir -p release/imgui4xp/mac_x64 &&
+mkdir -p src/build &&
 
 cd src
 rm -r build/*

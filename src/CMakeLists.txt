@@ -7,18 +7,18 @@ project(imgui4xp VERSION 1.0.0 DESCRIPTION "imgui4xp X-Plane plugin")
 set(CMAKE_CXX_STANDARD 14)
 
 # Set include directories used by our code and dependencies.
-include_directories("${CMAKE_SOURCE_DIR}/XPSDK301/CHeaders/Widgets")
-include_directories("${CMAKE_SOURCE_DIR}/XPSDK301/CHeaders/Wrappers")
-include_directories("${CMAKE_SOURCE_DIR}/XPSDK301/CHeaders/XPLM")
+include_directories("${CMAKE_SOURCE_DIR}/XPSDK302/CHeaders/Widgets")
+include_directories("${CMAKE_SOURCE_DIR}/XPSDK302/CHeaders/Wrappers")
+include_directories("${CMAKE_SOURCE_DIR}/XPSDK302/CHeaders/XPLM")
 include_directories("${CMAKE_SOURCE_DIR}/")
 include_directories("${CMAKE_SOURCE_DIR}/ImgWindow")
 include_directories("${CMAKE_SOURCE_DIR}/imgui")
 
 # Specify library search locations.
 if (WIN32)
-    list(APPEND CMAKE_LIBRARY_PATH "${CMAKE_SOURCE_DIR}/XPSDK301/Libraries/Win")
+    list(APPEND CMAKE_LIBRARY_PATH "${CMAKE_SOURCE_DIR}/XPSDK302/Libraries/Win")
 elseif (APPLE)
-    list(APPEND CMAKE_FRAMEWORK_PATH "${CMAKE_SOURCE_DIR}/XPSDK301/Libraries/Mac")
+    list(APPEND CMAKE_FRAMEWORK_PATH "${CMAKE_SOURCE_DIR}/XPSDK302/Libraries/Mac")
 elseif (UNIX)
 
 endif ()

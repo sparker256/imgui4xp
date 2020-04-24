@@ -7,9 +7,9 @@ CONFIG -= thread exceptions qt rtti debug
 
 VERSION = 1.0.0
 
-INCLUDEPATH += ../src/XPSDK301/CHeaders/XPLM
-INCLUDEPATH += ../src/XPSDK301/CHeaders/Wrappers
-INCLUDEPATH += ../src/XPSDK301/CHeaders/Widgets
+INCLUDEPATH += ../src/XPSDK302/CHeaders/XPLM
+INCLUDEPATH += ../src/XPSDK302/CHeaders/Wrappers
+INCLUDEPATH += ../src/XPSDK302/CHeaders/Widgets
 INCLUDEPATH += ../src
 INCLUDEPATH += ../src/ImgWindow
 INCLUDEPATH += ../src/imgui
@@ -17,7 +17,8 @@ INCLUDEPATH += ..
 VPATH = ..
 
 # Defined to use X-Plane SDK 3.0.0 capabilities - no backward compatibility before 11.10
-DEFINES +=  XPLM301 \
+DEFINES +=  XPLM302 \
+            XPLM301 \
             XPLM300 \
             XPLM210 \
             XPLM200
