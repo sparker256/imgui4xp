@@ -45,7 +45,7 @@ add_compile_options(-O3 -fPIC)
 
 # X-Plane plugin
 # FIXME: Split this into individual targets.
-list(APPEND IMGUI4XP_SRCS imgui4xp.cpp imgui_starter_window.cpp imgui/imgui.cpp imgui/imgui_demo.cpp imgui/imgui_draw.cpp ImgWindow/ImgWindow.cpp)
+list(APPEND IMGUI4XP_SRCS imgui4xp.cpp imgui_starter_window.cpp imgui/imgui.cpp imgui/imgui_demo.cpp imgui/imgui_draw.cpp imgui/imgui_widgets.cpp ImgWindow/ImgFontAtlas.cpp ImgWindow/ImgWindow.cpp )
 add_library(imgui4xp SHARED ${IMGUI4XP_SRCS})
 target_compile_features(imgui4xp PUBLIC cxx_std_11)
 

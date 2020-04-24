@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   Imgui Starter Window for X-Plane
  *   William Good
  *
@@ -35,8 +35,6 @@ ImVec2 text_size;
 float center;
 bool makeRed = false;
 
-ImFont* font2 = NULL;
-ImFont* font3 = NULL;
 
 // Trying to find a way to get a image to be displayed
 ImTextureID Imimage_id;
@@ -79,21 +77,6 @@ int try2load_image() {
     }
 }
 
-void ImguiWidget::configureImguiContext()
-{
-    ImGuiIO& io = ImGui::GetIO();
-    io.Fonts->AddFontDefault();
-    DejaVuSans = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSans.ttf", 13.0f);
-    DejaVuSansMono = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", 13.0f);
-    Inconsolata = io.Fonts->AddFontFromFileTTF("./Resources/fonts/Inconsolata.ttf", 13.0f);
-    ProFontWindows = io.Fonts->AddFontFromFileTTF("./Resources/fonts/ProFontWindows.ttf", 13.0f);
-    Roboto_Bold = io.Fonts->AddFontFromFileTTF("./Resources/fonts/Roboto-Bold.ttf", 13.0f);
-    RobotoCondensed_Regular = io.Fonts->AddFontFromFileTTF("./Resources/fonts/RobotoCondensed-Regular.ttf", 13.0f);
-    Roboto_Light = io.Fonts->AddFontFromFileTTF("./Resources/fonts/Roboto-Light.ttf", 13.0f);
-    Roboto_Regular = io.Fonts->AddFontFromFileTTF("./Resources/fonts/Roboto-Regular.ttf", 13.0f);
-    tahomabd = io.Fonts->AddFontFromFileTTF("./Resources/fonts/tahomabd.ttf", 13.0f);
-
-}
 
 ImguiWidget::ImguiWidget(int left, int top, int right, int bot, int decoration):
     ImgWindow(left, top, right, bot, decoration)
@@ -341,140 +324,4 @@ void ImguiWidget::buildInterface() {
 
         ImGui::TreePop();
     }
-
-    if (ImGui::TreeNode("Fonts")) {
-
-        ImGui::Text("");
-        ImGui::PushFont(DejaVuSans);
-        ImGui::SetWindowFontScale(1.0);
-        ImGui::Text("DejaVuSans FontScale(1.0)");
-
-        ImGui::SameLine();
-        ImGui::SetWindowFontScale(1.50);
-        ImGui::Text("  DejaVuSans FontScale(1.50)");
-
-        ImGui::SameLine();
-        ImGui::SetWindowFontScale(2.00);
-        ImGui::Text("  DejaVuSans FontScale(2.00)");
-        ImGui::PopFont();
-
-
-        ImGui::PushFont(DejaVuSansMono);
-        ImGui::SetWindowFontScale(1.0);
-        ImGui::Text("DejaVuSansMono FontScale(1.0)");
-
-        ImGui::SameLine();
-        ImGui::SetWindowFontScale(1.50);
-        ImGui::Text("  DejaVuSansMono FontScale(1.50)");
-
-        ImGui::SameLine();
-        ImGui::SetWindowFontScale(2.00);
-        ImGui::Text("  DejaVuSansMono FontScale(2.00)");
-        ImGui::PopFont();
-
-
-        ImGui::PushFont(Inconsolata);
-        ImGui::SetWindowFontScale(1.0);
-        ImGui::Text("Inconsolata FontScale(1.0)");
-
-        ImGui::SameLine();
-        ImGui::SetWindowFontScale(1.50);
-        ImGui::Text("  Inconsolata FontScale(1.50)");
-
-        ImGui::SameLine();
-        ImGui::SetWindowFontScale(2.00);
-        ImGui::Text("  Inconsolata FontScale(2.00)");
-        ImGui::PopFont();
-
-
-        ImGui::PushFont(ProFontWindows);
-        ImGui::SetWindowFontScale(1.0);
-        ImGui::Text("ProFontWindows FontScale(1.0)");
-
-        ImGui::SameLine();
-        ImGui::SetWindowFontScale(1.50);
-        ImGui::Text("  ProFontWindows FontScale(1.50)");
-
-        ImGui::SameLine();
-        ImGui::SetWindowFontScale(2.00);
-        ImGui::Text("  ProFontWindows FontScale(2.00)");
-        ImGui::PopFont();
-
-
-        ImGui::PushFont(Roboto_Bold);
-        ImGui::SetWindowFontScale(1.0);
-        ImGui::Text("Roboto-Bold FontScale(1.0)");
-
-        ImGui::SameLine();
-        ImGui::SetWindowFontScale(1.50);
-        ImGui::Text("  Roboto-Bold FontScale(1.50)");
-
-        ImGui::SameLine();
-        ImGui::SetWindowFontScale(2.00);
-        ImGui::Text("  Roboto-Bold FontScale(2.00)");
-        ImGui::PopFont();
-
-
-        ImGui::PushFont(RobotoCondensed_Regular);
-        ImGui::SetWindowFontScale(1.0);
-        ImGui::Text("RobotoCondensed-Regular FontScale(1.0)");
-
-        ImGui::SameLine();
-        ImGui::SetWindowFontScale(1.50);
-        ImGui::Text("  RobotoCondensed-Regular FontScale(1.50)");
-
-        ImGui::SameLine();
-        ImGui::SetWindowFontScale(2.00);
-        ImGui::Text("  RobotoCondensed-Regular FontScale(2.00)");
-        ImGui::PopFont();
-
-
-        ImGui::PushFont(Roboto_Light);
-        ImGui::SetWindowFontScale(1.0);
-        ImGui::Text("Roboto-Light FontScale(1.0)");
-
-        ImGui::SameLine();
-        ImGui::SetWindowFontScale(1.50);
-        ImGui::Text("  Roboto-Light FontScale(1.50)");
-
-        ImGui::SameLine();
-        ImGui::SetWindowFontScale(2.00);
-        ImGui::Text("  Roboto-Light FontScale(2.00)");
-        ImGui::PopFont();
-
-
-        ImGui::PushFont(Roboto_Regular);
-        ImGui::SetWindowFontScale(1.0);
-        ImGui::Text("Roboto-Regular FontScale(1.0)");
-
-        ImGui::SameLine();
-        ImGui::SetWindowFontScale(1.50);
-        ImGui::Text("  Roboto-Regular FontScale(1.50)");
-
-        ImGui::SameLine();
-        ImGui::SetWindowFontScale(2.00);
-        ImGui::Text("  Roboto-Regular FontScale(2.00)");
-        ImGui::PopFont();
-
-
-        ImGui::PushFont(tahomabd);
-        ImGui::SetWindowFontScale(1.0);
-        ImGui::Text("tahomabd FontScale(1.0)");
-
-        ImGui::SameLine();
-        ImGui::SetWindowFontScale(1.50);
-        ImGui::Text("  tahomabd FontScale(1.50)");
-
-        ImGui::SameLine();
-        ImGui::SetWindowFontScale(2.00);
-        ImGui::Text("  tahomabd FontScale(2.00)");
-        ImGui::PopFont();
-
-        ImGui::SetWindowFontScale(1.0);
-
-        ImGui::Text("");
-        ImGui::ShowStyleEditor();
-        ImGui::TreePop();
-    }
-
 }

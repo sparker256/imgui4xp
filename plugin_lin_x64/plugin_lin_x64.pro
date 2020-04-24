@@ -47,6 +47,7 @@ HEADERS +=  ../src/imgui4xp.h \
             ../src/imgui/stb_rect_pack.h \
             ../src/imgui/stb_textedit.h \
             ../src/imgui/stb_truetype.h \
+            ../src/ImgWindow/ImgFontAtlas.h \
             ../src/ImgWindow/ImgWindow.h
 
 
@@ -55,4 +56,6 @@ SOURCES +=  ../src/imgui4xp.cpp \
             ../src/imgui/imgui.cpp \
             ../src/imgui/imgui_demo.cpp \
             ../src/imgui/imgui_draw.cpp \
+            ../src/imgui/imgui_widgets.cpp \
+            ../src/ImgWindow/ImgFontAtlas.cpp \
             ../src/ImgWindow/ImgWindow.cpp

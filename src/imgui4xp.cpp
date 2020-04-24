@@ -9,7 +9,7 @@
  *
  */
 
-#define VERSION_NUMBER "1.02 build " __DATE__ " " __TIME__
+#define VERSION_NUMBER "1.00 build " __DATE__ " " __TIME__
 
 
 #include "XPLMDisplay.h"    // for window creation and manipulation
@@ -18,7 +18,7 @@
 #include "XPLMPlugin.h"     // for XPLM_MSG_SCENERY_LOADED message
 #include "XPLMUtilities.h"
 #include "XPLMMenus.h"
-#include "ImgWindow.h"
+#include "../src/ImgWindow/ImgWindow.h"
 
 #include "imgui4xp.h"
 #include "imgui_starter_window.h"
@@ -66,20 +66,18 @@ PLUGIN_API void XPluginReceiveMessage(XPLMPluginID, intptr_t inMessage, void * i
         int left, top, right, bot;
         XPLMGetScreenBoundsGlobal(&left, &top, &right, &bot);
 
-        int width = 1000;
-        int height = 800;
-        int left_pad = 175;
-        int top_pad = 75;
-        int x = left + left_pad;
-        int y = top - top_pad;
+        int width = 800;
+        int height = 450;
+        int pad = 75;
+        int x = left + pad;
+        int y = top - pad;
         // WindowDecoration decorate
         // WindowDecorationNone = 0
         // WindowDecorationRoundRectangle = 1
         // WindowDecorationSelfDecorated = 2
         // WindowDecorationSelfDecoratedResizable = 3
         int decorate = 1;
-        imguiPtr = std::make_shared<ImguiWidget>(x, y, x + width, y - height, decorate);  // calls constructor
-        imguiPtr->init(); // calls ImgWindow::init from the base class which in turn virtually calls the overridden function
+        imguiPtr = std::make_shared<ImguiWidget>(x, y, x + width, y - height, decorate);
 
     }
 }
