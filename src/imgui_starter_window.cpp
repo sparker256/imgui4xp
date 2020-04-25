@@ -26,6 +26,8 @@
 
 std::vector<GLuint> textureIDs;
 
+ImFont* DejaVuSans;
+
 int count;
 int choice = 1;
 float win_width = 0;
@@ -40,7 +42,6 @@ bool makeRed = false;
 ImTextureID Imimage_id;
 int image_id;
 std::string image_name = "./Resources/plugins/imgui4xp/imgui_demo.jpg";
-
 
 int loadImage(const std::string&fileName) {
     int imgWidth, imgHeight, nComps;
@@ -75,6 +76,17 @@ int try2load_image() {
         XPLMDebugString(err.c_str());
         return 0;
     }
+}
+
+void load_fonts() {
+    XPLMDebugString("Imgui4xp: before ImGuiIO& io = ImGui::GetIO()\n");
+    ImGuiIO& io = ImGui::GetIO();
+    XPLMDebugString("Imgui4xp: after ImGuiIO& io = ImGui::GetIO()\n");
+    io.Fonts->AddFontDefault();
+    XPLMDebugString("Imgui4xp: after io.Fonts->AddFontDefault();\n");
+    DejaVuSans = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSans.ttf", 13.0f);
+    XPLMDebugString("Imgui4xp: after DejaVuSans = io.Fonts->AddFontFromFileTTF\n");
+
 }
 
 
@@ -323,5 +335,21 @@ void ImguiWidget::buildInterface() {
         }
 
         ImGui::TreePop();
+    }
+
+    if (ImGui::TreeNode("Fonts")) {
+
+        ImGui::Text("This is just a test\n");
+        XPLMDebugString("Imgui4xp: before ImGui::PushFont(DejaVuSans)\n");
+//        ImGui::PushFont(DejaVuSans);
+        XPLMDebugString("Imgui4xp: before ImGui::SetWindowFontScale(1.0)\n");
+//        ImGui::SetWindowFontScale(1.0);
+        XPLMDebugString("Imgui4xp: SetWindowFontScale(1.0)\n");
+        ImGui::Text("DejaVuSans FontScale(1.0)");
+        XPLMDebugString("Imgui4xp: DejaVuSans FontScale(1.0)\n");
+//        ImGui::PopFont();
+
+        ImGui::TreePop();
+
     }
 }
