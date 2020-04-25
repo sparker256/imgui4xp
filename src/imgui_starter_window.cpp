@@ -12,6 +12,7 @@
 #include "imgui_starter_window.h"
 #include "../src/imgui/imgui.h"
 #include "../src/ImgWindow/ImgWindow.h"
+#include "../src/ImgWindow/ImgFontAtlas.h"
 
 #include <vector>
 #include <memory>
@@ -36,6 +37,7 @@ float cursor_posy = 0;
 ImVec2 text_size;
 float center;
 bool makeRed = false;
+int loop_time = 0;
 
 
 // Trying to find a way to get a image to be displayed
@@ -79,14 +81,15 @@ int try2load_image() {
 }
 
 void load_fonts() {
-    XPLMDebugString("Imgui4xp: before ImGuiIO& io = ImGui::GetIO()\n");
     ImGuiIO& io = ImGui::GetIO();
-    XPLMDebugString("Imgui4xp: after ImGuiIO& io = ImGui::GetIO()\n");
     io.Fonts->AddFontDefault();
-    XPLMDebugString("Imgui4xp: after io.Fonts->AddFontDefault();\n");
     DejaVuSans = io.Fonts->AddFontFromFileTTF("./Resources/fonts/DejaVuSans.ttf", 13.0f);
-    XPLMDebugString("Imgui4xp: after DejaVuSans = io.Fonts->AddFontFromFileTTF\n");
 
+    XPLMDebugString("Imgui4xp: Need to find a way to call the function bindTexture()\n");
+    // Need to find a way to call this.
+    // bindTexture creates and binds the font texture to OpenGL, ready for use.
+    // This should be called after all fonts are loaded, before any rendering occurs!
+    // bindTexture();
 }
 
 
@@ -339,14 +342,18 @@ void ImguiWidget::buildInterface() {
 
     if (ImGui::TreeNode("Fonts")) {
 
-        ImGui::Text("This is just a test\n");
-        XPLMDebugString("Imgui4xp: before ImGui::PushFont(DejaVuSans)\n");
+        if (loop_time < 5) {
+            loop_time = loop_time + 1;
+            XPLMDebugString("Imgui4xp: Using ShowStyleEditor() to see if new fonts loaded before using PushFont()\n");
+        }
+        if (loop_time > 5) {
+            loop_time = 15;
+        }
+
+        ImGui::Text("Using ShowStyleEditor() to see if new fonts loaded before using PushFont()\n");
+        ImGui::ShowStyleEditor();
 //        ImGui::PushFont(DejaVuSans);
-        XPLMDebugString("Imgui4xp: before ImGui::SetWindowFontScale(1.0)\n");
 //        ImGui::SetWindowFontScale(1.0);
-        XPLMDebugString("Imgui4xp: SetWindowFontScale(1.0)\n");
-        ImGui::Text("DejaVuSans FontScale(1.0)");
-        XPLMDebugString("Imgui4xp: DejaVuSans FontScale(1.0)\n");
 //        ImGui::PopFont();
 
         ImGui::TreePop();
