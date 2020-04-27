@@ -82,6 +82,36 @@ void configureImgWindow()
 {
   ImgWindow::sFontAtlas = std::make_shared<ImgFontAtlas>();
   // use actual parameters to configure the font, or use one of the other methods.
+
+  // this is a post from kuroneko on x-plane.org explaining this use.
+
+  // Basic setup looks something like:
+  // To avoid bleeding VRAM like it's going out of fashion, there is only one font atlas shared over all ImgWindows
+  // and we keep the manged pointer to it in the ImgWindow class statics.
+
+  // I use the C++11 managed/smart pointers to enforce RAII behaviours rather than encouraging use of new/delete.
+  //  This means the font atlas will only get destroyed when you break all references to it.
+  // (ie: via ImgWindow::sFontAtlas.reset())  You should never really need to do that though,
+  // unless you're being disabled (because you'll lose your texture handles anyway and it's probably a good idea
+  // to forcibly tear down the font atlas then).
+
+  // It's probably a bug that the instance of ImgWindow doesn't actually take a copy of the shared_ptr to ensure
+  // the font atlas remains valid until it's destroyed.  I was working on a lot of things when I threw that update
+  // together and I was heading down that path, but I think I forgot to finish it.
+
+
+  // you can use any of these fonts that are provided with X-Plane or find you own.
+  // Currently you can only load one font
+  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/DejaVuSans.ttf", 13.0f);
+  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", 13.0f);
+  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Inconsolata.ttf", 13.0f);
+  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/ProFontWindows", 13.0f);
+  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Roboto-Bold.ttf", 13.0f);
+  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/RobotoCondensed-Regular.ttf", 13.0f);
+  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Roboto-Light.ttf", 13.0f);
+  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Roboto-Regular.ttf", 13.0f);
+  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/tahomabd.ttf", 13.0f);
+
   ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", 13.0f);
 }
 
