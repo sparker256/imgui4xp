@@ -24,7 +24,7 @@
 #include <XPLMDataAccess.h>
 #include <XPLMUtilities.h>
 
-extern void load_fonts();
+extern void configureImgWindow();
 
 class ImguiWidget: public ImgWindow {
 public:

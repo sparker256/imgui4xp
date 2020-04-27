@@ -9,7 +9,7 @@
  *
  */
 
-#define VERSION_NUMBER "1.00 build " __DATE__ " " __TIME__
+#define VERSION_NUMBER "1.01 build " __DATE__ " " __TIME__
 
 
 #include "XPLMDisplay.h"    // for window creation and manipulation
@@ -25,15 +25,11 @@
 #include "imgui_starter_window.h"
 #include <cstring>
 
-
-void load_fonts();
-
 // XPLMDataRef g_vr_dref;
 // static bool g_in_vr = false;
 int vr_is_enabled = 0;
 
 std::shared_ptr<ImguiWidget> imguiPtr;
-std::shared_ptr<ImgFontAtlas> sFontAtlas;
 
 PLUGIN_API int XPluginStart(char * outName, char * outSig, char * outDesc) {
     // Plugin details
@@ -77,9 +73,7 @@ PLUGIN_API void XPluginReceiveMessage(XPLMPluginID, intptr_t inMessage, void * i
         // WindowDecorationSelfDecorated = 2
         // WindowDecorationSelfDecoratedResizable = 3
         int decorate = 1;
-        XPLMDebugString("Imgui4xp: before imguiPtr = std::make_shared\n");
+        configureImgWindow();
         imguiPtr = std::make_shared<ImguiWidget>(x, y, x + width, y - height, decorate);
-        XPLMDebugString("Imgui4xp: after imguiPtr = std::make_shared\n");
-        load_fonts();
     }
 }
