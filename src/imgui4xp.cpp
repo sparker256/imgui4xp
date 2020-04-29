@@ -9,7 +9,7 @@
  *
  */
 
-#define VERSION_NUMBER "1.01 build " __DATE__ " " __TIME__
+#define VERSION_NUMBER "1.02 build " __DATE__ " " __TIME__
 
 
 #include "XPLMDisplay.h"    // for window creation and manipulation
@@ -25,8 +25,6 @@
 #include "imgui_starter_window.h"
 #include <cstring>
 
-// XPLMDataRef g_vr_dref;
-// static bool g_in_vr = false;
 int vr_is_enabled = 0;
 
 std::shared_ptr<ImguiWidget> imguiPtr;
@@ -40,8 +38,6 @@ PLUGIN_API int XPluginStart(char * outName, char * outSig, char * outDesc) {
 
     // You probably want this on
 	XPLMEnableFeature("XPLM_USE_NATIVE_PATHS", 1);
-
-    // g_vr_dref = XPLMFindDataRef("sim/graphics/VR/enabled");
 
 	return 1;
 }

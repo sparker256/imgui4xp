@@ -81,6 +81,7 @@ int try2load_image() {
 void configureImgWindow()
 {
   ImgWindow::sFontAtlas = std::make_shared<ImgFontAtlas>();
+
   // use actual parameters to configure the font, or use one of the other methods.
 
   // this is a post from kuroneko on x-plane.org explaining this use.
@@ -101,7 +102,7 @@ void configureImgWindow()
 
 
   // you can use any of these fonts that are provided with X-Plane or find you own.
-  // Currently you can only load one font
+  // Currently you can only load one font and not sure if this might change in the future.
   // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/DejaVuSans.ttf", 13.0f);
   // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", 13.0f);
   // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Inconsolata.ttf", 13.0f);
@@ -364,9 +365,37 @@ void ImguiWidget::buildInterface() {
     }
 
     if (ImGui::TreeNode("Fonts")) {
+
+        ImGui::Text("Default DejaVuSansMono.ttf 13.0f font \n");
+
+        ImGui::TextUnformatted("");
+        // Green color
+        ImVec4 col = ImColor(0, 255, 0, 255);
+        ImGui::PushStyleColor(ImGuiCol_Text, col);
+        ImGui::TextUnformatted("Some Green Text with DejaVuSansMono 13 font");
+        ImGui::PopStyleColor();
+
+        ImGui::TextUnformatted("");
+        // Red color
+        col = ImColor(255, 0, 0, 255);
+        ImGui::PushStyleColor(ImGuiCol_Text, col);
+        ImGui::SetWindowFontScale(1.5);
+        ImGui::TextUnformatted("Some Red Text with DejaVuSansMono 13 font with font scale of 1.5");
+        ImGui::SetWindowFontScale(1.0);
+        ImGui::PopStyleColor();
+
+        ImGui::TextUnformatted("");
+        // Blue color
+        col = ImColor(0, 0, 255, 255);
+        ImGui::PushStyleColor(ImGuiCol_Text, col);
+        ImGui::SetWindowFontScale(1.25);
+        ImGui::TextUnformatted("Some Blue Text with DejaVuSansMono 13 font with font scale of 1.25");
+        ImGui::SetWindowFontScale(1.0);
+        ImGui::PopStyleColor();
+
+        ImGui::TextUnformatted("");
         ImGui::Text("Using ShowStyleEditor() to see if new fonts have loaded\n");
         ImGui::ShowStyleEditor();
-        ImGui::Text("DejaVuSans.ttf 13.0f \n");
         ImGui::TreePop();
 
     }
