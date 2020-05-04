@@ -3,7 +3,33 @@
  *
  * Integration for dear imgui into X-Plane.
  *
- * Copyright (C) 2018, Christopher Collins
+ * Copyright (C) 2018,2020 Christopher Collins
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the copyright holder nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
 */
 
 #ifndef IMGWINDOW_H
@@ -18,6 +44,7 @@
 #include <XPLMDisplay.h>
 #include <XPCProcessing.h>
 #include <imgui.h>
+#include <queue>
 
 #include "ImgFontAtlas.h"
 
@@ -40,10 +67,10 @@
  *    processing loop or similar.
  *
  * @note It should be possible to map globally on XP9 & XP10 letting you run
- * popups as large as you need, or to use the ImGUI native titlebars instead of
- * the XP10 ones - source for this may be provided later, but could also be
- * trivially adapted from this one by adjusting the way the space is translated
- * and mapped in the DrawWindowCB and constructor.
+ *     popups as large as you need, or to use the ImGUI native titlebars instead
+ *     of the XP10 ones - source for this may be provided later, but could also
+ *     be trivially adapted from this one by adjusting the way the space is
+ *     translated and mapped in the DrawWindowCB and constructor.
  */
 class
 ImgWindow {
@@ -93,12 +120,12 @@ protected:
      * @param layer the preferred layer to present this window in (see notes)
      *
      * @note The decoration should generally be one presented/rendered by XP -
-     * the ImGui window decorations are very intentionally supressed by
-     * ImgWindow to allow them to fit in with the rest of the simulator.
+     *     the ImGui window decorations are very intentionally supressed by
+     *     ImgWindow to allow them to fit in with the rest of the simulator.
      *
      * @note The only layers that really make sense are Floating and Modal.  Do
-     * not set VR layer here however unless the window is ONLY to be rendered
-     * in VR.
+     *     not set VR layer here however unless the window is ONLY to be
+     *     rendered in VR.
      */
     ImgWindow(
         int left,
@@ -124,7 +151,7 @@ protected:
      * and handle events.  It is called every frame the window is drawn.
      *
      * @note You must NOT delete the window object inside buildInterface() -
-     * use SafeDelete() for that.
+     *     use SafeDelete() for that.
      */
     virtual void buildInterface() = 0;
 
@@ -132,15 +159,15 @@ protected:
      * opportunity to prevent the window being shown.
      *
      * @note the implementation in the base-class is a null handler.  You can
-     * safely override this without chaining.
+     *     safely override this without chaining.
      *
      * @return true if the Window should be shown, false if the attempt to show
-     * should be suppressed.
+     *     should be suppressed.
      */
     virtual bool onShow();
 
     /** SafeDelete() can be used within buildInterface() to get the object to
-     * self-delete once it's finished rendering this frame.
+     *     self-delete once it's finished rendering this frame.
      */
     void SafeDelete();
 
@@ -181,6 +208,13 @@ private:
         XPLMMouseStatus inMouse,
         void *inRefcon);
 
+    static float SelfDestructCallback(float inElapsedSinceLastCall,
+                                      float inElapsedTimeSinceLastFlightLoop,
+                                      int inCounter,
+                                      void *inRefcon);
+    static std::queue<ImgWindow *>  sPendingDestruction;
+    static XPLMFlightLoopID         sSelfDestructHandler;
+
     int HandleMouseClickGeneric(
         int x, int y,
         XPLMMouseStatus inMouse,
@@ -200,7 +234,6 @@ private:
 
     float mModelView[16], mProjection[16];
     int mViewport[4];
-    bool mSelfDestruct;
 
     std::string mWindowTitle;
 
@@ -215,8 +248,6 @@ private:
     int mRight;
 
     XPLMWindowLayer mPreferredLayer;
-
-
 };
 
 #endif // #ifndef IMGWINDOW_H
