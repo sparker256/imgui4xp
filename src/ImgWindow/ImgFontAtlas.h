@@ -23,7 +23,7 @@ class ImgFontAtlas {
 public:
     ImgFontAtlas();
 
-    ~ImgFontAtlas();
+    virtual ~ImgFontAtlas();
 
     ImFont *AddFont(const ImFontConfig *font_cfg);
 
@@ -53,12 +53,11 @@ public:
      *
      * This should be called after all fonts are loaded, before any rendering occurs!
      */
-    void bindTexture();
+    virtual void bindTexture();
 
     ImFontAtlas *getAtlas();
 protected:
     ImFontAtlas *mOurAtlas;
-private:
     bool        mTextureBound;
     int         mGLTextureNum;
 };

@@ -29,12 +29,13 @@ ImgWindow::ImgWindow(
 	mIsInVR(false),
 	mPreferredLayer(layer),
 	mSelfDestruct(false),
-	mFirstRender(true)
+	mFirstRender(true),
+	mFontAtlas(sFontAtlas)
 {
     ImFontAtlas *iFontAtlas = nullptr;
-    if (sFontAtlas) {
-        sFontAtlas->bindTexture();
-        iFontAtlas = sFontAtlas->getAtlas();
+    if (mFontAtlas) {
+        mFontAtlas->bindTexture();
+        iFontAtlas = mFontAtlas->getAtlas();
     }
 	mImGuiContext = ImGui::CreateContext(iFontAtlas);
 	ImGui::SetCurrentContext(mImGuiContext);
@@ -66,8 +67,9 @@ ImgWindow::ImgWindow(
 	io.KeyMap[ImGuiKey_Delete] = XPLM_VK_DELETE;
 	io.KeyMap[ImGuiKey_Backspace] = XPLM_VK_BACK;
 	io.KeyMap[ImGuiKey_Space] = XPLM_VK_SPACE;
-	io.KeyMap[ImGuiKey_Enter] = XPLM_VK_ENTER;
-	io.KeyMap[ImGuiKey_Escape] = XPLM_VK_ESCAPE;
+    io.KeyMap[ImGuiKey_Enter] = XPLM_VK_RETURN;
+    io.KeyMap[ImGuiKey_Escape] = XPLM_VK_ESCAPE;
+    io.KeyMap[ImGuiKey_KeyPadEnter] = XPLM_VK_ENTER;
 	io.KeyMap[ImGuiKey_A] = XPLM_VK_A;
 	io.KeyMap[ImGuiKey_C] = XPLM_VK_C;
 	io.KeyMap[ImGuiKey_V] = XPLM_VK_V;
@@ -80,22 +82,37 @@ ImgWindow::ImgWindow(
 	style.WindowRounding = 0;
 
 	// bind the font
-	unsigned char* pixels;
-	int width, height;
-	io.Fonts->GetTexDataAsAlpha8(&pixels, &width, &height);
+	if (mFontAtlas) {
+        mFontTexture = static_cast<GLuint>(reinterpret_cast<intptr_t>(io.Fonts->TexID));
+    } else {
+        if (iFontAtlas->TexID == nullptr) {
+            // fallback binding if an atlas wasn't explicitly set.
+            unsigned char *pixels;
+            int width, height;
+            io.Fonts->GetTexDataAsAlpha8(&pixels, &width, &height);
 
-	// slightly stupid dance around the texture number due to XPLM not using GLint here.
-	int texNum = 0;
-	XPLMGenerateTextureNumbers(&texNum, 1);
-	mFontTexture = (GLuint) texNum;
+            // slightly stupid dance around the texture number due to XPLM not using GLint here.
+            int texNum = 0;
+            XPLMGenerateTextureNumbers(&texNum, 1);
+            mFontTexture = (GLuint)texNum;
 
-	// upload texture.
-	XPLMBindTexture2d(mFontTexture, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, width, height, 0, GL_ALPHA, GL_UNSIGNED_BYTE, pixels);
-	io.Fonts->TexID = (void *)(intptr_t)(mFontTexture);
+            // upload texture.
+            XPLMBindTexture2d(mFontTexture, 0);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+            glTexImage2D(GL_TEXTURE_2D,
+                         0,
+                         GL_ALPHA,
+                         width,
+                         height,
+                         0,
+                         GL_ALPHA,
+                         GL_UNSIGNED_BYTE,
+                         pixels);
+            io.Fonts->SetTexID((void *)((intptr_t)(mFontTexture)));
+        }
+    }
 
 	// disable OSX-like keyboard behaviours always - we don't have the keymapping for it.
 	io.ConfigMacOSXBehaviors = false;
@@ -127,7 +144,10 @@ ImgWindow::ImgWindow(
 ImgWindow::~ImgWindow()
 {
 	ImGui::SetCurrentContext(mImGuiContext);
-	glDeleteTextures(1, &mFontTexture);
+	if (!mFontAtlas) {
+	    // if we didn't have an explicit font atlas, destroy the texture.
+        glDeleteTextures(1, &mFontTexture);
+    }
 	ImGui::DestroyContext(mImGuiContext);
 	XPLMDestroyWindow(mWindowID);
 }
@@ -239,7 +259,6 @@ ImgWindow::RenderImGui(ImDrawData *draw_data)
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_COLOR_ARRAY);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glBindTexture(GL_TEXTURE_2D, 0);
 	glPopAttrib();
 	glPopClientAttrib();
 }

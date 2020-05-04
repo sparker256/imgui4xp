@@ -145,6 +145,8 @@ protected:
     void SafeDelete();
 
 private:
+    std::shared_ptr<ImgFontAtlas> mFontAtlas;
+
     static void DrawWindowCB(XPLMWindowID inWindowID, void *inRefcon);
 
     static int HandleMouseClickCB(
