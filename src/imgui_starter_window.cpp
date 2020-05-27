@@ -282,7 +282,7 @@ void ImguiWidget::buildInterface() {
 
     if (ImGui::TreeNode("Drawing")) {
         // local cx, cy = imgui.GetCursorScreenPos()
-        static ImVec2 pos = ImGui::GetCursorScreenPos();
+        ImVec2 pos = ImGui::GetCursorScreenPos();
 
         // -- Create a kind of canvas of size 100x100.
         // -- The previous variable remembers the top left
@@ -340,7 +340,7 @@ void ImguiWidget::buildInterface() {
         ImGui::TreePop();
     }
 
-    if (ImGui::TreeNode("Misc")) {
+    if (ImGui::TreeNodeEx("Misc", ImGuiTreeNodeFlags_Selected)) {
         // Create a bullet style enumeration
         ImGui::Bullet(); ImGui::TextUnformatted("Bullet");
         ImGui::Bullet(); ImGui::TextUnformatted("Style");
@@ -360,6 +360,41 @@ void ImguiWidget::buildInterface() {
             ImGui::Button("Button");
             ImGui::PopID();
         }
+
+        ImGui::TreePop();
+    }
+
+    // Let#s play with lists
+    if (ImGui::TreeNodeEx("List", ImGuiTreeNodeFlags_Selected)) {
+
+        static int selItem = 0;
+        ImDrawList* dl = ImGui::GetWindowDrawList();
+        const ImVec2 posListStart = ImGui::GetCursorScreenPos();
+        if (ImGui::ListBoxHeader("A List box", 10, 5))
+        {
+            for (int i = 0; i < 10; ++i) {
+                ImVec2 pos = ImGui::GetCursorScreenPos();
+                if (selItem == i)
+                    ImGui::TextColored(ImVec4(0,0,255,255),"Line: %d", i);
+                else
+                    ImGui::Value("Line", i);
+                if (ImGui::IsItemClicked())
+                    selItem = i;
+                if (pos.y > posListStart.y && ImGui::IsItemVisible())
+                    dl->AddLine(pos, ImVec2(pos.x + ImGui::GetColumnWidth(), pos.y), ImGui::GetColorU32(ImGuiCol_ScrollbarGrab));
+            }
+            ImGui::ListBoxFooter();
+        }
+
+        ImGui::Columns(3);
+        ImGui::Text("hallo");
+        ImGui::NextColumn();
+        ImGui::Text("zwo");
+        ImGui::NextColumn();
+        ImGui::Text("drei");
+        ImGui::NextColumn();
+        ImGui::Text("vier");
+        ImGui::Columns();
 
         ImGui::TreePop();
     }
