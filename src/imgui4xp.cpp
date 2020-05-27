@@ -49,27 +49,25 @@ PLUGIN_API void XPluginDisable(void) {
 }
 
 PLUGIN_API int XPluginEnable(void) {
-	return 1;
+    int left, top, right, bot;
+    XPLMGetScreenBoundsGlobal(&left, &top, &right, &bot);
+
+    int width = 800;
+    int height = 450;
+    int pad = 75;
+    int x = left + pad;
+    int y = top - pad;
+    // WindowDecoration decorate
+    // WindowDecorationNone = 0
+    // WindowDecorationRoundRectangle = 1
+    // WindowDecorationSelfDecorated = 2
+    // WindowDecorationSelfDecoratedResizable = 3
+    int decorate = 1;
+    configureImgWindow();
+    imguiPtr = std::make_shared<ImguiWidget>(x, y, x + width, y - height, decorate);
+
+    return 1;
 }
 
 PLUGIN_API void XPluginReceiveMessage(XPLMPluginID, intptr_t inMessage, void * inParam) {
-    if(inMessage == XPLM_MSG_SCENERY_LOADED)
-    {
-        int left, top, right, bot;
-        XPLMGetScreenBoundsGlobal(&left, &top, &right, &bot);
-
-        int width = 800;
-        int height = 450;
-        int pad = 75;
-        int x = left + pad;
-        int y = top - pad;
-        // WindowDecoration decorate
-        // WindowDecorationNone = 0
-        // WindowDecorationRoundRectangle = 1
-        // WindowDecorationSelfDecorated = 2
-        // WindowDecorationSelfDecoratedResizable = 3
-        int decorate = 1;
-        configureImgWindow();
-        imguiPtr = std::make_shared<ImguiWidget>(x, y, x + width, y - height, decorate);
-    }
 }
