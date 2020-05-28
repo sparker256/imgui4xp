@@ -282,7 +282,7 @@ void ImguiWidget::buildInterface() {
 
     if (ImGui::TreeNode("Drawing")) {
         // local cx, cy = imgui.GetCursorScreenPos()
-        static ImVec2 pos = ImGui::GetCursorScreenPos();
+        ImVec2 pos = ImGui::GetCursorScreenPos();
 
         // -- Create a kind of canvas of size 100x100.
         // -- The previous variable remembers the top left
