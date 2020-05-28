@@ -52,10 +52,10 @@ ImgWindow::ImgWindow(
 	int bottom,
 	XPLMWindowDecoration decoration,
 	XPLMWindowLayer layer) :
+    mFirstRender(true),
+    mFontAtlas(sFontAtlas),
 	mIsInVR(false),
-	mPreferredLayer(layer),
-	mFirstRender(true),
-	mFontAtlas(sFontAtlas)
+	mPreferredLayer(layer)
 {
     ImFontAtlas *iFontAtlas = nullptr;
     if (mFontAtlas) {
@@ -402,12 +402,12 @@ ImgWindow::HandleMouseClickGeneric(int x, int y, XPLMMouseStatus inMouse, int bu
 
 void
 ImgWindow::HandleKeyFuncCB(
-	XPLMWindowID         inWindowID,
+	XPLMWindowID         /*inWindowID*/,
 	char                 inKey,
 	XPLMKeyFlags         inFlags,
 	char                 inVirtualKey,
 	void *               inRefcon,
-	int                  losingFocus)
+	int                  /*losingFocus*/)
 {
 	auto *thisWindow = reinterpret_cast<ImgWindow *>(inRefcon);
 	ImGui::SetCurrentContext(thisWindow->mImGuiContext);
@@ -431,7 +431,7 @@ ImgWindow::HandleKeyFuncCB(
 
 XPLMCursorStatus
 ImgWindow::HandleCursorFuncCB(
-	XPLMWindowID         inWindowID,
+	XPLMWindowID         /*inWindowID*/,
 	int                  x,
 	int                  y,
 	void *               inRefcon)
@@ -448,7 +448,7 @@ ImgWindow::HandleCursorFuncCB(
 
 int
 ImgWindow::HandleMouseWheelFuncCB(
-	XPLMWindowID         inWindowID,
+	XPLMWindowID         /*inWindowID*/,
 	int                  x,
 	int                  y,
 	int                  wheel,
@@ -558,10 +558,10 @@ std::queue<ImgWindow *>  ImgWindow::sPendingDestruction;
 XPLMFlightLoopID         ImgWindow::sSelfDestructHandler = nullptr;
 
 float
-ImgWindow::SelfDestructCallback(float inElapsedSinceLastCall,
-                                float inElapsedTimeSinceLastFlightLoop,
-                                int inCounter,
-                                void *inRefcon)
+ImgWindow::SelfDestructCallback(float /*inElapsedSinceLastCall*/,
+                                float /*inElapsedTimeSinceLastFlightLoop*/,
+                                int   /*inCounter*/,
+                                void* /*inRefcon*/)
 {
     while (!sPendingDestruction.empty()) {
         auto *thisObj = sPendingDestruction.front();
