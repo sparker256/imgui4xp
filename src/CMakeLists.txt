@@ -39,7 +39,7 @@ if (NOT MSVC)
     add_compile_options(-fvisibility=hidden)
 
     # Enable stricter warnings and then disable some we are not interested in.
-    add_compile_options(-Wall -Wpedantic -Wshadow -Wfloat-equal -Wextra)
+    add_compile_options(-Wall -Wpedantic -Wshadow -Wextra)
     add_compile_options(-Wno-unused)
 
     # Always use position-independent code and highest optimization level (FPS!).
@@ -90,7 +90,7 @@ if (APPLE)
 
     target_link_libraries(imgui4xp ${IOKIT_LIBRARY} ${CORE_FOUNDATION_LIBRARY} ${GLUT_LIBRARY})
     target_link_libraries(imgui4xp ${OpenGL_LIBRARY} ${Cocoa_LIBRARY})
-    
+
 endif ()
 
 if (WIN32)
