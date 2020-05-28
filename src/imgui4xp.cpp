@@ -69,5 +69,5 @@ PLUGIN_API int XPluginEnable(void) {
     return 1;
 }
 
-PLUGIN_API void XPluginReceiveMessage(XPLMPluginID, intptr_t inMessage, void * inParam) {
+PLUGIN_API void XPluginReceiveMessage(XPLMPluginID, intptr_t /*inMessage*/, void * /*inParam*/) {
 }
