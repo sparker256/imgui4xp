@@ -120,7 +120,7 @@ void configureImgWindow()
 ImguiWidget::ImguiWidget(int left, int top, int right, int bot, int decoration):
     ImgWindow(left, top, right, bot, decoration)
 {
-    SetWindowTitle("Imgui for X-Plane  by William Good");
+    SetWindowTitle("Imgui v1.74 for X-Plane  by William Good");
     SetVisible(true);
     try2load_image();
 }
@@ -373,6 +373,54 @@ void ImguiWidget::buildInterface() {
 
         ImGui::TreePop();
     }
+
+    // Let#s play with lists
+    if (ImGui::TreeNode("List")) {
+
+        static int selItem = 0;
+        ImDrawList* dl = ImGui::GetWindowDrawList();
+        const ImVec2 posListStart = ImGui::GetCursorScreenPos();
+        if (ImGui::ListBoxHeader("A List box", 10, 5))
+        {
+            for (int i = 0; i < 10; ++i) {
+                ImVec2 pos = ImGui::GetCursorScreenPos();
+                if (selItem == i)
+                    ImGui::TextColored(ImVec4(0,192,255,255),"Line: %d", i);
+                else
+                    ImGui::Value("Line", i);
+                if (ImGui::IsItemClicked())
+                    selItem = i;
+                if (pos.y > posListStart.y && ImGui::IsItemVisible())
+                    dl->AddLine(pos, ImVec2(pos.x + ImGui::GetColumnWidth(), pos.y), ImGui::GetColorU32(ImGuiCol_ScrollbarGrab));
+            }
+            ImGui::ListBoxFooter();
+        }
+        ImGui::TreePop();
+    }
+
+    // Let#s play with Columns
+    if (ImGui::TreeNode("Columns")) {
+        ImGui::Columns(3);
+        ImGui::Text("first");
+        ImGui::NextColumn();
+        ImGui::Text("second");
+        ImGui::NextColumn();
+        ImGui::Text("third");
+        ImGui::NextColumn();
+        ImGui::Text("first2");
+        ImGui::NextColumn();
+        ImGui::Text("second2");
+        ImGui::NextColumn();
+        ImGui::Text("third2");
+        ImGui::NextColumn();
+        ImGui::Text("first3");
+
+        ImGui::Columns();
+
+        ImGui::TreePop();
+
+    }
+
 
     if (ImGui::TreeNode("Fonts")) {
 
