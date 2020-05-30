@@ -28,20 +28,23 @@ add_definitions(-DXPLM200=1 -DXPLM210=1 -DXPLM300=1 -DXPLM301=1)
 # Define platform macros.
 add_definitions(-DAPL=$<BOOL:${APPLE}> -DIBM=$<BOOL:${WIN32}> -DLIN=$<AND:$<BOOL:${UNIX}>,$<NOT:$<BOOL:${APPLE}>>>)
 
-# Force-enable exception support. This is most likely redundant, although for C
-# code the default is the opposite. Since we are mixing C++ and C libraries,
-# safer to set it on?
-add_compile_options(-fexceptions)
-# On UNIX systems this makes symbols non-exported by default. On Windows this
-# option is simply ignored, since symbol visibility works differently there.
-add_compile_options(-fvisibility=hidden)
+# Visual Studio defines compiler switches via CMakeSettings.json
+if (NOT MSVC)
+    # Force-enable exception support. This is most likely redundant, although for C
+    # code the default is the opposite. Since we are mixing C++ and C libraries,
+    # safer to set it on?
+    add_compile_options(-fexceptions)
+    # On UNIX systems this makes symbols non-exported by default. On Windows this
+    # option is simply ignored, since symbol visibility works differently there.
+    add_compile_options(-fvisibility=hidden)
 
-# Enable stricter warnings and then disable some we are not interested in.
-add_compile_options(-Wall -Wpedantic -Wshadow -Wfloat-equal -Wextra)
-add_compile_options(-Wno-unused)
+    # Enable stricter warnings and then disable some we are not interested in.
+    add_compile_options(-Wall -Wpedantic -Wshadow -Wextra)
+    add_compile_options(-Wno-unused)
 
-# Always use position-independent code and highest optimization level (FPS!).
-add_compile_options(-O3 -fPIC)
+    # Always use position-independent code and highest optimization level (FPS!).
+    add_compile_options(-O3 -fPIC)
+endif ()
 
 # X-Plane plugin
 # FIXME: Split this into individual targets.
@@ -66,8 +69,9 @@ find_library(GLUT_LIBRARY NAMES glut GLUT glut64)  # apt install freeglut3-dev
 if (WIN32 OR APPLE)
 # if (WIN32)
     find_library(XPLM_LIBRARY NAMES XPLM XPLM_64.lib)
-    find_library(XPWIDGETS_LIBRARY NAMES XPWidgets XPWidgets_64.lib)
-    target_link_libraries(imgui4xp ${XPLM_LIBRARY} ${XPWIDGETS_LIBRARY})
+    target_link_libraries(imgui4xp ${XPLM_LIBRARY})
+#    find_library(XPWIDGETS_LIBRARY NAMES XPWidgets XPWidgets_64.lib)
+#    target_link_libraries(imgui4xp ${XPLM_LIBRARY} ${XPWIDGETS_LIBRARY})
 endif ()
 
 # Link library for dynamic loading of shared objects on UNIX systems.
@@ -86,15 +90,20 @@ if (APPLE)
 
     target_link_libraries(imgui4xp ${IOKIT_LIBRARY} ${CORE_FOUNDATION_LIBRARY} ${GLUT_LIBRARY})
     target_link_libraries(imgui4xp ${OpenGL_LIBRARY} ${Cocoa_LIBRARY})
-    
+
 endif ()
 
 if (WIN32)
     # Unlike OS X and Linux we build standard libraries statically since X-Plane does not provide them.
-    target_link_libraries(imgui4xp -static-libgcc -static-libstdc++ opengl32)
-    # MSYS2 for some reason always links against winpthread, so we have to work around it by statically linking the
-    # entire plugin. This allows building the plugin nativaly on Windows.
-    target_link_libraries(imgui4xp -static)
+    if (MSVC)
+        # Visual Studio includes many standard libraries already, just need to make sure OpenGL is linked
+        target_link_libraries(imgui4xp opengl32)
+    else ()
+        target_link_libraries(imgui4xp -static-libgcc -static-libstdc++ opengl32)
+        # MSYS2 for some reason always links against winpthread, so we have to work around it by statically linking the
+        # entire plugin. This allows building the plugin nativaly on Windows.
+        target_link_libraries(imgui4xp -static)
+    endif ()
 elseif (APPLE)
     # Restrict set of symbols exported from the plugin. This reduces changes of
     # conflict with other plugins, in particular ones with Lua interpreter

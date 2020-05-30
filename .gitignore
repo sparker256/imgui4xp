@@ -1,32 +1,22 @@
-# Prerequisites
-*.d
+.DS_Store
+.localized
+.image
+.vs/
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
+# Build directories
+out/
+build/
+build-lin/
+build-win/
+build-mac/
 
-# Precompiled Headers
-*.gch
-*.pch
+# Generated documentation
+docs/html/
 
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
+# XCode user specific files
+xcuserdata/
+*.xcworkspace/
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.pbxuser
