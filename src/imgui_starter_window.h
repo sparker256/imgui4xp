@@ -28,7 +28,7 @@ extern void configureImgWindow();
 
 class ImguiWidget: public ImgWindow {
 public:
-    ImguiWidget(int left, int top, int right, int bot, int decoration);
+    ImguiWidget(int left, int top, int right, int bot, XPLMWindowDecoration decoration);
 protected:
     void buildInterface() override;
 private:

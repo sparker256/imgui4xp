@@ -131,6 +131,16 @@ void ImguiWidget::buildInterface() {
     win_height = ImGui::GetWindowHeight();
 
     ImGui::TextUnformatted("Hello, World!");
+    
+    // Button with fixed width 30 and standard height
+    // to pop out the window in an OS window
+    if (!IsPoppedOut()) {
+        // Same line, but right-alinged
+        static float btnWidth = ImGui::CalcTextSize("Pop out").x + 5;
+        ImGui::SameLine(ImGui::GetWindowContentRegionWidth()-btnWidth);
+        if (ImGui::Button("Pop out", ImVec2(btnWidth,0)))
+            SetWindowPositioningMode(xplm_WindowPopOut);
+    }
 
     ImGui::Text("Window size: width = %f  height = %f", win_width, win_height);
 
