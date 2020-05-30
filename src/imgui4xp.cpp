@@ -9,7 +9,7 @@
  *
  */
 
-#define VERSION_NUMBER "1.03 build " __DATE__ " " __TIME__
+#define VERSION_NUMBER "1.04 build " __DATE__ " " __TIME__
 
 
 #include "XPLMDisplay.h"    // for window creation and manipulation
@@ -25,9 +25,34 @@
 #include "imgui_starter_window.h"
 #include <cstring>
 
-int vr_is_enabled = 0;
+/// Our "standard" window size
+constexpr int WIN_WIDTH     = 800;      ///< window width
+constexpr int WIN_HEIGHT    = 450;      ///< window height
+constexpr int WIN_PAD       =  75;      ///< distance from left and top border
 
-std::shared_ptr<ImguiWidget> imguiPtr;
+// --- Global Variables ---
+
+// Is VR enabled?
+bool vr_is_enabled = false;
+
+// Pointer to the ImGui window we are going to create
+ImguiWidget* imguiPtr = nullptr;
+
+
+
+/// Calculate window's standard coordinates
+void CalcWinCoords (int& left, int& top, int& right, int& bottom)
+{
+    // Screen coordinates
+    int screenLeft, screenTop;
+    XPLMGetScreenBoundsGlobal(&screenLeft, &screenTop, nullptr, nullptr);
+
+    // Coordinates of our window
+    left    = screenLeft    + WIN_PAD;
+    right   = left          + WIN_WIDTH;
+    top     = screenTop     - WIN_PAD;
+    bottom  = top           - WIN_HEIGHT;
+}
 
 /// Callback function for menu
 void CBMenu (void* /*inMenuRef*/, void* inItemRef)
@@ -35,8 +60,13 @@ void CBMenu (void* /*inMenuRef*/, void* inItemRef)
     // Show window?
     if (inItemRef == (void*)1)
     {
-        if (imguiPtr)
+        if (imguiPtr) {
             imguiPtr->SetVisible(true);
+            // Reset the size to standard, makes sure it will show in a defined way
+            int left, top, right, bottom;
+            CalcWinCoords(left, top, right, bottom);
+            imguiPtr->SetWindowGeometry(left, top, right, bottom);
+        }
     }
 }
 
@@ -67,26 +97,21 @@ PLUGIN_API void XPluginDisable(void) {
     // (Can't use ImgWindow::SafeDelete here as that would wait for a
     //  flight loop callback, which won't be delivered any longer.
     //  Delete should be safe here as no rendering is taking place and will no longer.)
-    imguiPtr.reset();
+    if (imguiPtr)
+        delete imguiPtr;
+    imguiPtr = nullptr;
 }
 
 PLUGIN_API int XPluginEnable(void) {
-    int left, top, right, bot;
-    XPLMGetScreenBoundsGlobal(&left, &top, &right, &bot);
-
-    int width = 800;
-    int height = 450;
-    int pad = 75;
-    int x = left + pad;
-    int y = top - pad;
-    // WindowDecoration decorate
-    // WindowDecorationNone = 0
-    // WindowDecorationRoundRectangle = 1
-    // WindowDecorationSelfDecorated = 2
-    // WindowDecorationSelfDecoratedResizable = 3
-    int decorate = 1;
+    // Some general ImGui setup
     configureImgWindow();
-    imguiPtr = std::make_shared<ImguiWidget>(x, y, x + width, y - height, decorate);
+    
+    // Create our window with standard coordinates
+    if (!imguiPtr) {
+        int left, top, right, bottom;
+        CalcWinCoords(left, top, right, bottom);
+        imguiPtr = new ImguiWidget(left, top, right, bottom, xplm_WindowDecorationRoundRectangle);
+    }
 
     return 1;
 }
@@ -96,13 +121,22 @@ PLUGIN_API void XPluginReceiveMessage(XPLMPluginID, int inMessage, void * /*inPa
     switch (inMessage) {
         // Move the window in or out of VR when VR mode changes
         case XPLM_MSG_ENTERED_VR:
+            vr_is_enabled = true;
+            // We don't move popped out windows into VR because we think
+            // the user didn't want it inside the sim
+            if (imguiPtr &&
+                !imguiPtr->IsPoppedOut())
+                imguiPtr->SetWindowPositioningMode(xplm_WindowVR);
+            break;
+            
         case XPLM_MSG_EXITING_VR:
-            vr_is_enabled = inMessage == XPLM_MSG_ENTERED_VR;
-            if (imguiPtr)
-                // ImguiWindow::moveForVR is what we need, but it is protected.
-                // SetVisible in turn calls ImguiWindow::moveForVr,
-                // even if the visibility status doesn't change
-                imguiPtr->SetVisible(imguiPtr->GetVisible());
+            vr_is_enabled = false;
+            // If we don't move popped out windows then we need to make
+            // sure that we only move VR windows back into the sim,
+            // so that a popped out window stays popped out
+            if (imguiPtr &&
+                imguiPtr->IsInVR())
+                imguiPtr->SetWindowPositioningMode(xplm_WindowPositionFree);
             break;
     }
 }

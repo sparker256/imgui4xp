@@ -120,7 +120,7 @@ void configureImgWindow()
 ImguiWidget::ImguiWidget(int left, int top, int right, int bot, int decoration):
     ImgWindow(left, top, right, bot, decoration)
 {
-    SetWindowTitle("Imgui for X-Plane  by William Good");
+    SetWindowTitle("Imgui v1.74 for X-Plane  by William Good");
     SetVisible(true);
     try2load_image();
 }
@@ -131,6 +131,16 @@ void ImguiWidget::buildInterface() {
     win_height = ImGui::GetWindowHeight();
 
     ImGui::TextUnformatted("Hello, World!");
+    
+    // Button with fixed width 30 and standard height
+    // to pop out the window in an OS window
+    if (!IsPoppedOut()) {
+        // Same line, but right-alinged
+        static float btnWidth = ImGui::CalcTextSize("Pop out").x + 5;
+        ImGui::SameLine(ImGui::GetWindowContentRegionWidth()-btnWidth);
+        if (ImGui::Button("Pop out", ImVec2(btnWidth,0)))
+            SetWindowPositioningMode(xplm_WindowPopOut);
+    }
 
     ImGui::Text("Window size: width = %f  height = %f", win_width, win_height);
 
@@ -365,7 +375,7 @@ void ImguiWidget::buildInterface() {
     }
 
     // Let#s play with lists
-    if (ImGui::TreeNodeEx("List", ImGuiTreeNodeFlags_Selected)) {
+    if (ImGui::TreeNode("List")) {
 
         static int selItem = 0;
         ImDrawList* dl = ImGui::GetWindowDrawList();
@@ -375,7 +385,7 @@ void ImguiWidget::buildInterface() {
             for (int i = 0; i < 10; ++i) {
                 ImVec2 pos = ImGui::GetCursorScreenPos();
                 if (selItem == i)
-                    ImGui::TextColored(ImVec4(0,0,255,255),"Line: %d", i);
+                    ImGui::TextColored(ImVec4(0,192,255,255),"Line: %d", i);
                 else
                     ImGui::Value("Line", i);
                 if (ImGui::IsItemClicked())
@@ -385,19 +395,32 @@ void ImguiWidget::buildInterface() {
             }
             ImGui::ListBoxFooter();
         }
+        ImGui::TreePop();
+    }
 
+    // Let#s play with Columns
+    if (ImGui::TreeNode("Columns")) {
         ImGui::Columns(3);
-        ImGui::Text("hallo");
+        ImGui::Text("first");
         ImGui::NextColumn();
-        ImGui::Text("zwo");
+        ImGui::Text("second");
         ImGui::NextColumn();
-        ImGui::Text("drei");
+        ImGui::Text("third");
         ImGui::NextColumn();
-        ImGui::Text("vier");
+        ImGui::Text("first2");
+        ImGui::NextColumn();
+        ImGui::Text("second2");
+        ImGui::NextColumn();
+        ImGui::Text("third2");
+        ImGui::NextColumn();
+        ImGui::Text("first3");
+
         ImGui::Columns();
 
         ImGui::TreePop();
+
     }
+
 
     if (ImGui::TreeNode("Fonts")) {
 

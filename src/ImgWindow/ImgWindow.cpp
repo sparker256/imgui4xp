@@ -54,7 +54,6 @@ ImgWindow::ImgWindow(
 	XPLMWindowLayer layer) :
     mFirstRender(true),
     mFontAtlas(sFontAtlas),
-	mIsInVR(false),
 	mPreferredLayer(layer)
 {
     ImFontAtlas *iFontAtlas = nullptr;
@@ -334,7 +333,7 @@ ImgWindow::updateImgui()
 	ImGui::SetNextWindowSize(ImVec2(win_width, win_height), ImGuiCond_Always);
 
 	// and construct the window
-	ImGui::Begin(mWindowTitle.c_str(), nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+	ImGui::Begin(mWindowTitle.c_str(), nullptr, beforeBegin() | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
 	buildInterface();
 	ImGui::End();
 
@@ -464,10 +463,10 @@ ImgWindow::HandleMouseWheelFuncCB(
 	io.MousePos = ImVec2(outX, outY);
 	switch (wheel) {
 	case 0:
-		io.MouseWheel = static_cast<float>(clicks);
+		io.MouseWheel += static_cast<float>(clicks);
 		break;
 	case 1:
-		io.MouseWheelH = static_cast<float>(clicks);
+		io.MouseWheelH += static_cast<float>(clicks);
 		break;
 	default:
 		// unknown wheel
@@ -516,11 +515,9 @@ ImgWindow::moveForVR()
 	// - if we're VR enabled, explicitly move the window to the VR world.
 	if (XPLMGetDatai(gVrEnabledRef)) {
 			XPLMSetWindowPositioningMode(mWindowID, xplm_WindowVR, 0);
-			mIsInVR = true;
 		} else {
-			if (mIsInVR) {
+			if (IsInVR()) {
 				XPLMSetWindowPositioningMode(mWindowID, mPreferredLayer, -1);
-				mIsInVR = false;
 			}
 		}
 }
