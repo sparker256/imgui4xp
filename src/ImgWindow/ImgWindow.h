@@ -84,6 +84,30 @@ public:
     static std::shared_ptr<ImgFontAtlas> sFontAtlas;
 
     virtual ~ImgWindow();
+    
+    /** Gets the current window geometry */
+    void GetWindowGeometry (int& left, int& top, int& right, int& bottom) const
+    { XPLMGetWindowGeometry(mWindowID, &left, &top, &right, &bottom); }
+    
+    /** Sets the current window geometry */
+    void SetWindowGeometry (int left, int top, int right, int bottom)
+    { XPLMSetWindowGeometry(mWindowID, left, top, right, bottom); }
+
+    /** Gets the current window geometry of a popped out window */
+    void GetWindowGeometryOS (int& left, int& top, int& right, int& bottom) const
+    { XPLMGetWindowGeometryOS(mWindowID, &left, &top, &right, &bottom); }
+    
+    /** Sets the current window geometry of a popped out window */
+    void SetWindowGeometryOS (int left, int top, int right, int bottom)
+    { XPLMSetWindowGeometryOS(mWindowID, left, top, right, bottom); }
+
+    /** Gets the current window size of window in VR */
+    void GetWindowGeometryVR (int& width, int& height) const
+    { XPLMGetWindowGeometryVR(mWindowID, &width, &height); }
+    
+    /** Sets the current window size of window in VR */
+    void SetWindowGeometryVR (int width, int height)
+    { XPLMSetWindowGeometryVR(mWindowID, width, height); }
 
     /** SetVisible() makes the window visible after making the onShow() call.
      * It is also at this time that the window will be relocated onto the VR
@@ -98,7 +122,25 @@ public:
      * @return true if the window is visible, false otherwise.
     */
     bool GetVisible() const;
+    
+    /** Is Window popped out */
+    bool IsPoppedOut () const { return XPLMWindowIsPoppedOut(mWindowID) != 0; }
 
+    /** Is Window in VR? */
+    bool IsInVR () const { return XPLMWindowIsInVR(mWindowID) != 0; }
+    
+    /** Set the positioning mode
+     * @see https://developer.x-plane.com/sdk/XPLMDisplay/#XPLMWindowPositioningMode */
+    void SetWindowPositioningMode (XPLMWindowPositioningMode inPosMode,
+                                   int                       inMonitorIdx = -1)
+    { XPLMSetWindowPositioningMode (mWindowID, inPosMode, inMonitorIdx); }
+    
+    /** Bring window to front of Z-order */
+    void BringWindowToFront () { XPLMBringWindowToFront(mWindowID); }
+    
+    /** Is Window in front of Z-order? */
+    bool IsWindowInFront () const { return XPLMIsWindowInFront(mWindowID) != 0; }
+    
 protected:
     /** mFirstRender can be checked during buildInterface() to see if we're
      * being rendered for the first time or not.  This is particularly
@@ -146,6 +188,12 @@ protected:
      * preferred layer or the VR layer depending on if the headset is in use.
      */
     void moveForVR();
+    
+    /** A hook called before imgui::begin in case you want to set up something
+     * before interface building begins
+     * @return addition flags to be passed to the imgui::begin() call,
+     *         like for example ImGuiWindowFlags_MenuBar */
+    virtual ImGuiWindowFlags_ beforeBegin() { return ImGuiWindowFlags_None; }
 
     /** buildInterface() is the method where you can define your ImGui interface
      * and handle events.  It is called every frame the window is drawn.
@@ -170,6 +218,9 @@ protected:
      *     self-delete once it's finished rendering this frame.
      */
     void SafeDelete();
+    
+    /** Returns X-Plane's internal Window id */
+    XPLMWindowID GetWindowId () const { return mWindowID; }
 
 private:
     std::shared_ptr<ImgFontAtlas> mFontAtlas;
@@ -240,7 +291,6 @@ private:
     XPLMWindowID mWindowID;
     ImGuiContext *mImGuiContext;
     GLuint mFontTexture;
-    bool mIsInVR;
 
     int mTop;
     int mBottom;
