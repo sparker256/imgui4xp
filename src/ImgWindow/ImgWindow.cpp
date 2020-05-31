@@ -363,6 +363,9 @@ ImgWindow::DrawWindowCB(XPLMWindowID /* inWindowID */, void *inRefcon)
 	ImGui::Render();
 
 	thisWindow->RenderImGui(ImGui::GetDrawData());
+    
+    // Give subclasses a chance to do something after all rendering
+    thisWindow->afterRendering();
 }
 
 int
