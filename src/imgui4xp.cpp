@@ -11,19 +11,8 @@
 
 #define VERSION_NUMBER "1.04 build " __DATE__ " " __TIME__
 
-
-#include "XPLMDisplay.h"    // for window creation and manipulation
-#include "XPLMGraphics.h"   // for window drawing
-#include "XPLMDataAccess.h" // for the VR dataref
-#include "XPLMPlugin.h"     // for XPLM_MSG_SCENERY_LOADED message
-#include "XPLMUtilities.h"
-#include "XPLMMenus.h"
-#include "../src/ImgWindow/ImgWindow.h"
-#include "../src/ImgWindow/ImgFontAtlas.h"
-
+// All our headers combined
 #include "imgui4xp.h"
-#include "imgui_starter_window.h"
-#include <cstring>
 
 /// Our "standard" window size
 constexpr int WIN_WIDTH     = 800;      ///< window width
