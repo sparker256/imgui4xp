@@ -189,7 +189,7 @@ protected:
      */
     void moveForVR();
     
-    /** A hook called before imgui::begin in case you want to set up something
+    /** A hook called right before ImGui::Begin in case you want to set up something
      * before interface building begins
      * @return addition flags to be passed to the imgui::begin() call,
      *         like for example ImGuiWindowFlags_MenuBar */
@@ -202,6 +202,11 @@ protected:
      *     use SafeDelete() for that.
      */
     virtual void buildInterface() = 0;
+
+    /** A hook called after all rendering is done, right before the
+     * X-Plane window draw call back returns
+     * in case you want to do something that otherwise would conflict with rendering. */
+    virtual void afterRendering() {}
 
     /** onShow() is called before making the Window visible.  It provides an
      * opportunity to prevent the window being shown.
