@@ -136,7 +136,13 @@ PLUGIN_API void XPluginReceiveMessage(XPLMPluginID, int inMessage, void * /*inPa
             // so that a popped out window stays popped out
             if (imguiPtr &&
                 imguiPtr->IsInVR())
+            {
                 imguiPtr->SetWindowPositioningMode(xplm_WindowPositionFree);
+                // Geometry gets lost when moving into VR, so we need to re-position the window now
+                int left, top, right, bottom;
+                CalcWinCoords(left, top, right, bottom);
+                imguiPtr->SetWindowGeometry(left, top, right, bottom);
+            }
             break;
     }
 }
