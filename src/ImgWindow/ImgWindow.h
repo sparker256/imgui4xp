@@ -36,13 +36,12 @@
 #define IMGWINDOW_H
 
 #include "SystemGL.h"
-#include "XOGLUtils.h"
 
 #include <string>
 #include <memory>
 
 #include <XPLMDisplay.h>
-#include <XPCProcessing.h>
+#include <XPLMProcessing.h>
 #include <imgui.h>
 #include <queue>
 
