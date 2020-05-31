@@ -8,15 +8,9 @@
  *
  *
  */
-#include "imgui_starter_window.h"
 
-// Standard C/C++ header
-#include <string>
-
-// X-Plane SDK header
-#include "XPLMDisplay.h"
-#include <XPLMGraphics.h>
-#include <XPLMUtilities.h>
+// All our headers combined
+#include "imgui4xp.h"
 
 // Image processing (for reading "imgui_demo.jpg"
 #define STB_IMAGE_IMPLEMENTATION
