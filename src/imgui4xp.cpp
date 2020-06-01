@@ -74,6 +74,9 @@ PLUGIN_API int XPluginStart(char * outName, char * outSig, char * outDesc) {
     int my_slot = XPLMAppendMenuItem(XPLMFindPluginsMenu(), "imgui4xp", NULL, 0);
     XPLMMenuID hMenu = XPLMCreateMenu("imgui4xp", XPLMFindPluginsMenu(), my_slot, CBMenu, NULL);
     XPLMAppendMenuItem(hMenu, "Show Window", (void*)1, 0);
+    
+    // Initialize random number generator
+    std::srand((unsigned)std::time(nullptr));
 
 	return 1;
 }
