@@ -200,6 +200,15 @@ ImguiWidget::ImguiWidget(int left, int top, int right, int bot,
     // Disable reading/writing of "imgui.ini"
     ImGuiIO& io = ImGui::GetIO();
     io.IniFilename = nullptr;
+
+    // Create a flight loop id, but don't schedule it yet
+    XPLMCreateFlightLoop_t flDef = {
+        sizeof(flDef),                              // structSize
+        xplm_FlightLoop_Phase_BeforeFlightModel,    // phase
+        cbFlightLoop,                               // callbackFunc
+        (void*)this,                                // refcon
+    };
+    flId = XPLMCreateFlightLoop(&flDef);
     
     // Define our own window title
     SetWindowTitle("Imgui v" IMGUI_VERSION " for X-Plane  by William Good");
@@ -218,7 +227,13 @@ ImguiWidget::ImguiWidget(int left, int top, int right, int bot,
     // copy initial table example data, init with random heading
     tableList = TABLE_CONTENT;
     for (tableDataTy& td: tableList)
-        td.heading = float(std::rand() % 3600) / 10.0;
+        td.heading = float(std::rand() % 3600) / 10.0f;
+}
+
+ImguiWidget::~ImguiWidget()
+{
+    if (flId)
+        XPLMDestroyFlightLoop(flId);
 }
 
 void ImguiWidget::buildInterface() {
@@ -247,6 +262,10 @@ void ImguiWidget::buildInterface() {
             if (ImGui::Button("Pop out", ImVec2(btnWidth,0)))
                 nextWinPosMode = xplm_WindowPopOut;
         }
+
+        // Window mode should be set outside drawing calls to avoid crashes
+        if (nextWinPosMode >= 0)
+            XPLMScheduleFlightLoop(flId, -1.0, 1);
     }
 
     // Grouping a few lines...
@@ -752,25 +771,30 @@ void ImguiWidget::buildInterface() {
     }
 }
 
-// After all rendering we can change things like window mode
-void ImguiWidget::afterRendering()
+// Outside all rendering we can change things like window mode
+float ImguiWidget::cbFlightLoop(float, float, int, void* inRefcon)
 {
+    // refcon is pointer to ImguiWidget
+    ImguiWidget& wnd = *reinterpret_cast<ImguiWidget*>(inRefcon);
+
     // Has user requested a change in window mode?
-    if (nextWinPosMode >= 0) {
-        SetWindowPositioningMode(nextWinPosMode);
+    if (wnd.nextWinPosMode >= 0) {
+        wnd.SetWindowPositioningMode(wnd.nextWinPosMode);
         // If we pop in, then we need to explicitely set a position for the window to appear
-        if (nextWinPosMode == xplm_WindowPositionFree) {
+        if (wnd.nextWinPosMode == xplm_WindowPositionFree) {
             int left, top, right, bottom;
-            GetCurrentWindowGeometry(left, top, right, bottom);
+            wnd.GetCurrentWindowGeometry(left, top, right, bottom);
             // Normalize to our starting position (WIN_PAD|WIN_PAD), but keep size unchanged
             const int width  = right-left;
             const int height = top-bottom;
             CalcWinCoords(left, top, right, bottom);
             right  = left + width;
             bottom = top - height;
-            SetWindowGeometry(left, top, right, bottom);
+            wnd.SetWindowGeometry(left, top, right, bottom);
         }
-        nextWinPosMode = -1;
+        wnd.nextWinPosMode = -1;
     }
     
+    // don't call me again
+    return 0.0f;
 }

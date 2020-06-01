@@ -27,6 +27,8 @@ protected:
     const int       myWinNum;
     // Note to myself that a change of window mode is requested
     XPLMWindowPositioningMode nextWinPosMode = -1;
+    // Our flight loop callback in case we need one
+    XPLMFlightLoopID flId = nullptr;
     // Values in node "Buttons" / "Checkboxes"
     bool makeRed = false;
     int         radioChoice = 1;
@@ -67,13 +69,17 @@ public:
     ImguiWidget(int left, int top, int right, int bot,
                 XPLMWindowDecoration decoration = xplm_WindowDecorationRoundRectangle,
                 XPLMWindowLayer layer = xplm_WindowLayerFloatingWindows);
+    ~ImguiWidget() override;
 protected:
     // Main function: creates the window's UI
     void buildInterface() override;
-    // After all rendering we can change things like window mode
-    void afterRendering() override;
-private:
 
+    // flight loop callback for stuff we cannot do during drawing callback
+    static float cbFlightLoop(
+        float                inElapsedSinceLastCall,
+        float                inElapsedTimeSinceLastFlightLoop,
+        int                  inCounter,
+        void*                inRefcon);
 };
 
 //
