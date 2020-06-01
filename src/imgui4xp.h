@@ -24,6 +24,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <string>
+#include <algorithm>
 
 // X-Plane SDK header
 #include "XPLMDisplay.h"

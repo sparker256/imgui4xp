@@ -584,38 +584,38 @@ void ImguiWidget::buildInterface() {
                                    "%03.0f", td.heading);
                 // Checkbox
                 ImGui::TableNextCell();
-                ImGui::PushID_formatted("Left_%p", &td); // action widget require a unique id per table row (otherwise only the first line's widget work)
+                ImGui::PushID_formatted("Left_%p", (void*)&td); // action widget require a unique id per table row (otherwise only the first line's widget work)
                 ImGui::Checkbox("", &td.turnsLeft);
                 ImGui::PopID();
                 
                 // Actions: A few buttons
                 ImGui::TableNextCell();
 
-                ImGui::PushID_formatted("N_%p", &td);   // North
+                ImGui::PushID_formatted("N_%p", (void*)&td);   // North
                 if (ImGui::ArrowButton("", ImGuiDir_Up))
                     td.heading = 0.0f;
                 ImGui::PopID();
 
                 ImGui::SameLine();
-                ImGui::PushID_formatted("E_%p", &td);   // East
+                ImGui::PushID_formatted("E_%p", (void*)&td);   // East
                 if (ImGui::ArrowButton("", ImGuiDir_Right))
                     td.heading = 90.0f;
                 ImGui::PopID();
 
                 ImGui::SameLine();
-                ImGui::PushID_formatted("S_%p", &td);   // South
+                ImGui::PushID_formatted("S_%p", (void*)&td);   // South
                 if (ImGui::ArrowButton("", ImGuiDir_Down))
                     td.heading = 180.0f;
                 ImGui::PopID();
 
                 ImGui::SameLine();
-                ImGui::PushID_formatted("W_%p", &td);   // West
+                ImGui::PushID_formatted("W_%p", (void*)&td);   // West
                 if (ImGui::ArrowButton("", ImGuiDir_Left))
                     td.heading = 270.0f;
                 ImGui::PopID();
 
                 ImGui::SameLine();
-                ImGui::PushID_formatted("Del_%p", &td);
+                ImGui::PushID_formatted("Del_%p", (void*)&td);
                 if (ImGui::SmallButton("Del"))
                     // remember the row to delete, but don't delete right now
                     delIter = iter;
