@@ -230,12 +230,23 @@ void ImguiWidget::buildInterface() {
     
     // Button with fixed width 30 and standard height
     // to pop out the window in an OS window
-    if (!IsPoppedOut()) {
-        // Same line, but right-alinged
-        static float btnWidth = ImGui::CalcTextSize("Pop out").x + 5;
-        ImGui::SameLine(ImGui::GetWindowContentRegionWidth()-btnWidth);
-        if (ImGui::Button("Pop out", ImVec2(btnWidth,0)))
-            SetWindowPositioningMode(xplm_WindowPopOut);
+    static float btnWidth = ImGui::CalcTextSize("Pop out").x + 5;
+    const bool bBtnPopOut = !IsPoppedOut();
+    const bool bBtnPopIn  = IsPoppedOut() || IsInVR();
+    const int numBtn = bBtnPopOut + bBtnPopIn;
+    if (numBtn > 0) {
+        if (bBtnPopIn) {
+            // Same line, but right-alinged
+            ImGui::SameLine(ImGui::GetWindowContentRegionWidth() - (numBtn * btnWidth));
+            if (ImGui::Button("Pop in", ImVec2(btnWidth,0)))
+                nextWinPosMode = xplm_WindowPositionFree;
+        }
+        if (bBtnPopOut) {
+            // Same line, but right-alinged
+            ImGui::SameLine(ImGui::GetWindowContentRegionWidth() - btnWidth);
+            if (ImGui::Button("Pop out", ImVec2(btnWidth,0)))
+                nextWinPosMode = xplm_WindowPopOut;
+        }
     }
 
     // Grouping a few lines...
@@ -739,4 +750,27 @@ void ImguiWidget::buildInterface() {
         ImGui::TreePop();
 
     }
+}
+
+// After all rendering we can change things like window mode
+void ImguiWidget::afterRendering()
+{
+    // Has user requested a change in window mode?
+    if (nextWinPosMode >= 0) {
+        SetWindowPositioningMode(nextWinPosMode);
+        // If we pop in, then we need to explicitely set a position for the window to appear
+        if (nextWinPosMode == xplm_WindowPositionFree) {
+            int left, top, right, bottom;
+            GetCurrentWindowGeometry(left, top, right, bottom);
+            // Normalize to our starting position (WIN_PAD|WIN_PAD), but keep size unchanged
+            const int width  = right-left;
+            const int height = top-bottom;
+            CalcWinCoords(left, top, right, bottom);
+            right  = left + width;
+            bottom = top - height;
+            SetWindowGeometry(left, top, right, bottom);
+        }
+        nextWinPosMode = -1;
+    }
+    
 }

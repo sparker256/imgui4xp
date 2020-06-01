@@ -177,6 +177,19 @@ ImgWindow::~ImgWindow()
 }
 
 void
+ImgWindow::GetCurrentWindowGeometry (int& left, int& top, int& right, int& bottom) const
+{
+    if (IsPoppedOut())
+        GetWindowGeometryOS(left, top, right, bottom);
+    else if (IsInVR()) {
+        left = bottom = 0;
+        GetWindowGeometryVR(right, top);
+    } else {
+        GetWindowGeometry(left, top, right, bottom);
+    }
+}
+
+void
 ImgWindow::updateMatrices()
 {
 	// Get the current modelview matrix, viewport, and projection matrix from X-Plane

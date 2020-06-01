@@ -25,6 +25,8 @@ protected:
     static int      num_win;
     // I am window number...
     const int       myWinNum;
+    // Note to myself that a change of window mode is requested
+    XPLMWindowPositioningMode nextWinPosMode = -1;
     // Values in node "Buttons" / "Checkboxes"
     bool makeRed = false;
     int         radioChoice = 1;
@@ -66,7 +68,10 @@ public:
                 XPLMWindowDecoration decoration = xplm_WindowDecorationRoundRectangle,
                 XPLMWindowLayer layer = xplm_WindowLayerFloatingWindows);
 protected:
+    // Main function: creates the window's UI
     void buildInterface() override;
+    // After all rendering we can change things like window mode
+    void afterRendering() override;
 private:
 
 };
