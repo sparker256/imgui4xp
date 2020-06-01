@@ -21,9 +21,28 @@ protected:
     // texture number and size of the image we want to show
     static int      image_id;
     static ImVec2   image_size;
-    // These are the values read/written from the UI
-    int choice = 1;
+    // Counter for the number of windows opened
+    static int      num_win;
+    // I am window number...
+    const int       myWinNum;
+    // Values in node "Buttons" / "Checkboxes"
     bool makeRed = false;
+    int         radioChoice = 1;
+    // Values in node "Sliders"
+    float       sliderVal1  = 250.0f;
+    float       sliderVal2  = 0.0f;
+    int         sliderVal3  = 50;
+    float       sliderAngle = 0.0f;
+    // Values in node "ComboBox"
+    int         choice1     = 1;
+    int         choice2     = 1;
+    // Values in node "Input"
+    std::string userText;
+    int         userI1 = 123;
+    int         userI2 = 1234;
+    // Values in node "List"
+    std::vector<const char*> listContent;
+    int         listSelItem = 0;
     // Structure and data used for displaying a table
 public:
     struct tableDataTy {
@@ -43,11 +62,15 @@ public:
 protected:
     tableDataListTy     tableList;
 public:
-    ImguiWidget(int left, int top, int right, int bot, XPLMWindowDecoration decoration);
+    ImguiWidget(int left, int top, int right, int bot,
+                XPLMWindowDecoration decoration = xplm_WindowDecorationRoundRectangle,
+                XPLMWindowLayer layer = xplm_WindowLayerFloatingWindows);
 protected:
     void buildInterface() override;
 private:
 
 };
+
+//
 
 #endif /* SRC_IMGUIWIDGET_H_ */

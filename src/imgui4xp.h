@@ -12,19 +12,15 @@
 #ifndef IMGUI4XP_H
 #define IMGUI4XP_H
 
-
-#ifdef __APPLE__
-#include <OpenGL/gl.h>
-#else
-#include <GL/gl.h>
-#include <GL/glext.h>
-#endif
+// (Open)GL
+#include "SystemGL.h"
 
 // Standard C/C++ header
+#include <stdexcept>
 #include <cstdlib>
 #include <ctime>
 #include <string>
-#include <algorithm>
+#include <vector>
 
 // X-Plane SDK header
 #include "XPLMDisplay.h"
@@ -37,8 +33,9 @@
 #include "XPLMMenus.h"
 
 // Dear ImGui and ImgWindow
-#include "../src/imgui/imgui.h"
-#include "../src/ImgWindow/ImgWindow.h"
+#include "imgui.h"
+#include "imgui_stdlib.h"
+#include "ImgWindow.h"
 
 // Our Window definition
 #include "imgui_starter_window.h"

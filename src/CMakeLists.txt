@@ -7,12 +7,13 @@ project(imgui4xp VERSION 1.0.0 DESCRIPTION "imgui4xp X-Plane plugin")
 set(CMAKE_CXX_STANDARD 14)
 
 # Set include directories used by our code and dependencies.
+include_directories("${CMAKE_SOURCE_DIR}/")
+include_directories("${CMAKE_SOURCE_DIR}/imgui")
+include_directories("${CMAKE_SOURCE_DIR}/imgui/misc/cpp")
+include_directories("${CMAKE_SOURCE_DIR}/ImgWindow")
+include_directories("${CMAKE_SOURCE_DIR}/XPSDK302/CHeaders/XPLM")
 include_directories("${CMAKE_SOURCE_DIR}/XPSDK302/CHeaders/Widgets")
 include_directories("${CMAKE_SOURCE_DIR}/XPSDK302/CHeaders/Wrappers")
-include_directories("${CMAKE_SOURCE_DIR}/XPSDK302/CHeaders/XPLM")
-include_directories("${CMAKE_SOURCE_DIR}/")
-include_directories("${CMAKE_SOURCE_DIR}/ImgWindow")
-include_directories("${CMAKE_SOURCE_DIR}/imgui")
 
 # Specify library search locations.
 if (WIN32)
@@ -43,12 +44,25 @@ if (NOT MSVC)
     add_compile_options(-Wno-unused)
 
     # Always use position-independent code and highest optimization level (FPS!).
-    add_compile_options(-O3 -fPIC)
+    add_compile_options(-O3)
+    if (NOT WIN32)
+        add_compile_options(-fPIC)
+    endif()
 endif ()
 
 # X-Plane plugin
 # FIXME: Split this into individual targets.
-list(APPEND IMGUI4XP_SRCS imgui4xp.cpp imgui_starter_window.cpp imgui/imgui.cpp imgui/imgui_demo.cpp imgui/imgui_draw.cpp imgui/imgui_widgets.cpp ImgWindow/ImgFontAtlas.cpp ImgWindow/ImgWindow.cpp )
+list(APPEND IMGUI4XP_SRCS
+    imgui4xp.cpp
+    imgui_starter_window.cpp
+    imgui/imgui.cpp
+    imgui/imgui_demo.cpp
+    imgui/imgui_draw.cpp
+    imgui/imgui_widgets.cpp
+    imgui/misc/cpp/imgui_stdlib.cpp
+    ImgWindow/ImgFontAtlas.cpp
+    ImgWindow/ImgWindow.cpp
+)
 add_library(imgui4xp SHARED ${IMGUI4XP_SRCS})
 target_compile_features(imgui4xp PUBLIC cxx_std_11)
 
