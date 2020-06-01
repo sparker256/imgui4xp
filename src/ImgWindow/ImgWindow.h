@@ -175,6 +175,11 @@ protected:
         int bottom,
         XPLMWindowDecoration decoration = xplm_WindowDecorationRoundRectangle,
         XPLMWindowLayer layer = xplm_WindowLayerFloatingWindows);
+    
+    /** An ImgWindow object must not be copied!
+     */
+    ImgWindow (const ImgWindow&) = delete;
+    ImgWindow& operator = (const ImgWindow&) = delete;
 
     /** SetWindowTitle sets the title of the window both in the ImGui layer and
      * at the XPLM layer.
