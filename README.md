@@ -41,7 +41,7 @@ Find more information in `docker/README.md`.
 
 On Windows, you can use
 [Visual Studio's "Open Folder" feature](https://docs.microsoft.com/en-us/cpp/build/open-folder-projects-cpp)
-to open the project and build the plugin based on its CMake configuration.
+to open the project's `src` folder and build the plugin based on its CMake configuration.
 
 Results will be in `src/build-win`.
 
