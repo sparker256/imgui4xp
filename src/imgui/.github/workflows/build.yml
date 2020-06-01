@@ -10,6 +10,7 @@ jobs:
   Windows:
     runs-on: windows-2019
     env:
+      VS_PATH: C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\
       MSBUILD_PATH: C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\
       # Until gh-actions allow us to use env variables inside other env variables (because we need %GITHUB_WORKSPACE%) we have to use relative path to imgui/examples/example_name directory.
       SDL2_DIR: ..\..\SDL2-devel-2.0.10-VC\SDL2-2.0.10\
@@ -41,8 +42,45 @@ jobs:
           }
 
       # Not using matrix here because it would inflate job count too much. Check out and setup is done for every job and that makes build times way too long.
-      - name: Build example_null (extra warnings)
-        run: mingw32-make -C examples/example_null EXTRA_WARNINGS=1
+      - name: Build example_null (extra warnings, mingw 64-bit)
+        run: mingw32-make -C examples/example_null WITH_EXTRA_WARNINGS=1
+
+      - name: Build example_null (extra warnings, msvc 64-bit)
+        shell: cmd
+        run: |
+          cd examples\example_null
+          "%VS_PATH%\VC\Auxiliary\Build\vcvarsall.bat" x64 && .\build_win32.bat /W4
+
+      - name: Build example_null (single file build)
+        shell: bash
+        run: |
+          echo '#define IMGUI_IMPLEMENTATION'                    >  example_single_file.cpp
+          echo '#include "misc/single_file/imgui_single_file.h"' >> example_single_file.cpp
+          echo '#include "examples/example_null/main.cpp"'       >> example_single_file.cpp
+          g++ -I. -Wall -Wformat -o example_single_file.exe example_single_file.cpp
+
+      - name: Build example_null (with IMGUI_DISABLE_WIN32_FUNCTIONS)
+        shell: bash
+        run: |
+          echo '#define IMGUI_DISABLE_WIN32_FUNCTIONS'           >  example_single_file.cpp
+          echo '#define IMGUI_IMPLEMENTATION'                    >> example_single_file.cpp
+          echo '#include "misc/single_file/imgui_single_file.h"' >> example_single_file.cpp
+          echo '#include "examples/example_null/main.cpp"'       >> example_single_file.cpp
+          g++ -I. -Wall -Wformat -o example_single_file.exe example_single_file.cpp
+
+      - name: Build example_null (as DLL)
+        shell: cmd
+        run: |
+          "%VS_PATH%\VC\Auxiliary\Build\vcvarsall.bat" x64
+          echo '#ifdef _EXPORT'                                  >  example_single_file.cpp
+          echo '#  define IMGUI_API __declspec(dllexport)'       >> example_single_file.cpp
+          echo '#else'                                           >> example_single_file.cpp
+          echo '#  define IMGUI_API __declspec(dllimport)'       >> example_single_file.cpp
+          echo '#endif'                                          >> example_single_file.cpp
+          echo '#define IMGUI_IMPLEMENTATION'                    >> example_single_file.cpp
+          echo '#include "misc/single_file/imgui_single_file.h"' >> example_single_file.cpp
+          cl.exe /D_USRDLL /D_WINDLL /D_EXPORT /I. example_single_file.cpp /LD /FeImGui.dll /link
+          cl.exe /I. ImGui.lib /Feexample_null.exe examples/example_null/main.cpp
 
       - name: Build Win32 example_glfw_opengl2
         shell: cmd
@@ -151,10 +189,112 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libglfw3-dev libsdl2-dev
+        sudo apt-get install -y libglfw3-dev libsdl2-dev gcc-multilib g++-multilib libfreetype6-dev
 
-    - name: Build example_null (extra warnings)
-      run: make -C examples/example_null EXTRA_WARNINGS=1
+    - name: Build example_null (extra warnings, gcc 32-bit)
+      run: |
+        make -C examples/example_null clean
+        CXXFLAGS="$CXXFLAGS -m32 -Werror" make -C examples/example_null WITH_EXTRA_WARNINGS=1
+
+    - name: Build example_null (extra warnings, gcc 64-bit)
+      run: |
+        make -C examples/example_null clean
+        CXXFLAGS="$CXXFLAGS -m64 -Werror" make -C examples/example_null WITH_EXTRA_WARNINGS=1
+
+    - name: Build example_null (extra warnings, clang 32-bit)
+      run: |
+        make -C examples/example_null clean
+        CXXFLAGS="$CXXFLAGS -m32 -Werror" CXX=clang++ make -C examples/example_null WITH_EXTRA_WARNINGS=1
+
+    - name: Build example_null (extra warnings, clang 64-bit)
+      run: |
+        make -C examples/example_null clean
+        CXXFLAGS="$CXXFLAGS -m64 -Werror" CXX=clang++ make -C examples/example_null WITH_EXTRA_WARNINGS=1
+
+    - name: Build example_null (freetype)
+      run: |
+        make -C examples/example_null clean
+        make -C examples/example_null WITH_FREETYPE=1
+
+    - name: Build example_null (single file build)
+      run: |
+        echo '#define IMGUI_IMPLEMENTATION'                    >  example_single_file.cpp
+        echo '#include "misc/single_file/imgui_single_file.h"' >> example_single_file.cpp
+        echo '#include "examples/example_null/main.cpp"'       >> example_single_file.cpp
+        g++ -I. -Wall -Wformat -o example_single_file example_single_file.cpp
+
+    - name: Build example_null (with ImWchar32)
+      run: |
+        echo '#define IMGUI_USE_WCHAR32'                       >  example_single_file.cpp
+        echo '#define IMGUI_IMPLEMENTATION'                    >> example_single_file.cpp
+        echo '#include "misc/single_file/imgui_single_file.h"' >> example_single_file.cpp
+        echo '#include "examples/example_null/main.cpp"'       >> example_single_file.cpp
+        g++ -I. -Wall -Wformat -o example_single_file example_single_file.cpp
+
+    - name: Build example_null (with large ImDrawIdx)
+      run: |
+        echo '#define ImDrawIdx unsigned int'                  >  example_single_file.cpp
+        echo '#define IMGUI_IMPLEMENTATION'                    >> example_single_file.cpp
+        echo '#include "misc/single_file/imgui_single_file.h"' >> example_single_file.cpp
+        echo '#include "examples/example_null/main.cpp"'       >> example_single_file.cpp
+        g++ -I. -Wall -Wformat -o example_single_file example_single_file.cpp
+
+    - name: Build example_null (with IMGUI_DISABLE_OBSOLETE_FUNCTIONS)
+      run: |
+        echo '#define IMGUI_DISABLE_OBSOLETE_FUNCTIONS'        >  example_single_file.cpp
+        echo '#define IMGUI_IMPLEMENTATION'                    >> example_single_file.cpp
+        echo '#include "misc/single_file/imgui_single_file.h"' >> example_single_file.cpp
+        echo '#include "examples/example_null/main.cpp"'       >> example_single_file.cpp
+        g++ -I. -Wall -Wformat -o example_single_file example_single_file.cpp
+
+    - name: Build example_null (with IMGUI_DISABLE_DEMO_WINDOWS and IMGUI_DISABLE_METRICS_WINDOW)
+      run: |
+        echo '#define IMGUI_DISABLE_DEMO_WINDOWS'              >  example_single_file.cpp
+        echo '#define IMGUI_DISABLE_METRICS_WINDOW'            >> example_single_file.cpp
+        echo '#define IMGUI_IMPLEMENTATION'                    >> example_single_file.cpp
+        echo '#include "misc/single_file/imgui_single_file.h"' >> example_single_file.cpp
+        echo '#include "examples/example_null/main.cpp"'       >> example_single_file.cpp
+        g++ -I. -Wall -Wformat -o example_single_file example_single_file.cpp
+
+    - name: Build example_null (with IMGUI_DISABLE_FILE_FUNCTIONS)
+      run: |
+        echo '#define IMGUI_DISABLE_FILE_FUNCTIONS'            >  example_single_file.cpp
+        echo '#define IMGUI_IMPLEMENTATION'                    >> example_single_file.cpp
+        echo '#include "misc/single_file/imgui_single_file.h"' >> example_single_file.cpp
+        echo '#include "examples/example_null/main.cpp"'       >> example_single_file.cpp
+        g++ -I. -Wall -Wformat -o example_single_file example_single_file.cpp
+
+    - name: Build example_null (with IMGUI_USE_BGRA_PACKED_COLOR)
+      run: |
+        echo '#define IMGUI_USE_BGRA_PACKED_COLOR'             >  example_single_file.cpp
+        echo '#define IMGUI_IMPLEMENTATION'                    >> example_single_file.cpp
+        echo '#include "misc/single_file/imgui_single_file.h"' >> example_single_file.cpp
+        echo '#include "examples/example_null/main.cpp"'       >> example_single_file.cpp
+        g++ -I. -Wall -Wformat -o example_single_file example_single_file.cpp
+
+    - name: Build example_null (with IM_VEC2_CLASS_EXTRA and IM_VEC4_CLASS_EXTRA)
+      run: |
+        echo 'struct MyVec2 { float x; float y; MyVec2(float x, float y) : x(x), y(y) { } };' >  example_single_file.cpp
+        echo 'struct MyVec4 { float x; float y; float z; float w;'                            >> example_single_file.cpp
+        echo 'MyVec4(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) { } };'     >> example_single_file.cpp
+        echo '#define IM_VEC2_CLASS_EXTRA                                             \'      >> example_single_file.cpp
+        echo '        ImVec2(const MyVec2& f) { x = f.x; y = f.y; }                   \'      >> example_single_file.cpp
+        echo '        operator MyVec2() const { return MyVec2(x, y); }'                       >> example_single_file.cpp
+        echo '#define IM_VEC4_CLASS_EXTRA                                             \'      >> example_single_file.cpp
+        echo '        ImVec4(const MyVec4& f) { x = f.x; y = f.y; z = f.z; w = f.w; } \'      >> example_single_file.cpp
+        echo '        operator MyVec4() const { return MyVec4(x, y, z, w); }'                 >> example_single_file.cpp
+        echo '#define IMGUI_IMPLEMENTATION'                                                   >> example_single_file.cpp
+        echo '#include "misc/single_file/imgui_single_file.h"'                                >> example_single_file.cpp
+        echo '#include "examples/example_null/main.cpp"'                                      >> example_single_file.cpp
+        g++ -I. -Wall -Wformat -o example_single_file example_single_file.cpp
+
+    - name: Build example_null (without c++ runtime, Clang)
+      run: |
+        echo '#define IMGUI_IMPLEMENTATION'                    >  example_single_file.cpp
+        echo '#define IMGUI_DISABLE_DEMO_WINDOWS'              >> example_single_file.cpp
+        echo '#include "misc/single_file/imgui_single_file.h"' >> example_single_file.cpp
+        echo '#include "examples/example_null/main.cpp"'       >> example_single_file.cpp
+        clang++ -I. -Wall -Wformat -nodefaultlibs -fno-rtti -fno-exceptions -fno-threadsafe-statics -lc -lm -o example_single_file example_single_file.cpp
 
     - name: Build example_glfw_opengl2
       run: make -C examples/example_glfw_opengl2
@@ -182,8 +322,22 @@ jobs:
         brew install glfw3
         brew install sdl2
 
-    - name: Build example_null (extra warnings)
-      run: make -C examples/example_null EXTRA_WARNINGS=1
+    - name: Build example_null (extra warnings, clang 64-bit)
+      run: make -C examples/example_null WITH_EXTRA_WARNINGS=1
+
+    - name: Build example_null (single file build)
+      run: |
+        echo '#define IMGUI_IMPLEMENTATION'                    >  example_single_file.cpp
+        echo '#include "misc/single_file/imgui_single_file.h"' >> example_single_file.cpp
+        echo '#include "examples/example_null/main.cpp"'       >> example_single_file.cpp
+        clang++ -I. -Wall -Wformat -o example_single_file example_single_file.cpp
+
+    - name: Build example_null (without c++ runtime)
+      run: |
+        echo '#define IMGUI_IMPLEMENTATION'                    >  example_single_file.cpp
+        echo '#include "misc/single_file/imgui_single_file.h"' >> example_single_file.cpp
+        echo '#include "examples/example_null/main.cpp"'       >> example_single_file.cpp
+        clang++ -I. -Wall -Wformat -nodefaultlibs -fno-rtti -fno-exceptions -fno-threadsafe-statics -lc -lm -o example_single_file example_single_file.cpp
 
     - name: Build example_glfw_opengl2
       run: make -C examples/example_glfw_opengl2
@@ -194,6 +348,9 @@ jobs:
 
     - name: Build example_glfw_metal
       run: make -C examples/example_glfw_metal
+
+    - name: Build example_sdl_metal
+      run: make -C examples/example_sdl_metal
 
     - name: Build example_sdl_opengl2
       run: make -C examples/example_sdl_opengl2
@@ -239,3 +396,38 @@ jobs:
       run: |
         source emsdk-master/emsdk_env.sh
         make -C examples/example_emscripten
+
+  Static-Analysis:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          fetch-depth: 1
+
+      - name: Install Dependencies
+        env:
+          PVS_STUDIO_LICENSE: ${{ secrets.PVS_STUDIO_LICENSE }}
+        run: |
+          if [[ "$PVS_STUDIO_LICENSE" != "" ]];
+          then
+            echo "$PVS_STUDIO_LICENSE" > pvs-studio.lic
+            wget -q https://files.viva64.com/etc/pubkey.txt
+            sudo apt-key add pubkey.txt
+            sudo wget -O /etc/apt/sources.list.d/viva64.list https://files.viva64.com/etc/viva64.list
+            sudo apt-get update
+            sudo apt-get install -y pvs-studio
+          fi
+
+      - name: PVS-Studio static analysis
+        run: |
+          if [[ ! -f pvs-studio.lic ]];
+          then
+            echo "PVS Studio license is missing. No analysis will be performed."
+            echo "If you have a PVS Studio license please create a project secret named PVS_STUDIO_LICENSE with your license."
+            echo "You may use a free license. More information at https://www.viva64.com/en/b/0457/"
+            exit 0
+          fi
+          cd examples/example_null
+          pvs-studio-analyzer trace -- make WITH_EXTRA_WARNINGS=1
+          pvs-studio-analyzer analyze -e ../../imstb_rectpack.h -e ../../imstb_textedit.h -e ../../imstb_truetype.h -l ../../pvs-studio.lic -o pvs-studio.log
+          plog-converter -a 'GA:1,2;OP:1' -t errorfile -w pvs-studio.log

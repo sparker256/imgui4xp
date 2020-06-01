@@ -43,6 +43,24 @@ protected:
     // Values in node "List"
     std::vector<const char*> listContent;
     int         listSelItem = 0;
+    // Structure and data used for displaying a table
+public:
+    struct tableDataTy {
+        std::string     reg;
+        std::string     model;
+        std::string     typecode;
+        std::string     owner;
+        float           heading = 0.0f;
+        bool            turnsLeft = false;
+        bool            filtered = true;    // included in search result?
+        
+        // is s (upper cased!) in any text?
+        bool contains (const std::string& s) const;
+        
+    };
+    typedef std::vector<tableDataTy> tableDataListTy;
+protected:
+    tableDataListTy     tableList;
 public:
     ImguiWidget(int left, int top, int right, int bot,
                 XPLMWindowDecoration decoration = xplm_WindowDecorationRoundRectangle,

@@ -98,6 +98,9 @@ PLUGIN_API int XPluginStart(char * outName, char * outSig, char * outDesc) {
     XPLMMenuID hMenu = XPLMCreateMenu("imgui4xp", XPLMFindPluginsMenu(), my_slot, CBMenu, NULL);
     XPLMAppendMenuItem(hMenu, "Collate All Windows", (void*)1, 0);
     XPLMAppendMenuItem(hMenu, "Add Window", (void*)2, 0);
+    
+    // Initialize random number generator
+    std::srand((unsigned)std::time(nullptr));
 
 	return 1;
 }
