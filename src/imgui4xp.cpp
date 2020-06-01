@@ -18,16 +18,18 @@
 constexpr int WIN_WIDTH     = 800;      ///< window width
 constexpr int WIN_HEIGHT    = 450;      ///< window height
 constexpr int WIN_PAD       =  75;      ///< distance from left and top border
+constexpr int WIN_COLL_OFS  =  30;      ///< offset of collated windows
 
 // --- Global Variables ---
 
 // Is VR enabled?
 bool vr_is_enabled = false;
 
-// Pointer to the ImGui window we are going to create
-ImguiWidget* imguiPtr = nullptr;
-
-
+// the ImGui windows we are going to create
+// managed in the form of smart pointers.
+typedef std::shared_ptr<ImgWindow> ImgWindowSPtrTy;
+typedef std::vector<ImgWindowSPtrTy> ImgWindowSPtrVecTy;
+ImgWindowSPtrVecTy gWndList;
 
 /// Calculate window's standard coordinates
 void CalcWinCoords (int& left, int& top, int& right, int& bottom)
@@ -43,19 +45,40 @@ void CalcWinCoords (int& left, int& top, int& right, int& bottom)
     bottom  = top           - WIN_HEIGHT;
 }
 
+/// Creates another window right inside the list
+void AddWindow ()
+{
+    int left, top, right, bottom;
+    CalcWinCoords(left, top, right, bottom);
+    // This creates a ImguiWidget object inside the list,
+    // which in turn creates the actual window through its constructor
+    gWndList.emplace_back(std::make_shared<ImguiWidget>(left, top, right, bottom));
+}
+
 /// Callback function for menu
 void CBMenu (void* /*inMenuRef*/, void* inItemRef)
 {
-    // Show window?
+    // Show all windows?
     if (inItemRef == (void*)1)
     {
-        if (imguiPtr) {
-            imguiPtr->SetVisible(true);
-            // Reset the size to standard, makes sure it will show in a defined way
-            int left, top, right, bottom;
-            CalcWinCoords(left, top, right, bottom);
-            imguiPtr->SetWindowGeometry(left, top, right, bottom);
+        // Reset the size to standard, makes sure it will show in a defined way
+        int left, top, right, bottom;
+        CalcWinCoords(left, top, right, bottom);
+        // Show all windows we have and arrange them
+        for (ImgWindowSPtrTy& pWnd: gWndList) {
+            pWnd->SetVisible(true);                                     // visible
+            pWnd->SetWindowPositioningMode(xplm_WindowPositionFree);    // inside X-Plane
+            pWnd->SetWindowGeometry(left, top, right, bottom);          // well positioned
+            pWnd->BringWindowToFront();
+            // move the next window a bit to the side and down to see all of them arranged
+            left += WIN_COLL_OFS; right  += WIN_COLL_OFS;
+            top  -= WIN_COLL_OFS; bottom -= WIN_COLL_OFS;
         }
+    }
+    // Add another window?
+    else if (inItemRef == (void*)2)
+    {
+        AddWindow();
     }
 }
 
@@ -73,7 +96,8 @@ PLUGIN_API int XPluginStart(char * outName, char * outSig, char * outDesc) {
     // Create the menu for the plugin
     int my_slot = XPLMAppendMenuItem(XPLMFindPluginsMenu(), "imgui4xp", NULL, 0);
     XPLMMenuID hMenu = XPLMCreateMenu("imgui4xp", XPLMFindPluginsMenu(), my_slot, CBMenu, NULL);
-    XPLMAppendMenuItem(hMenu, "Show Window", (void*)1, 0);
+    XPLMAppendMenuItem(hMenu, "Collate All Windows", (void*)1, 0);
+    XPLMAppendMenuItem(hMenu, "Add Window", (void*)2, 0);
 
 	return 1;
 }
@@ -82,25 +106,19 @@ PLUGIN_API void	XPluginStop(void) {
 }
 
 PLUGIN_API void XPluginDisable(void) {
-    // Destroy the window object in order to properly clean up.
+    // Destroy all window object in order to properly clean up.
     // (Can't use ImgWindow::SafeDelete here as that would wait for a
     //  flight loop callback, which won't be delivered any longer.
     //  Delete should be safe here as no rendering is taking place and will no longer.)
-    if (imguiPtr)
-        delete imguiPtr;
-    imguiPtr = nullptr;
+    gWndList.clear();
 }
 
 PLUGIN_API int XPluginEnable(void) {
     // Some general ImGui setup
     configureImgWindow();
     
-    // Create our window with standard coordinates
-    if (!imguiPtr) {
-        int left, top, right, bottom;
-        CalcWinCoords(left, top, right, bottom);
-        imguiPtr = new ImguiWidget(left, top, right, bottom, xplm_WindowDecorationRoundRectangle);
-    }
+    // Create a first window
+    AddWindow();
 
     return 1;
 }
@@ -108,29 +126,33 @@ PLUGIN_API int XPluginEnable(void) {
 PLUGIN_API void XPluginReceiveMessage(XPLMPluginID, int inMessage, void * /*inParam*/) {
     
     switch (inMessage) {
-        // Move the window in or out of VR when VR mode changes
+        // Move all windows in or out of VR when VR mode changes
         case XPLM_MSG_ENTERED_VR:
             vr_is_enabled = true;
             // We don't move popped out windows into VR because we think
             // the user didn't want it inside the sim
-            if (imguiPtr &&
-                !imguiPtr->IsPoppedOut())
-                imguiPtr->SetWindowPositioningMode(xplm_WindowVR);
+            for (ImgWindowSPtrTy& pWnd: gWndList) {
+                if (!pWnd->IsPoppedOut())
+                    pWnd->SetWindowPositioningMode(xplm_WindowVR);
+            }
             break;
             
         case XPLM_MSG_EXITING_VR:
             vr_is_enabled = false;
-            // If we don't move popped out windows then we need to make
-            // sure that we only move VR windows back into the sim,
-            // so that a popped out window stays popped out
-            if (imguiPtr &&
-                imguiPtr->IsInVR())
-            {
-                imguiPtr->SetWindowPositioningMode(xplm_WindowPositionFree);
-                // Geometry gets lost when moving into VR, so we need to re-position the window now
-                int left, top, right, bottom;
-                CalcWinCoords(left, top, right, bottom);
-                imguiPtr->SetWindowGeometry(left, top, right, bottom);
+            // Geometry gets lost when moving into VR, so we need to re-position the window now
+            int left, top, right, bottom;
+            CalcWinCoords(left, top, right, bottom);
+            for (ImgWindowSPtrTy& pWnd: gWndList) {
+                // If we don't move popped out windows then we need to make
+                // sure that we only move VR windows back into the sim,
+                // so that a popped out window stays popped out
+                if (pWnd->IsInVR()) {
+                    pWnd->SetWindowPositioningMode(xplm_WindowPositionFree);
+                    pWnd->SetWindowGeometry(left, top, right, bottom);
+                    // move the next window a bit to the side and down to see all of them arranged
+                    left += WIN_COLL_OFS; right  += WIN_COLL_OFS;
+                    top  -= WIN_COLL_OFS; bottom -= WIN_COLL_OFS;
+                }
             }
             break;
     }

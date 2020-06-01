@@ -18,6 +18,12 @@
 
 void configureImgWindow();
 
+// To show how global values synch between window instances we declare here 2 global variables
+// Values in node "Drag Controls"
+float       g_dragVal1  = 0.0f;
+int         g_dragVal2  = 0;
+
+
 // Trying to find a way to get a image to be displayed
 const std::string IMAGE_NAME = "./Resources/plugins/imgui4xp/imgui_demo.jpg";
 
@@ -115,12 +121,23 @@ void configureImgWindow()
 int      ImguiWidget::image_id = 0;
 ImVec2   ImguiWidget::image_size;
 
+// Counter for the number of windows opened
+int      ImguiWidget::num_win = 0;
 
-ImguiWidget::ImguiWidget(int left, int top, int right, int bot, int decoration):
-    ImgWindow(left, top, right, bot, decoration)
+ImguiWidget::ImguiWidget(int left, int top, int right, int bot,
+                         XPLMWindowDecoration decoration,
+                         XPLMWindowLayer layer) :
+    ImgWindow(left, top, right, bot, decoration, layer),
+    myWinNum(++num_win)             // assign a unique window number
 {
     SetWindowTitle("Imgui v" IMGUI_VERSION " for X-Plane  by William Good");
     SetVisible(true);
+    
+    // Initialize the list content
+    listContent = {
+        "1st line", "2nd line", "3rd line", "4th line", "5th line",
+        "6th line", "7th line", "8th line", "9th line", "10th line"
+    };
     
     // if not yet loaded: try loading an image for display
     if (!image_id)
@@ -144,12 +161,21 @@ void ImguiWidget::buildInterface() {
             SetWindowPositioningMode(xplm_WindowPopOut);
     }
 
+    // Grouping a few lines...
+    ImGui::BeginGroup();
     ImGui::Text("Window size: width = %f  height = %f", win_width, win_height);
-
+    
     ImGui::TextUnformatted("Two Widgets");
-
     ImGui::SameLine();
     ImGui::TextUnformatted("One Line.");
+    ImGui::EndGroup();
+    
+    // ...to put the side-by-side with another group of lines
+    ImGui::SameLine(0.0f, 20.0f);
+    ImGui::BeginGroup();
+    ImGui::Text("Window #%d", myWinNum);
+    ImGui::Text("X-Plane Window Id: %p", GetWindowId());
+    ImGui::EndGroup();
 
     if (ImGui::TreeNode("Styling Widgets")) {
         const char *text = "Centered Text";
@@ -187,16 +213,16 @@ void ImguiWidget::buildInterface() {
             makeRed = !makeRed;
         }
 
-        if (ImGui::RadioButton("Choice 1", choice == 1)) {
-            choice = 1;
+        if (ImGui::RadioButton("Choice 1", radioChoice == 1)) {
+            radioChoice = 1;
         }
 
-        if (ImGui::RadioButton("Choice 2", choice == 2)) {
-            choice = 2;
+        if (ImGui::RadioButton("Choice 2", radioChoice == 2)) {
+            radioChoice = 2;
         }
 
-        if (ImGui::RadioButton("Choice 3", choice == 3)) {
-            choice = 3;
+        if (ImGui::RadioButton("Choice 3", radioChoice == 3)) {
+            radioChoice = 3;
         }
 
         ImGui::TreePop();
@@ -219,43 +245,33 @@ void ImguiWidget::buildInterface() {
     }
 
     if (ImGui::TreeNode("Sliders")) {
-        static float sliderVal;
-        ImGui::SliderFloat("Slider Caption", &sliderVal, 0, 100000, "Value %.2f");
-
-        static float sliderVal2;
-        ImGui::SliderFloat("Power Slider", &sliderVal2, 0, 100000, "Value %.2f", 3.0);
-
-        static int sliderVal3;
-        ImGui::SliderInt("Int Slider", &sliderVal3, 0, 100000, "Value %.0f");
-
-        static float angle;
-        ImGui::SliderAngle("Angle Slider", &angle, -180, 180);
-
+        ImGui::SliderFloat("Slider [0..1000]", &sliderVal1, 0, 1000, "Value %.2f");
+        ImGui::SliderFloat("Power Slider [0..100000]", &sliderVal2, 0, 100000, "Value %.2f", 3.0);
+        ImGui::SliderInt("Int Slider [0..100]", &sliderVal3, 0, 100, "Value %.0f");
+        ImGui::SliderAngle("Angle Slider", &sliderAngle, -180, 180);
 
         ImGui::TreePop();
     }
 
     if (ImGui::TreeNode("ComboBox")) {
         static const char * choices[] = {"Choice 1", "Choice 2", "Choice 3"};
-        if (ImGui::BeginCombo("Combo Box", choices[choice])) {
-            int i;
-            for (i = 0; i < 3; i++) {
-                if (ImGui::Selectable(choices[i], choice == i)) {
-                    choice = i;
-                }
+        if (ImGui::BeginCombo("Combo Box", choices[choice1])) {
+            for (int i = 0; i < 3; i++) {
+                if (ImGui::Selectable(choices[i], choice1 == i))
+                    choice1 = i;
             }
             ImGui::EndCombo();
         }
 
         if (ImGui::BeginCombo("Combo Box 2", "", ImGuiComboFlags_NoPreview)) {
-            if (ImGui::Selectable("Choice A", choice == 1)) {
-                choice = 1;
+            if (ImGui::Selectable("Choice A", choice2 == 1)) {
+                choice2 = 1;
             }
-            if (ImGui::Selectable("Choice B", choice == 2)) {
-                choice = 2;
+            if (ImGui::Selectable("Choice B", choice2 == 2)) {
+                choice2 = 2;
             }
-            if (ImGui::Selectable("Choice C", choice == 3)) {
-                choice = 3;
+            if (ImGui::Selectable("Choice C", choice2 == 3)) {
+                choice2 = 3;
             }
             ImGui::EndCombo();
         }
@@ -263,11 +279,10 @@ void ImguiWidget::buildInterface() {
         ImGui::TreePop();
     }
 
-    if (ImGui::TreeNode("Drag Controls")) {
-        static float sliderVal;
-        ImGui::DragFloat("Drag Float", &sliderVal, 1.0, 0, 1000, "%.2f", 1.0);
-        static int sliderVal2;
-        ImGui::DragInt("Drag Int", &sliderVal2, 1.0, 0, 1000, "%.2f");
+    if (ImGui::TreeNode("Drag Controls / Global Variables")) {
+        ImGui::DragFloat("Drag Float", &g_dragVal1, 1.0, 0, 1000, "%.2f", 1.0);
+        ImGui::DragInt("Drag Int", &g_dragVal2, 1.0, 0, 1000, "%.2f");
+        ImGui::TextUnformatted("Note: This values are global and synched between windows.");
         ImGui::TreePop();
     }
 
@@ -280,14 +295,10 @@ void ImguiWidget::buildInterface() {
     }
 
     if (ImGui::TreeNode("Input")) {
-        static char text[255];
-        ImGui::InputText("Text", text, IM_ARRAYSIZE(text));
-
-        static int i0 = 123;
-        ImGui::InputInt("Input int", &i0);
-
-        static int i02 = 1234;
-        ImGui::InputInt("Input int2", &i02, 10);
+        // Uses stdlib wrapper implemented in imgui/misc/cpp/imgui_stdlib.c/.h
+        ImGui::InputText ("Text", &userText);
+        ImGui::InputInt("Input int", &userI1);
+        ImGui::InputInt("Input int2", &userI2, 10);
 
         ImGui::TreePop();
     }
@@ -377,25 +388,10 @@ void ImguiWidget::buildInterface() {
 
     // Let#s play with lists
     if (ImGui::TreeNode("List")) {
-
-        static int selItem = 0;
-        ImDrawList* dl = ImGui::GetWindowDrawList();
-        const ImVec2 posListStart = ImGui::GetCursorScreenPos();
-        if (ImGui::ListBoxHeader("A List box", 10, 5))
-        {
-            for (int i = 0; i < 10; ++i) {
-                ImVec2 pos = ImGui::GetCursorScreenPos();
-                if (selItem == i)
-                    ImGui::TextColored(ImVec4(0,192,255,255),"Line: %d", i);
-                else
-                    ImGui::Value("Line", i);
-                if (ImGui::IsItemClicked())
-                    selItem = i;
-                if (pos.y > posListStart.y && ImGui::IsItemVisible())
-                    dl->AddLine(pos, ImVec2(pos.x + ImGui::GetColumnWidth(), pos.y), ImGui::GetColorU32(ImGuiCol_ScrollbarGrab));
-            }
-            ImGui::ListBoxFooter();
-        }
+        ImGui::ListBox ("A simple List Box", &listSelItem,
+                        listContent.data(),
+                        int(listContent.size()),
+                        int(listContent.size())/2);  // half as high as number of list elements to show how vertical scrolling works
         ImGui::TreePop();
     }
 
