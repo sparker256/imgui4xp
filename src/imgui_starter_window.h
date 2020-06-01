@@ -25,6 +25,8 @@ protected:
     static int      num_win;
     // I am window number...
     const int       myWinNum;
+    // Note to myself that a change of window mode is requested
+    XPLMWindowPositioningMode nextWinPosMode = -1;
     // Values in node "Buttons" / "Checkboxes"
     bool makeRed = false;
     int         radioChoice = 1;
@@ -43,12 +45,33 @@ protected:
     // Values in node "List"
     std::vector<const char*> listContent;
     int         listSelItem = 0;
+    // Structure and data used for displaying a table
+public:
+    struct tableDataTy {
+        std::string     reg;
+        std::string     model;
+        std::string     typecode;
+        std::string     owner;
+        float           heading = 0.0f;
+        bool            turnsLeft = false;
+        bool            filtered = true;    // included in search result?
+        
+        // is s (upper cased!) in any text?
+        bool contains (const std::string& s) const;
+        
+    };
+    typedef std::vector<tableDataTy> tableDataListTy;
+protected:
+    tableDataListTy     tableList;
 public:
     ImguiWidget(int left, int top, int right, int bot,
                 XPLMWindowDecoration decoration = xplm_WindowDecorationRoundRectangle,
                 XPLMWindowLayer layer = xplm_WindowLayerFloatingWindows);
 protected:
+    // Main function: creates the window's UI
     void buildInterface() override;
+    // After all rendering we can change things like window mode
+    void afterRendering() override;
 private:
 
 };

@@ -107,6 +107,10 @@ public:
     /** Sets the current window size of window in VR */
     void SetWindowGeometryVR (int width, int height)
     { XPLMSetWindowGeometryVR(mWindowID, width, height); }
+    
+    /** Gets the current valid geometry (free, OS, or VR
+        If VR, then left=bottom=0 and right=width and top=height*/
+    void GetCurrentWindowGeometry (int& left, int& top, int& right, int& bottom) const;
 
     /** SetVisible() makes the window visible after making the onShow() call.
      * It is also at this time that the window will be relocated onto the VR

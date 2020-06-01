@@ -21,6 +21,7 @@
 #include <ctime>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 // X-Plane SDK header
 #include "XPLMDisplay.h"
@@ -39,5 +40,8 @@
 
 // Our Window definition
 #include "imgui_starter_window.h"
+
+/// Calculate window's standard coordinates
+void CalcWinCoords (int& left, int& top, int& right, int& bottom);
 
 #endif // #ifndef IMGUI4XP_H
