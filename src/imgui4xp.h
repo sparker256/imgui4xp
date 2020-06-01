@@ -20,11 +20,26 @@
 #include <GL/glext.h>
 #endif
 
+// Standard C/C++ header
+#include <cstdlib>
+#include <ctime>
 #include <string>
-#include <XPLMDisplay.h>
-#include <XPLMProcessing.h>
-#include "../src/imgui/imgui.h"
 
+// X-Plane SDK header
+#include "XPLMDisplay.h"
+#include "XPLMGraphics.h"
+#include "XPLMUtilities.h"
+#include "XPLMProcessing.h"
+#include "XPLMPlugin.h"
+#include "XPLMDataAccess.h"
+#include "XPLMUtilities.h"
+#include "XPLMMenus.h"
+
+// Dear ImGui and ImgWindow
+#include "../src/imgui/imgui.h"
+#include "../src/ImgWindow/ImgWindow.h"
+
+// Our Window definition
 #include "imgui_starter_window.h"
 
 #endif // #ifndef IMGUI4XP_H

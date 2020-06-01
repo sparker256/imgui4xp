@@ -39,6 +39,12 @@
 		254ED5972482C48D002C4A62 /* imgui_internal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = imgui_internal.h; sourceTree = "<group>"; };
 		254ED5982482C4AA002C4A62 /* ImgFontAtlas.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImgFontAtlas.h; sourceTree = "<group>"; };
 		254ED5992482C4AA002C4A62 /* ImgWindow.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImgWindow.h; sourceTree = "<group>"; };
+		255109C7248439ED002235C2 /* stb_image.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = stb_image.h; path = src/stb_image.h; sourceTree = "<group>"; };
+		255109C8248439ED002235C2 /* SystemGL.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SystemGL.h; path = src/SystemGL.h; sourceTree = "<group>"; };
+		255109C9248439ED002235C2 /* XOGLUtils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = XOGLUtils.h; path = src/XOGLUtils.h; sourceTree = "<group>"; };
+		255109CA248439ED002235C2 /* CMakeLists.txt */ = {isa = PBXFileReference; lastKnownFileType = text; name = CMakeLists.txt; path = src/CMakeLists.txt; sourceTree = "<group>"; };
+		255109CB248439ED002235C2 /* imgui_starter_window.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = imgui_starter_window.h; path = src/imgui_starter_window.h; sourceTree = "<group>"; };
+		255109CC248439ED002235C2 /* imgui4xp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = imgui4xp.h; path = src/imgui4xp.h; sourceTree = "<group>"; };
 		D607B19909A556E400699BC3 /* imgui4xp.xpl */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = imgui4xp.xpl; sourceTree = BUILT_PRODUCTS_DIR; };
 		D6A7BDA916A1DEA200D1426A /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		D6A7BDC016A1DEC000D1426A /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
@@ -91,10 +97,16 @@
 		AC4E46B809C2E0B3006B7E1B /* Source */ = {
 			isa = PBXGroup;
 			children = (
-				25253B39247FA01F0061BFC2 /* imgui_starter_window.cpp */,
-				25253B38247FA01F0061BFC2 /* imgui4xp.cpp */,
+				255109CA248439ED002235C2 /* CMakeLists.txt */,
 				25253B50247FA1370061BFC2 /* imgui */,
+				25253B39247FA01F0061BFC2 /* imgui_starter_window.cpp */,
+				255109CB248439ED002235C2 /* imgui_starter_window.h */,
+				25253B38247FA01F0061BFC2 /* imgui4xp.cpp */,
+				255109CC248439ED002235C2 /* imgui4xp.h */,
 				25253B3E247FA06A0061BFC2 /* ImgWindow */,
+				255109C7248439ED002235C2 /* stb_image.h */,
+				255109C8248439ED002235C2 /* SystemGL.h */,
+				255109C9248439ED002235C2 /* XOGLUtils.h */,
 			);
 			name = Source;
 			sourceTree = "<group>";

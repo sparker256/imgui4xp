@@ -8,43 +8,27 @@
  *
  *
  */
-#include "XPLMDisplay.h"
-#include "imgui_starter_window.h"
-#include "../src/imgui/imgui.h"
-#include "../src/ImgWindow/ImgWindow.h"
-#include "../src/ImgWindow/ImgFontAtlas.h"
 
-#include <vector>
-#include <memory>
-#include <stdexcept>
-#include <stdint.h>     // uint64_t
-#include <cstring> // memcpy
-#include <string.h>
-#include <string>
+// All our headers combined
+#include "imgui4xp.h"
 
+// Image processing (for reading "imgui_demo.jpg"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-std::vector<GLuint> textureIDs;
-
 void configureImgWindow();
 
-int count;
-int choice = 1;
-float win_width = 0;
-float win_height = 0;
-float cursor_posy = 0;
-ImVec2 text_size;
-float center;
-bool makeRed = false;
-
 // Trying to find a way to get a image to be displayed
-ImTextureID Imimage_id;
-int image_id;
-std::string image_name = "./Resources/plugins/imgui4xp/imgui_demo.jpg";
+const std::string IMAGE_NAME = "./Resources/plugins/imgui4xp/imgui_demo.jpg";
 
-int loadImage(const std::string&fileName) {
-    int imgWidth, imgHeight, nComps;
+/// Uses "stb_image" library to load a picture into memory
+/// @param fileName Path to image file
+/// @param[out] imgWidth Image width in pixel
+/// @param[out] imgHeight Image height in pixel
+/// @return texture id
+/// @exception std::runtime_error if image not found
+int loadImage(const std::string& fileName, int& imgWidth, int& imgHeight) {
+    int nComps;
     uint8_t *data = stbi_load(fileName.c_str(), &imgWidth, &imgHeight, &nComps, sizeof(uint32_t));
 
     if (!data) {
@@ -62,17 +46,23 @@ int loadImage(const std::string&fileName) {
             GL_RGBA, GL_UNSIGNED_BYTE, data);
 
     stbi_image_free(data);
-    textureIDs.push_back(id);
 
     return id;
 }
 
-int try2load_image() {
+/// Wrapper around loadImage() capturing the possible exception
+/// @param fileName Path to image file
+/// @param[out] imgSize Image size in pixel
+/// @return texture id for loaded image, or 0 in case of failure
+int try2load_image(const std::string& fileName, ImVec2& imgSize) {
     try {
-        image_id = loadImage(image_name);
-        return 1;
+        int imgWidth=0, imgHeight=0;
+        int ret = loadImage(fileName, imgWidth, imgHeight);
+        imgSize.x = float(imgWidth);
+        imgSize.y = float(imgHeight);
+        return ret;
     } catch (const std::exception &e) {
-        std::string err = std::string("imgui4xp Error: ") + e.what() + " in " + image_name + "\n";
+        std::string err = std::string("imgui4xp Error: ") + e.what() + " in " + fileName + "\n";
         XPLMDebugString(err.c_str());
         return 0;
     }
@@ -116,19 +106,31 @@ void configureImgWindow()
   ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", 13.0f);
 }
 
+//
+// MARK: ImguiWidget (our example implementation of ImguiWindow)
+//
+
+// texture number and size of the image we want to show
+// (static, because we want to load the image into a texture just once)
+int      ImguiWidget::image_id = 0;
+ImVec2   ImguiWidget::image_size;
+
 
 ImguiWidget::ImguiWidget(int left, int top, int right, int bot, int decoration):
     ImgWindow(left, top, right, bot, decoration)
 {
-    SetWindowTitle("Imgui v1.74 for X-Plane  by William Good");
+    SetWindowTitle("Imgui v" IMGUI_VERSION " for X-Plane  by William Good");
     SetVisible(true);
-    try2load_image();
+    
+    // if not yet loaded: try loading an image for display
+    if (!image_id)
+        image_id = try2load_image(IMAGE_NAME, image_size);
 }
 
 void ImguiWidget::buildInterface() {
 
-    win_width = ImGui::GetWindowWidth();
-    win_height = ImGui::GetWindowHeight();
+    float win_width = ImGui::GetWindowWidth();
+    float win_height = ImGui::GetWindowHeight();
 
     ImGui::TextUnformatted("Hello, World!");
     
@@ -151,8 +153,8 @@ void ImguiWidget::buildInterface() {
 
     if (ImGui::TreeNode("Styling Widgets")) {
         const char *text = "Centered Text";
-        text_size = ImGui::CalcTextSize(text, NULL, true);
-        center = win_width / 2 - text_size[0] / 2;
+        ImVec2 text_size = ImGui::CalcTextSize(text, NULL, true);
+        float center = win_width / 2 - text_size[0] / 2;
         ImGui::SetCursorPosX(center);
         ImGui::TextUnformatted(text);
         ImVec4 col = ImColor(43, 101, 236, 255);
@@ -343,9 +345,8 @@ void ImguiWidget::buildInterface() {
     if (ImGui::TreeNode("Images")) {
         ImGui::Text("image_id = %d", image_id);
         // Draw a previously loaded image
-        // ImGui::Image((void*)(intptr_t)my_opengl_texture, ImVec2(my_image_width, my_image_height));
-        ImGui::Image((void*)(intptr_t)image_id, ImVec2(800, 450));
-        // Prameters: image id returned by float_wnd_load_image, diplay width, display height
+        if (image_id)
+            ImGui::Image((void*)(intptr_t)image_id, image_size);
 
         ImGui::TreePop();
     }

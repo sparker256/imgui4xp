@@ -11,22 +11,18 @@
 #ifndef SRC_IMGUIWIDGET_H_
 #define SRC_IMGUIWIDGET_H_
 
-#include <functional>
-#include <map>
-#include <memory>
-#include <stdint.h>     // uint64_t
-#include <cstring> // memcpy
-#include <string.h>
 #include "../src/ImgWindow/ImgWindow.h"
-
-#include <XPLMGraphics.h>
-#include <XPLMDisplay.h>
-#include <XPLMDataAccess.h>
-#include <XPLMUtilities.h>
 
 extern void configureImgWindow();
 
 class ImguiWidget: public ImgWindow {
+protected:
+    // texture number and size of the image we want to show
+    static int      image_id;
+    static ImVec2   image_size;
+    // These are the values read/written from the UI
+    int choice = 1;
+    bool makeRed = false;
 public:
     ImguiWidget(int left, int top, int right, int bot, XPLMWindowDecoration decoration);
 protected:
