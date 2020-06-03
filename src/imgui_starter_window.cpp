@@ -38,11 +38,49 @@ IMGUI_API void PushID_formatted(const char* format, ...)
     PushID(sz);
 }
 
+/// @brief Button with on-hover popup helper text
+/// @param label Text on Button
+/// @param tip Tooltip text when hovering over the button (or NULL of none)
+/// @param colFg Foreground/text color (optional, otherwise no change)
+/// @param colBg Background color (optional, otherwise no change)
+/// @param size button size, 0 for either axis means: auto size
+IMGUI_API bool ButtonTooltip(const char* label,
+                             const char* tip = nullptr,
+                             ImU32 colFg = IM_COL32(1,1,1,0),
+                             ImU32 colBg = IM_COL32(1,1,1,0),
+                             const ImVec2& size = ImVec2(0,0))
+{
+    // Setup colors
+    if (colFg != IM_COL32(1,1,1,0))
+        ImGui::PushStyleColor(ImGuiCol_Text, colFg);
+    if (colBg != IM_COL32(1,1,1,0))
+        ImGui::PushStyleColor(ImGuiCol_Button, colBg);
+
+    // do the button
+    bool b = ImGui::Button(label, size);
+    
+    // restore previous colors
+    if (colBg != IM_COL32(1,1,1,0))
+        ImGui::PopStyleColor();
+    if (colFg != IM_COL32(1,1,1,0))
+        ImGui::PopStyleColor();
+
+    // do the tooltip
+    if (tip && ImGui::IsItemHovered())
+        ImGui::SetTooltip("%s", tip);
+    
+    // return if button pressed
+    return b;
+}
+
 }
 
 //
 // MARK: Global data and functions
 //
+
+// The raw TTF data of OpenFontIcons has been generated into the following file
+#include "fa-solid-900.inc"
 
 // Initial data for the example table
 ImguiWidget::tableDataListTy TABLE_CONTENT = {
@@ -160,7 +198,37 @@ void configureImgWindow()
   // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Roboto-Regular.ttf", 13.0f);
   // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/tahomabd.ttf", 13.0f);
 
-  ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", 13.0f);
+    ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", 13.0f);
+    
+    // Now we merge some icons from the OpenFontsIcons font into the above font
+    // (see `imgui/docs/FONTS.txt`)
+    ImFontConfig config;
+    config.MergeMode = true;
+    
+    // We only read very selectively the individual glyphs we are actually using
+    // to safe on texture space
+    static ImVector<ImWchar> icon_ranges;
+    ImFontGlyphRangesBuilder builder;
+    // Add all icons that are actually used (they concatenate into one string)
+    builder.AddText(ICON_FA_TRASH_ALT ICON_FA_SEARCH
+                    ICON_FA_EXTERNAL_LINK_SQUARE_ALT
+                    ICON_FA_WINDOW_MAXIMIZE ICON_FA_WINDOW_MINIMIZE
+                    ICON_FA_WINDOW_RESTORE ICON_FA_WINDOW_CLOSE);
+    builder.BuildRanges(&icon_ranges);
+
+    // Merge the icon font with the text font
+    ImgWindow::sFontAtlas->AddFontFromMemoryCompressedTTF(fa_solid_900_compressed_data,
+                                                          fa_solid_900_compressed_size,
+                                                          13.0f,
+                                                          &config,
+                                                          icon_ranges.Data);
+}
+
+// Undo what we did in configureImgWindow()
+void cleanupAfterImgWindow()
+{
+    // We just destroy the font atlas
+    ImgWindow::sFontAtlas.reset();
 }
 
 //
@@ -245,23 +313,41 @@ void ImguiWidget::buildInterface() {
     
     // Button with fixed width 30 and standard height
     // to pop out the window in an OS window
-    static float btnWidth = ImGui::CalcTextSize("Pop out").x + 5;
+    static float btnWidth = ImGui::CalcTextSize(ICON_FA_WINDOW_MAXIMIZE).x + 5;
     const bool bBtnPopOut = !IsPoppedOut();
     const bool bBtnPopIn  = IsPoppedOut() || IsInVR();
-    const int numBtn = bBtnPopOut + bBtnPopIn;
+    const bool bBtnVR     = vr_is_enabled && !IsInVR();
+    int numBtn = bBtnPopOut + bBtnPopIn + bBtnVR;
     if (numBtn > 0) {
+        // Setup colors for window sizing buttons
+        ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetColorU32(ImGuiCol_ScrollbarGrabActive)); // dark gray
+        ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32_BLACK_TRANS);                           // transparent
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetColorU32(ImGuiCol_ScrollbarGrab)); // lighter gray
+
+        if (bBtnVR) {
+            // Same line, but right-alinged
+            ImGui::SameLine(ImGui::GetWindowContentRegionWidth() - (numBtn * btnWidth));
+            if (ImGui::ButtonTooltip(ICON_FA_EXTERNAL_LINK_SQUARE_ALT, "Move into VR"))
+                nextWinPosMode = xplm_WindowVR;
+            --numBtn;
+        }
         if (bBtnPopIn) {
             // Same line, but right-alinged
             ImGui::SameLine(ImGui::GetWindowContentRegionWidth() - (numBtn * btnWidth));
-            if (ImGui::Button("Pop in", ImVec2(btnWidth,0)))
+            if (ImGui::ButtonTooltip(ICON_FA_WINDOW_RESTORE, "Move back into X-Plane"))
                 nextWinPosMode = xplm_WindowPositionFree;
+            --numBtn;
         }
         if (bBtnPopOut) {
             // Same line, but right-alinged
-            ImGui::SameLine(ImGui::GetWindowContentRegionWidth() - btnWidth);
-            if (ImGui::Button("Pop out", ImVec2(btnWidth,0)))
+            ImGui::SameLine(ImGui::GetWindowContentRegionWidth() - (numBtn * btnWidth));
+            if (ImGui::ButtonTooltip(ICON_FA_WINDOW_MAXIMIZE, "Pop out into separate window"))
                 nextWinPosMode = xplm_WindowPopOut;
+            --numBtn;
         }
+
+        // Restore colors
+        ImGui::PopStyleColor(3);
 
         // Window mode should be set outside drawing calls to avoid crashes
         if (nextWinPosMode >= 0)
@@ -531,8 +617,8 @@ void ImguiWidget::buildInterface() {
         // -- Filter by text search --
         
         static char sFilter[100];
-        ImGui::PushID("SearchText");
-        if (ImGui::InputTextWithHint("", "Search", sFilter, IM_ARRAYSIZE(sFilter),
+        // Note: "##SearchText" creates a unique id, but due to ## it doesn't create a label"
+        if (ImGui::InputTextWithHint("##SearchText", ICON_FA_SEARCH " Search", sFilter, IM_ARRAYSIZE(sFilter),
                              ImGuiInputTextFlags_CharsUppercase |
                              ImGuiInputTextFlags_CharsNoBlank))
         {
@@ -544,15 +630,16 @@ void ImguiWidget::buildInterface() {
                     td.filtered = true;
             }
         }
-        ImGui::PopID();
         
         // -- The table --
         
+        // Alternating rows slighly grayish
+        ImGui::PushStyleColor(ImGuiCol_TableRowBgAlt, IM_COL32(0x1a, 0x1a, 0x1a, 0xff));
         // A table with pretty flexible columns, first column frozen, fully scrollable
         if (ImGui::BeginTable("Table", 7,
                               ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable |
                               ImGuiTableFlags_Hideable | ImGuiTableFlags_Sortable |
-                              ImGuiTableFlags_Borders |
+                              ImGuiTableFlags_RowBg |
                               ImGuiTableFlags_SizingPolicyFixedX | ImGuiTableFlags_Scroll |
                               ImGuiTableFlags_ScrollFreezeTopRow |
                               ImGuiTableFlags_ScrollFreezeLeftColumn))
@@ -568,9 +655,9 @@ void ImguiWidget::buildInterface() {
             }
             
             // Set up the columns of the table
-            ImGui::TableSetupColumn("Tail", ImGuiTableColumnFlags_DefaultSort, 75);
+            ImGui::TableSetupColumn("Tail", ImGuiTableColumnFlags_DefaultSort, 60);
             ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_None, 50);
-            ImGui::TableSetupColumn("Model", ImGuiTableColumnFlags_None, 200);
+            ImGui::TableSetupColumn("Model", ImGuiTableColumnFlags_None, 180);
             ImGui::TableSetupColumn("Owner", ImGuiTableColumnFlags_None, 200);
             ImGui::TableSetupColumn("Heading", ImGuiTableColumnFlags_None, 50);
             ImGui::TableSetupColumn("Left", ImGuiTableColumnFlags_None, 30);
@@ -659,7 +746,7 @@ void ImguiWidget::buildInterface() {
 
                 ImGui::SameLine();
                 ImGui::PushID_formatted("Del_%p", (void*)&td);
-                if (ImGui::SmallButton("Del"))
+                if (ImGui::ButtonTooltip(ICON_FA_TRASH_ALT, "Delete row"))
                     // remember the row to delete, but don't delete right now
                     delIter = iter;
                 ImGui::PopID();
@@ -674,34 +761,22 @@ void ImguiWidget::buildInterface() {
             static int iHead = 0;
             static bool bLeft = false;
             ImGui::TableNextRow();
-            ImGui::PushID("New_Tail");
-            ImGui::InputTextWithHint("", "Tail", sTail, IM_ARRAYSIZE(sTail));
-            ImGui::PopID();
+            ImGui::InputTextWithHint("##New_Tail", "Tail", sTail, IM_ARRAYSIZE(sTail));
 
             ImGui::TableNextCell();
-            ImGui::PushID("New_Type");
-            ImGui::InputTextWithHint("", "Type", sType, IM_ARRAYSIZE(sType));
-            ImGui::PopID();
+            ImGui::InputTextWithHint("##New_Type", "Type", sType, IM_ARRAYSIZE(sType));
 
             ImGui::TableNextCell();
-            ImGui::PushID("New_Model");
-            ImGui::InputTextWithHint("", "Model", sModel, IM_ARRAYSIZE(sModel));
-            ImGui::PopID();
+            ImGui::InputTextWithHint("##New_Model", "Model", sModel, IM_ARRAYSIZE(sModel));
 
             ImGui::TableNextCell();
-            ImGui::PushID("New_Owner");
-            ImGui::InputTextWithHint("", "Owner", sOwner, IM_ARRAYSIZE(sOwner));
-            ImGui::PopID();
+            ImGui::InputTextWithHint("##New_Owner", "Owner", sOwner, IM_ARRAYSIZE(sOwner));
 
             ImGui::TableNextCell();
-            ImGui::PushID("New_Heading");
-            ImGui::InputInt("", &iHead);
-            ImGui::PopID();
+            ImGui::InputInt("##New_Heading", &iHead);
 
             ImGui::TableNextCell();
-            ImGui::PushID("New_TurnLeft");
-            ImGui::Checkbox("", &bLeft);
-            ImGui::PopID();
+            ImGui::Checkbox("##New_TurnLeft", &bLeft);
 
             ImGui::TableNextCell();
             // something entered for all texts?
@@ -730,6 +805,7 @@ void ImguiWidget::buildInterface() {
 
             
         }
+        ImGui::PopStyleColor();
         
         ImGui::TreePop();
     }

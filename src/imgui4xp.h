@@ -41,6 +41,12 @@
 // Our Window definition
 #include "imgui_starter_window.h"
 
+// Definitions for OpenFontIcons
+#include "IconsFontAwesome5.h"
+
+/// Is VR currently enabled?
+extern bool vr_is_enabled;
+
 /// Calculate window's standard coordinates
 void CalcWinCoords (int& left, int& top, int& right, int& bottom);
 
