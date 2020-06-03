@@ -14,8 +14,12 @@
 #include "../src/ImgWindow/ImgWindow.h"
 #include <vector>
 
-extern void configureImgWindow();
+// Configure one-time setup like fonts
+void configureImgWindow();
+// Cleanup one-time setup
+void cleanupAfterImgWindow();
 
+// Our own class defining our own UI
 class ImguiWidget: public ImgWindow {
 protected:
     // texture number and size of the image we want to show

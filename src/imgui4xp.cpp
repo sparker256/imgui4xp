@@ -114,6 +114,9 @@ PLUGIN_API void XPluginDisable(void) {
     //  flight loop callback, which won't be delivered any longer.
     //  Delete should be safe here as no rendering is taking place and will no longer.)
     gWndList.clear();
+    
+    // Cleanup the general stuff
+    cleanupAfterImgWindow();
 }
 
 PLUGIN_API int XPluginEnable(void) {
