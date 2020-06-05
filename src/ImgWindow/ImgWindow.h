@@ -111,6 +111,9 @@ public:
     /** Gets the current valid geometry (free, OS, or VR
         If VR, then left=bottom=0 and right=width and top=height*/
     void GetCurrentWindowGeometry (int& left, int& top, int& right, int& bottom) const;
+    
+    /** Set resize limits. If set this way then the window object knows. */
+    void SetWindowResizingLimits (int minW, int minH, int maxW, int maxH);
 
     /** SetVisible() makes the window visible after making the onShow() call.
      * It is also at this time that the window will be relocated onto the VR
@@ -132,6 +135,9 @@ public:
     /** Is Window in VR? */
     bool IsInVR () const { return XPLMWindowIsInVR(mWindowID) != 0; }
     
+    /** Is Window inside the sim? */
+    bool IsInsideSim () const { return !IsPoppedOut() && !IsInVR(); }
+    
     /** Set the positioning mode
      * @see https://developer.x-plane.com/sdk/XPLMDisplay/#XPLMWindowPositioningMode */
     void SetWindowPositioningMode (XPLMWindowPositioningMode inPosMode,
@@ -143,6 +149,36 @@ public:
     
     /** Is Window in front of Z-order? */
     bool IsWindowInFront () const { return XPLMIsWindowInFront(mWindowID) != 0; }
+    
+    /** @brief Define Window drag area, ie. an area in which dragging with the mouse
+     * moves the entire window.
+     * @details Useful for windows without decoration.
+     * For convenience (often you want a strip at the top of the window to be the drag area,
+     * much like a little title bar), coordinates originate in the top-left
+     * corner of the window and go right/down, ie. vertical axis is contrary
+     * to what X-Plane usually uses, but in line with the ImGui system.
+     * Right/Bottom can be set much large than window size just to extend the
+     * drag area to the window's edges. So 0,0,INT_MAX,INT_MAX will surely
+     * make the entire window the drag area.
+     * @param left Left begin of drag area, relative to window's origin
+     * @param top Ditto, top begin
+     * @param right Ditto, right end
+     * @param bottom Ditto, bottom end
+     */
+    void SetWindowDragArea (int left=0, int top=0, int right=INT_MAX, int bottom=INT_MAX);
+    
+    /** Clear the drag area, ie. stop the drag-the-window functionality */
+    void ClearWindowDragArea ();
+    
+    /** Is a drag area defined? Return its sizes if wanted */
+    bool HasWindowDragArea (int* pL = nullptr, int* pT = nullptr,
+                            int* pR = nullptr, int* pB = nullptr) const;
+    
+    /** Is given position inside the defined drag area?
+     * @param x Horizontal position in ImGui coordinates (0,0 in top/left corner)
+     * @param y Vertical position in ImGui coordinates
+     */
+    bool IsInsideWindowDragArea (int x, int y) const;
     
 protected:
     /** mFirstRender can be checked during buildInterface() to see if we're
@@ -311,6 +347,43 @@ private:
     int mRight;
 
     XPLMWindowLayer mPreferredLayer;
+    
+    /** Set if `xplm_WindowDecorationSelfDecoratedResizable`,
+     *  ie. we need to handle resizing ourselves: X-Plane provides
+     *  the "hand" mouse icon but as we catch mouse events X-Plane
+     *  cannot handle resizing. (And passing on mouse events is
+     *  discouraged.
+     *  @see https://developer.x-plane.com/sdk/XPLMHandleMouseClick_f/ */
+    const bool bHandleWndResize;
+    
+    /** Resize limits. There's no way to query XP, so we need to keep track ourself */
+    int minWidth    = 100;
+    int minHeight   = 100;
+    int maxWidth    = INT_MAX;
+    int maxHeight   = INT_MAX;
+
+    /** Window drag area in ImGui coordinates (0,0 is top/left corner) */
+    int dragLeft    = -1;
+    int dragTop     = -1;
+    int dragRight   = -1;       // right > left
+    int dragBottom  = -1;       // bottom > top!
+    
+    /** Last (processed) mouse drag pos while moving/resizing */
+    int lastMouseDragX  = -1;
+    int lastMouseDragY  = -1;
+    
+    /** What are we dragging right now? */
+    struct DragTy {
+        bool wnd    : 1;
+        bool left   : 1;
+        bool top    : 1;
+        bool right  : 1;
+        bool bottom : 1;
+        
+        DragTy () { clear(); }
+        void clear () { wnd = left = top = right = bottom = false; }
+        operator bool() const { return wnd || left || top || right || bottom; }
+    } dragWhat;
 };
 
 #endif // #ifndef IMGWINDOW_H
