@@ -46,13 +46,16 @@ void CalcWinCoords (int& left, int& top, int& right, int& bottom)
 }
 
 /// Creates another window right inside the list
-void AddWindow ()
+void AddWindow (XPLMWindowDecoration decoration = xplm_WindowDecorationRoundRectangle,
+                XPLMWindowLayer layer = xplm_WindowLayerFloatingWindows)
 {
     int left, top, right, bottom;
     CalcWinCoords(left, top, right, bottom);
     // This creates a ImguiWidget object inside the list,
     // which in turn creates the actual window through its constructor
-    gWndList.emplace_back(std::make_shared<ImguiWidget>(left, top, right, bottom));
+    gWndList.emplace_back(std::make_shared<ImguiWidget>(left, top, right, bottom,
+                                                        decoration,
+                                                        layer));
 }
 
 /// Callback function for menu
@@ -80,6 +83,12 @@ void CBMenu (void* /*inMenuRef*/, void* inItemRef)
     {
         AddWindow();
     }
+    // Add another transparent window?
+    else if (inItemRef == (void*)3)
+    {
+        AddWindow(xplm_WindowDecorationSelfDecoratedResizable,
+                  xplm_WindowLayerFlightOverlay);
+    }
 }
 
 
@@ -97,8 +106,9 @@ PLUGIN_API int XPluginStart(char * outName, char * outSig, char * outDesc) {
     int my_slot = XPLMAppendMenuItem(XPLMFindPluginsMenu(), "imgui4xp", NULL, 0);
     XPLMMenuID hMenu = XPLMCreateMenu("imgui4xp", XPLMFindPluginsMenu(), my_slot, CBMenu, NULL);
     XPLMAppendMenuItem(hMenu, "Collate All Windows", (void*)1, 0);
-    XPLMAppendMenuItem(hMenu, "Add Window", (void*)2, 0);
-    
+    XPLMAppendMenuItem(hMenu, "Add Window (solid)", (void*)2, 0);
+    XPLMAppendMenuItem(hMenu, "Add Window (transparent)", (void*)3, 0);
+
     // Initialize random number generator
     std::srand((unsigned)std::time(nullptr));
 
