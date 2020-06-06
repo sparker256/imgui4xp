@@ -10,12 +10,13 @@
 		25253B35247F9FD10061BFC2 /* XPLM.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 25253B34247F9FD10061BFC2 /* XPLM.framework */; };
 		25253B3A247FA01F0061BFC2 /* imgui4xp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 25253B38247FA01F0061BFC2 /* imgui4xp.cpp */; };
 		25253B3B247FA01F0061BFC2 /* imgui_starter_window.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 25253B39247FA01F0061BFC2 /* imgui_starter_window.cpp */; };
-		25253B4C247FA06A0061BFC2 /* ImgWindow.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 25253B44247FA06A0061BFC2 /* ImgWindow.cpp */; };
-		25253B4F247FA06A0061BFC2 /* ImgFontAtlas.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 25253B49247FA06A0061BFC2 /* ImgFontAtlas.cpp */; };
 		25253C39247FA1370061BFC2 /* imgui_widgets.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 25253B69247FA1370061BFC2 /* imgui_widgets.cpp */; };
 		25253C3A247FA1370061BFC2 /* imgui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 25253B72247FA1370061BFC2 /* imgui.cpp */; };
 		25253C6C247FA1370061BFC2 /* imgui_demo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 25253C2B247FA1370061BFC2 /* imgui_demo.cpp */; };
 		25253C6D247FA1370061BFC2 /* imgui_draw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 25253C2C247FA1370061BFC2 /* imgui_draw.cpp */; };
+		25339A002485347500A65BE4 /* imgui_stdlib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 253399F52485347500A65BE4 /* imgui_stdlib.cpp */; };
+		25804FD524886B2B008961CB /* ImgWindow.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 25804FCD24886B2B008961CB /* ImgWindow.cpp */; };
+		25804FD824886B2B008961CB /* ImgFontAtlas.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 25804FD224886B2B008961CB /* ImgFontAtlas.cpp */; };
 		D6A7BDAA16A1DEA200D1426A /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D6A7BDA916A1DEA200D1426A /* OpenGL.framework */; };
 		D6A7BDC116A1DEC000D1426A /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D6A7BDC016A1DEC000D1426A /* CoreFoundation.framework */; };
 /* End PBXBuildFile section */
@@ -24,21 +25,30 @@
 		25253B34247F9FD10061BFC2 /* XPLM.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XPLM.framework; path = src/XPSDK302/Libraries/Mac/XPLM.framework; sourceTree = "<group>"; };
 		25253B38247FA01F0061BFC2 /* imgui4xp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = imgui4xp.cpp; path = src/imgui4xp.cpp; sourceTree = SOURCE_ROOT; };
 		25253B39247FA01F0061BFC2 /* imgui_starter_window.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = imgui_starter_window.cpp; path = src/imgui_starter_window.cpp; sourceTree = SOURCE_ROOT; };
-		25253B44247FA06A0061BFC2 /* ImgWindow.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ImgWindow.cpp; path = src/ImgWindow/ImgWindow.cpp; sourceTree = SOURCE_ROOT; };
-		25253B49247FA06A0061BFC2 /* ImgFontAtlas.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ImgFontAtlas.cpp; path = src/ImgWindow/ImgFontAtlas.cpp; sourceTree = SOURCE_ROOT; };
 		25253B69247FA1370061BFC2 /* imgui_widgets.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = imgui_widgets.cpp; sourceTree = "<group>"; };
 		25253B72247FA1370061BFC2 /* imgui.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = imgui.cpp; sourceTree = "<group>"; };
 		25253C2B247FA1370061BFC2 /* imgui_demo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = imgui_demo.cpp; sourceTree = "<group>"; };
 		25253C2C247FA1370061BFC2 /* imgui_draw.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = imgui_draw.cpp; sourceTree = "<group>"; };
 		25253C6E24805DD10061BFC2 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		253399F32485347500A65BE4 /* imgui_stdlib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = imgui_stdlib.h; sourceTree = "<group>"; };
+		253399F52485347500A65BE4 /* imgui_stdlib.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = imgui_stdlib.cpp; sourceTree = "<group>"; };
 		254ED5922482C48D002C4A62 /* imstb_textedit.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = imstb_textedit.h; sourceTree = "<group>"; };
 		254ED5932482C48D002C4A62 /* imstb_truetype.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = imstb_truetype.h; sourceTree = "<group>"; };
 		254ED5942482C48D002C4A62 /* imstb_rectpack.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = imstb_rectpack.h; sourceTree = "<group>"; };
 		254ED5952482C48D002C4A62 /* imconfig.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = imconfig.h; sourceTree = "<group>"; };
 		254ED5962482C48D002C4A62 /* imgui.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = imgui.h; sourceTree = "<group>"; };
 		254ED5972482C48D002C4A62 /* imgui_internal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = imgui_internal.h; sourceTree = "<group>"; };
-		254ED5982482C4AA002C4A62 /* ImgFontAtlas.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImgFontAtlas.h; sourceTree = "<group>"; };
-		254ED5992482C4AA002C4A62 /* ImgWindow.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImgWindow.h; sourceTree = "<group>"; };
+		255109C7248439ED002235C2 /* stb_image.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = stb_image.h; path = src/stb_image.h; sourceTree = "<group>"; };
+		255109C8248439ED002235C2 /* SystemGL.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SystemGL.h; path = src/SystemGL.h; sourceTree = "<group>"; };
+		255109CA248439ED002235C2 /* CMakeLists.txt */ = {isa = PBXFileReference; lastKnownFileType = text; name = CMakeLists.txt; path = src/CMakeLists.txt; sourceTree = "<group>"; };
+		255109CB248439ED002235C2 /* imgui_starter_window.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = imgui_starter_window.h; path = src/imgui_starter_window.h; sourceTree = "<group>"; };
+		255109CC248439ED002235C2 /* imgui4xp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = imgui4xp.h; path = src/imgui4xp.h; sourceTree = "<group>"; };
+		25804FC424883497008961CB /* IconsFontAwesome5.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = IconsFontAwesome5.h; path = src/IconsFontAwesome5.h; sourceTree = "<group>"; };
+		25804FC624886A62008961CB /* fa-solid-900.inc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.pascal; name = "fa-solid-900.inc"; path = "src/fa-solid-900.inc"; sourceTree = "<group>"; };
+		25804FC824886B2B008961CB /* ImgFontAtlas.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImgFontAtlas.h; sourceTree = "<group>"; };
+		25804FCD24886B2B008961CB /* ImgWindow.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ImgWindow.cpp; sourceTree = "<group>"; };
+		25804FD124886B2B008961CB /* ImgWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImgWindow.h; sourceTree = "<group>"; };
+		25804FD224886B2B008961CB /* ImgFontAtlas.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ImgFontAtlas.cpp; sourceTree = "<group>"; };
 		D607B19909A556E400699BC3 /* imgui4xp.xpl */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = imgui4xp.xpl; sourceTree = BUILT_PRODUCTS_DIR; };
 		D6A7BDA916A1DEA200D1426A /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		D6A7BDC016A1DEC000D1426A /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
@@ -58,21 +68,10 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		25253B3E247FA06A0061BFC2 /* ImgWindow */ = {
-			isa = PBXGroup;
-			children = (
-				254ED5982482C4AA002C4A62 /* ImgFontAtlas.h */,
-				254ED5992482C4AA002C4A62 /* ImgWindow.h */,
-				25253B49247FA06A0061BFC2 /* ImgFontAtlas.cpp */,
-				25253B44247FA06A0061BFC2 /* ImgWindow.cpp */,
-			);
-			name = ImgWindow;
-			path = src/ImgWindow;
-			sourceTree = "<group>";
-		};
 		25253B50247FA1370061BFC2 /* imgui */ = {
 			isa = PBXGroup;
 			children = (
+				253399EA2485347500A65BE4 /* misc */,
 				254ED5952482C48D002C4A62 /* imconfig.h */,
 				254ED5972482C48D002C4A62 /* imgui_internal.h */,
 				254ED5962482C48D002C4A62 /* imgui.h */,
@@ -88,13 +87,49 @@
 			path = src/imgui;
 			sourceTree = "<group>";
 		};
+		253399EA2485347500A65BE4 /* misc */ = {
+			isa = PBXGroup;
+			children = (
+				253399F22485347500A65BE4 /* cpp */,
+			);
+			path = misc;
+			sourceTree = "<group>";
+		};
+		253399F22485347500A65BE4 /* cpp */ = {
+			isa = PBXGroup;
+			children = (
+				253399F32485347500A65BE4 /* imgui_stdlib.h */,
+				253399F52485347500A65BE4 /* imgui_stdlib.cpp */,
+			);
+			path = cpp;
+			sourceTree = "<group>";
+		};
+		25804FC724886B2B008961CB /* ImgWindow */ = {
+			isa = PBXGroup;
+			children = (
+				25804FC824886B2B008961CB /* ImgFontAtlas.h */,
+				25804FCD24886B2B008961CB /* ImgWindow.cpp */,
+				25804FD124886B2B008961CB /* ImgWindow.h */,
+				25804FD224886B2B008961CB /* ImgFontAtlas.cpp */,
+			);
+			name = ImgWindow;
+			path = src/ImgWindow;
+			sourceTree = "<group>";
+		};
 		AC4E46B809C2E0B3006B7E1B /* Source */ = {
 			isa = PBXGroup;
 			children = (
-				25253B39247FA01F0061BFC2 /* imgui_starter_window.cpp */,
-				25253B38247FA01F0061BFC2 /* imgui4xp.cpp */,
+				25804FC724886B2B008961CB /* ImgWindow */,
 				25253B50247FA1370061BFC2 /* imgui */,
-				25253B3E247FA06A0061BFC2 /* ImgWindow */,
+				25804FC624886A62008961CB /* fa-solid-900.inc */,
+				255109CA248439ED002235C2 /* CMakeLists.txt */,
+				25804FC424883497008961CB /* IconsFontAwesome5.h */,
+				25253B39247FA01F0061BFC2 /* imgui_starter_window.cpp */,
+				255109CB248439ED002235C2 /* imgui_starter_window.h */,
+				25253B38247FA01F0061BFC2 /* imgui4xp.cpp */,
+				255109CC248439ED002235C2 /* imgui4xp.h */,
+				255109C7248439ED002235C2 /* stb_image.h */,
+				255109C8248439ED002235C2 /* SystemGL.h */,
 			);
 			name = Source;
 			sourceTree = "<group>";
@@ -152,7 +187,7 @@
 		D607B16109A5563100699BC3 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 1140;
+				LastUpgradeCheck = 1150;
 			};
 			buildConfigurationList = D607B16209A5563100699BC3 /* Build configuration list for PBXProject "imgui4xp" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -180,11 +215,12 @@
 				25253C6C247FA1370061BFC2 /* imgui_demo.cpp in Sources */,
 				25253C6D247FA1370061BFC2 /* imgui_draw.cpp in Sources */,
 				25253B3A247FA01F0061BFC2 /* imgui4xp.cpp in Sources */,
+				25804FD524886B2B008961CB /* ImgWindow.cpp in Sources */,
 				25253B3B247FA01F0061BFC2 /* imgui_starter_window.cpp in Sources */,
 				25253C39247FA1370061BFC2 /* imgui_widgets.cpp in Sources */,
-				25253B4C247FA06A0061BFC2 /* ImgWindow.cpp in Sources */,
-				25253B4F247FA06A0061BFC2 /* ImgFontAtlas.cpp in Sources */,
 				25253C3A247FA1370061BFC2 /* imgui.cpp in Sources */,
+				25804FD824886B2B008961CB /* ImgFontAtlas.cpp in Sources */,
+				25339A002485347500A65BE4 /* imgui_stdlib.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -221,6 +257,7 @@
 				DYLIB_COMPATIBILITY_VERSION = "";
 				DYLIB_CURRENT_VERSION = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
 				EXECUTABLE_EXTENSION = xpl;
 				FRAMEWORK_SEARCH_PATHS = "$(XPSDK_ROOT)/Libraries/Mac";
 				GCC_C_LANGUAGE_STANDARD = c11;
@@ -247,6 +284,8 @@
 				HEADER_SEARCH_PATHS = (
 					src,
 					src/imgui,
+					src/imgui/misc/cpp,
+					src/ImgWindow,
 					"$(XPSDK_ROOT)/CHeaders/**",
 					"$(HEADER_SEARCH_PATHS)",
 				);
@@ -329,6 +368,8 @@
 				HEADER_SEARCH_PATHS = (
 					src,
 					src/imgui,
+					src/imgui/misc/cpp,
+					src/ImgWindow,
 					"$(XPSDK_ROOT)/CHeaders/**",
 					"$(HEADER_SEARCH_PATHS)",
 				);

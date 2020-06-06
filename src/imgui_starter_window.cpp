@@ -8,43 +8,118 @@
  *
  *
  */
-#include "XPLMDisplay.h"
-#include "imgui_starter_window.h"
-#include "../src/imgui/imgui.h"
-#include "../src/ImgWindow/ImgWindow.h"
-#include "../src/ImgWindow/ImgFontAtlas.h"
 
-#include <vector>
-#include <memory>
-#include <stdexcept>
-#include <stdint.h>     // uint64_t
-#include <cstring> // memcpy
-#include <string.h>
-#include <string>
+// All our headers combined
+#include "imgui4xp.h"
 
+// Image processing (for reading "imgui_demo.jpg"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-std::vector<GLuint> textureIDs;
+//
+// MARK: ImGui extension: formatted IDs
+//
 
-void configureImgWindow();
+namespace ImGui {
 
-int count;
-int choice = 1;
-float win_width = 0;
-float win_height = 0;
-float cursor_posy = 0;
-ImVec2 text_size;
-float center;
-bool makeRed = false;
+/// @brief Helper for creating unique IDs
+/// @details Required when creating many widgets in a loop, e.g. in a table
+IMGUI_API void PushID_formatted(const char* format, ...)    IM_FMTARGS(1);
+
+IMGUI_API void PushID_formatted(const char* format, ...)
+{
+    // format the variable string
+    va_list args;
+    char sz[500];
+    va_start (args, format);
+    vsnprintf(sz, sizeof(sz), format, args);
+    va_end (args);
+    // Call the actual push function
+    PushID(sz);
+}
+
+/// @brief Button with on-hover popup helper text
+/// @param label Text on Button
+/// @param tip Tooltip text when hovering over the button (or NULL of none)
+/// @param colFg Foreground/text color (optional, otherwise no change)
+/// @param colBg Background color (optional, otherwise no change)
+/// @param size button size, 0 for either axis means: auto size
+IMGUI_API bool ButtonTooltip(const char* label,
+                             const char* tip = nullptr,
+                             ImU32 colFg = IM_COL32(1,1,1,0),
+                             ImU32 colBg = IM_COL32(1,1,1,0),
+                             const ImVec2& size = ImVec2(0,0))
+{
+    // Setup colors
+    if (colFg != IM_COL32(1,1,1,0))
+        ImGui::PushStyleColor(ImGuiCol_Text, colFg);
+    if (colBg != IM_COL32(1,1,1,0))
+        ImGui::PushStyleColor(ImGuiCol_Button, colBg);
+
+    // do the button
+    bool b = ImGui::Button(label, size);
+    
+    // restore previous colors
+    if (colBg != IM_COL32(1,1,1,0))
+        ImGui::PopStyleColor();
+    if (colFg != IM_COL32(1,1,1,0))
+        ImGui::PopStyleColor();
+
+    // do the tooltip
+    if (tip && ImGui::IsItemHovered())
+        ImGui::SetTooltip("%s", tip);
+    
+    // return if button pressed
+    return b;
+}
+
+}
+
+//
+// MARK: Global data and functions
+//
+
+// The raw TTF data of OpenFontIcons has been generated into the following file
+#include "fa-solid-900.inc"
+
+// Initial data for the example table
+ImguiWidget::tableDataListTy TABLE_CONTENT = {
+    {"6533","MH-65C Dolphin","AS65","United States Coast Guard",0.0f,false},
+    {"N493TR","SR22T","S22T","Aircraft Guaranty Corp Trustee",0.0f,true},
+    {"N77FK","G-IV","GLF4","Wilmington Trust Co Trustee",0.0f,true},
+    {"N911XB","EC135T1","EC35","Air Med Services Llc",0.0f,false},
+    {"OY-JRJ","Avions de Transport Regional ATR 42 310","AT43","Danish Air Transport",0.0f,false},
+    {"CB-8001","C-17A Globemaster III","C17","Indian Air Force",0.0f,false},
+    {"G-DVIP","AGUSTA A109E","A109","Castle Air",0.0f,true},
+    {"OE-KSD","91 D Safir","SB91","Patrick Lohr",0.0f,false},
+    {"D-ITOR","Citation CJ2+","C25A","Hormann Kg",0.0f,false},
+    {"N544XL","Citation Excel","C56X","High Tec Industries Services Inc",0.0f,true},
+    {"N368MS","R44 II","R44","Silvestri Mark J",0.0f,true},
+    {"N451QX","DHC-8-402","DH8D","Horizon Air Industries Inc",0.0f,true},
+    {"N1125J","1125 WESTWIND ASTRA","ASTR","Djb Air Llc",0.0f,false},
+    {"N250SH","AS 350 B2","AS50","Sundance Helicopters Inc",0.0f,true},
+};
+
+// To show how global values synch between window instances we declare here 2 global variables
+// Values in node "Drag Controls"
+float       g_dragVal1  = 0.0f;
+int         g_dragVal2  = 0;
+
 
 // Trying to find a way to get a image to be displayed
-ImTextureID Imimage_id;
-int image_id;
-std::string image_name = "./Resources/plugins/imgui4xp/imgui_demo.jpg";
+const std::string IMAGE_NAME = "./Resources/plugins/imgui4xp/imgui_demo.jpg";
 
-int loadImage(const std::string&fileName) {
-    int imgWidth, imgHeight, nComps;
+// Font size, also roughly defines height of one line
+constexpr float FONT_SIZE = 13.0f;
+
+/// Uses "stb_image" library to load a picture into memory
+/// @param fileName Path to image file
+/// @param[out] imgWidth Image width in pixel
+/// @param[out] imgHeight Image height in pixel
+/// @return texture id
+/// @exception std::runtime_error if image not found
+int loadImage(const std::string& fileName, int& imgWidth, int& imgHeight) {
+    int nComps;
     uint8_t *data = stbi_load(fileName.c_str(), &imgWidth, &imgHeight, &nComps, sizeof(uint32_t));
 
     if (!data) {
@@ -62,20 +137,33 @@ int loadImage(const std::string&fileName) {
             GL_RGBA, GL_UNSIGNED_BYTE, data);
 
     stbi_image_free(data);
-    textureIDs.push_back(id);
 
     return id;
 }
 
-int try2load_image() {
+/// Wrapper around loadImage() capturing the possible exception
+/// @param fileName Path to image file
+/// @param[out] imgSize Image size in pixel
+/// @return texture id for loaded image, or 0 in case of failure
+int try2load_image(const std::string& fileName, ImVec2& imgSize) {
     try {
-        image_id = loadImage(image_name);
-        return 1;
+        int imgWidth=0, imgHeight=0;
+        int ret = loadImage(fileName, imgWidth, imgHeight);
+        imgSize.x = float(imgWidth);
+        imgSize.y = float(imgHeight);
+        return ret;
     } catch (const std::exception &e) {
-        std::string err = std::string("imgui4xp Error: ") + e.what() + " in " + image_name + "\n";
+        std::string err = std::string("imgui4xp Error: ") + e.what() + " in " + fileName + "\n";
         XPLMDebugString(err.c_str());
         return 0;
     }
+}
+
+// Helper: Turns a string upper case
+inline std::string& toupper (std::string& s)
+{
+    std::for_each(s.begin(), s.end(), [](char& c) { c = toupper(c); });
+    return s;
 }
 
 void configureImgWindow()
@@ -103,56 +191,221 @@ void configureImgWindow()
 
   // you can use any of these fonts that are provided with X-Plane or find you own.
   // Currently you can only load one font and not sure if this might change in the future.
-  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/DejaVuSans.ttf", 13.0f);
-  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", 13.0f);
-  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Inconsolata.ttf", 13.0f);
-  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/ProFontWindows", 13.0f);
-  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Roboto-Bold.ttf", 13.0f);
-  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/RobotoCondensed-Regular.ttf", 13.0f);
-  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Roboto-Light.ttf", 13.0f);
-  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Roboto-Regular.ttf", 13.0f);
-  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/tahomabd.ttf", 13.0f);
+  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/DejaVuSans.ttf", FONT_SIZE);
+  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", FONT_SIZE);
+  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Inconsolata.ttf", FONT_SIZE);
+  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/ProFontWindows", FONT_SIZE);
+  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Roboto-Bold.ttf", FONT_SIZE);
+  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/RobotoCondensed-Regular.ttf", FONT_SIZE);
+  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Roboto-Light.ttf", FONT_SIZE);
+  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Roboto-Regular.ttf", FONT_SIZE);
+  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/tahomabd.ttf", FONT_SIZE);
 
-  ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", 13.0f);
+    ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", FONT_SIZE);
+    
+    // Now we merge some icons from the OpenFontsIcons font into the above font
+    // (see `imgui/docs/FONTS.txt`)
+    ImFontConfig config;
+    config.MergeMode = true;
+    
+    // We only read very selectively the individual glyphs we are actually using
+    // to safe on texture space
+    static ImVector<ImWchar> icon_ranges;
+    ImFontGlyphRangesBuilder builder;
+    // Add all icons that are actually used (they concatenate into one string)
+    builder.AddText(ICON_FA_TRASH_ALT ICON_FA_SEARCH
+                    ICON_FA_EXTERNAL_LINK_SQUARE_ALT
+                    ICON_FA_WINDOW_MAXIMIZE ICON_FA_WINDOW_MINIMIZE
+                    ICON_FA_WINDOW_RESTORE ICON_FA_WINDOW_CLOSE);
+    builder.BuildRanges(&icon_ranges);
+
+    // Merge the icon font with the text font
+    ImgWindow::sFontAtlas->AddFontFromMemoryCompressedTTF(fa_solid_900_compressed_data,
+                                                          fa_solid_900_compressed_size,
+                                                          FONT_SIZE,
+                                                          &config,
+                                                          icon_ranges.Data);
+}
+
+// Undo what we did in configureImgWindow()
+void cleanupAfterImgWindow()
+{
+    // We just destroy the font atlas
+    ImgWindow::sFontAtlas.reset();
+}
+
+//
+// MARK: ImguiWidget (our example implementation of ImguiWindow)
+//
+
+// texture number and size of the image we want to show
+// (static, because we want to load the image into a texture just once)
+int      ImguiWidget::image_id = 0;
+ImVec2   ImguiWidget::image_size;
+
+// Counter for the number of windows opened
+int      ImguiWidget::num_win = 0;
+
+// Does any text contain the characters in s?
+bool ImguiWidget::tableDataTy::contains (const std::string& s) const
+{
+    // try finding s in all our texts
+    for (const std::string& t: {reg, model, typecode, owner} )
+    {
+        std::string l = t;
+        if (toupper(l).find(s) != std::string::npos)
+            return true;
+    }
+    
+    // not found
+    return false;
 }
 
 
-ImguiWidget::ImguiWidget(int left, int top, int right, int bot, int decoration):
-    ImgWindow(left, top, right, bot, decoration)
+ImguiWidget::ImguiWidget(int left, int top, int right, int bot,
+                         XPLMWindowDecoration decoration,
+                         XPLMWindowLayer layer) :
+    ImgWindow(left, top, right, bot, decoration, layer),
+    myWinNum(++num_win)             // assign a unique window number
 {
-    SetWindowTitle("Imgui v1.74 for X-Plane  by William Good");
+    // Disable reading/writing of "imgui.ini"
+    ImGuiIO& io = ImGui::GetIO();
+    io.IniFilename = nullptr;
+    
+    // We take the parameter combination "SelfDecorateResizeable" + "LayerFlightOverlay"
+    // to mean: simulate HUD
+    if (decoration  == xplm_WindowDecorationSelfDecoratedResizable &&
+        layer       == xplm_WindowLayerFlightOverlay)
+    {
+        // let's set a fairly transparent, barely visible background
+        ImGuiStyle& style = ImGui::GetStyle();
+        style.Colors[ImGuiCol_WindowBg] = ImColor(0, 0, 0, 0x10);
+        // There's no window decoration, so to move the window we need to
+        // activate a "drag area", here a small strip (roughly double text height)
+        // at the top of the window, ie. the window can be moved by
+        // dragging a spot near the window's top
+        SetWindowDragArea(0, 5, INT_MAX, 5 + 2*int(FONT_SIZE));
+    }
+
+    // Create a flight loop id, but don't schedule it yet
+    XPLMCreateFlightLoop_t flDef = {
+        sizeof(flDef),                              // structSize
+        xplm_FlightLoop_Phase_BeforeFlightModel,    // phase
+        cbFlightLoop,                               // callbackFunc
+        (void*)this,                                // refcon
+    };
+    flId = XPLMCreateFlightLoop(&flDef);
+    
+    // Define our own window title
+    SetWindowTitle("Imgui v" IMGUI_VERSION " for X-Plane  by William Good");
+    SetWindowResizingLimits(100, 100, 1024, 1024);
     SetVisible(true);
-    try2load_image();
+    
+    // Initialize the list content
+    listContent = {
+        "1st line", "2nd line", "3rd line", "4th line", "5th line",
+        "6th line", "7th line", "8th line", "9th line", "10th line"
+    };
+    
+    // if not yet loaded: try loading an image for display
+    if (!image_id)
+        image_id = try2load_image(IMAGE_NAME, image_size);
+    
+    // copy initial table example data, init with random heading
+    tableList = TABLE_CONTENT;
+    for (tableDataTy& td: tableList)
+        td.heading = float(std::rand() % 3600) / 10.0f;
+}
+
+ImguiWidget::~ImguiWidget()
+{
+    if (flId)
+        XPLMDestroyFlightLoop(flId);
 }
 
 void ImguiWidget::buildInterface() {
 
-    win_width = ImGui::GetWindowWidth();
-    win_height = ImGui::GetWindowHeight();
+    float win_width = ImGui::GetWindowWidth();
+    float win_height = ImGui::GetWindowHeight();
 
     ImGui::TextUnformatted("Hello, World!");
     
+    // If we are a transparent HUD-like window then we draw 3 lines that look
+    // a bit like a head...so people know where to drag the window to move it
+    if (HasWindowDragArea()) {
+        ImGui::SameLine();
+        ImDrawList* draw_list = ImGui::GetWindowDrawList();
+        ImVec2 pos_start = ImGui::GetCursorPos();
+        float x_end = ImGui::GetWindowContentRegionWidth() - 75;
+        for (int i = 0; i < 3; i++) {
+            draw_list->AddLine(pos_start, {x_end, pos_start.y}, IM_COL32(0xa0, 0xa0, 0xa0, 255), 1.0f);
+            pos_start.y += 5;
+        }
+    }
+    
     // Button with fixed width 30 and standard height
     // to pop out the window in an OS window
-    if (!IsPoppedOut()) {
-        // Same line, but right-alinged
-        static float btnWidth = ImGui::CalcTextSize("Pop out").x + 5;
-        ImGui::SameLine(ImGui::GetWindowContentRegionWidth()-btnWidth);
-        if (ImGui::Button("Pop out", ImVec2(btnWidth,0)))
-            SetWindowPositioningMode(xplm_WindowPopOut);
+    static float btnWidth = ImGui::CalcTextSize(ICON_FA_WINDOW_MAXIMIZE).x + 5;
+    const bool bBtnPopOut = !IsPoppedOut();
+    const bool bBtnPopIn  = IsPoppedOut() || IsInVR();
+    const bool bBtnVR     = vr_is_enabled && !IsInVR();
+    int numBtn = bBtnPopOut + bBtnPopIn + bBtnVR;
+    if (numBtn > 0) {
+        // Setup colors for window sizing buttons
+        ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetColorU32(ImGuiCol_ScrollbarGrabActive)); // dark gray
+        ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32_BLACK_TRANS);                           // transparent
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetColorU32(ImGuiCol_ScrollbarGrab)); // lighter gray
+
+        if (bBtnVR) {
+            // Same line, but right-alinged
+            ImGui::SameLine(ImGui::GetWindowContentRegionWidth() - (numBtn * btnWidth));
+            if (ImGui::ButtonTooltip(ICON_FA_EXTERNAL_LINK_SQUARE_ALT, "Move into VR"))
+                nextWinPosMode = xplm_WindowVR;
+            --numBtn;
+        }
+        if (bBtnPopIn) {
+            // Same line, but right-alinged
+            ImGui::SameLine(ImGui::GetWindowContentRegionWidth() - (numBtn * btnWidth));
+            if (ImGui::ButtonTooltip(ICON_FA_WINDOW_RESTORE, "Move back into X-Plane"))
+                nextWinPosMode = xplm_WindowPositionFree;
+            --numBtn;
+        }
+        if (bBtnPopOut) {
+            // Same line, but right-alinged
+            ImGui::SameLine(ImGui::GetWindowContentRegionWidth() - (numBtn * btnWidth));
+            if (ImGui::ButtonTooltip(ICON_FA_WINDOW_MAXIMIZE, "Pop out into separate window"))
+                nextWinPosMode = xplm_WindowPopOut;
+            --numBtn;
+        }
+
+        // Restore colors
+        ImGui::PopStyleColor(3);
+
+        // Window mode should be set outside drawing calls to avoid crashes
+        if (nextWinPosMode >= 0)
+            XPLMScheduleFlightLoop(flId, -1.0, 1);
     }
 
+    // Grouping a few lines...
+    ImGui::BeginGroup();
     ImGui::Text("Window size: width = %f  height = %f", win_width, win_height);
-
+    
     ImGui::TextUnformatted("Two Widgets");
-
     ImGui::SameLine();
     ImGui::TextUnformatted("One Line.");
+    ImGui::EndGroup();
+    
+    // ...to put them side-by-side with another group of lines
+    ImGui::SameLine(0.0f, 20.0f);
+    ImGui::BeginGroup();
+    ImGui::Text("Window #%d", myWinNum);
+    ImGui::Text("X-Plane Window Id: %p", GetWindowId());
+    ImGui::EndGroup();
 
     if (ImGui::TreeNode("Styling Widgets")) {
         const char *text = "Centered Text";
-        text_size = ImGui::CalcTextSize(text, NULL, true);
-        center = win_width / 2 - text_size[0] / 2;
+        ImVec2 text_size = ImGui::CalcTextSize(text, NULL, true);
+        float center = win_width / 2 - text_size[0] / 2;
         ImGui::SetCursorPosX(center);
         ImGui::TextUnformatted(text);
         ImVec4 col = ImColor(43, 101, 236, 255);
@@ -185,16 +438,16 @@ void ImguiWidget::buildInterface() {
             makeRed = !makeRed;
         }
 
-        if (ImGui::RadioButton("Choice 1", choice == 1)) {
-            choice = 1;
+        if (ImGui::RadioButton("Choice 1", radioChoice == 1)) {
+            radioChoice = 1;
         }
 
-        if (ImGui::RadioButton("Choice 2", choice == 2)) {
-            choice = 2;
+        if (ImGui::RadioButton("Choice 2", radioChoice == 2)) {
+            radioChoice = 2;
         }
 
-        if (ImGui::RadioButton("Choice 3", choice == 3)) {
-            choice = 3;
+        if (ImGui::RadioButton("Choice 3", radioChoice == 3)) {
+            radioChoice = 3;
         }
 
         ImGui::TreePop();
@@ -217,43 +470,33 @@ void ImguiWidget::buildInterface() {
     }
 
     if (ImGui::TreeNode("Sliders")) {
-        static float sliderVal;
-        ImGui::SliderFloat("Slider Caption", &sliderVal, 0, 100000, "Value %.2f");
-
-        static float sliderVal2;
-        ImGui::SliderFloat("Power Slider", &sliderVal2, 0, 100000, "Value %.2f", 3.0);
-
-        static int sliderVal3;
-        ImGui::SliderInt("Int Slider", &sliderVal3, 0, 100000, "Value %.0f");
-
-        static float angle;
-        ImGui::SliderAngle("Angle Slider", &angle, -180, 180);
-
+        ImGui::SliderFloat("Slider [0..1000]", &sliderVal1, 0, 1000, "Value %.2f");
+        ImGui::SliderFloat("Power Slider [0..100000]", &sliderVal2, 0, 100000, "Value %.2f", 3.0);
+        ImGui::SliderInt("Int Slider [0..100]", &sliderVal3, 0, 100, "Value %.0f");
+        ImGui::SliderAngle("Angle Slider", &sliderAngle, -180, 180);
 
         ImGui::TreePop();
     }
 
     if (ImGui::TreeNode("ComboBox")) {
         static const char * choices[] = {"Choice 1", "Choice 2", "Choice 3"};
-        if (ImGui::BeginCombo("Combo Box", choices[choice])) {
-            int i;
-            for (i = 0; i < 3; i++) {
-                if (ImGui::Selectable(choices[i], choice == i)) {
-                    choice = i;
-                }
+        if (ImGui::BeginCombo("Combo Box", choices[choice1])) {
+            for (int i = 0; i < 3; i++) {
+                if (ImGui::Selectable(choices[i], choice1 == i))
+                    choice1 = i;
             }
             ImGui::EndCombo();
         }
 
         if (ImGui::BeginCombo("Combo Box 2", "", ImGuiComboFlags_NoPreview)) {
-            if (ImGui::Selectable("Choice A", choice == 1)) {
-                choice = 1;
+            if (ImGui::Selectable("Choice A", choice2 == 1)) {
+                choice2 = 1;
             }
-            if (ImGui::Selectable("Choice B", choice == 2)) {
-                choice = 2;
+            if (ImGui::Selectable("Choice B", choice2 == 2)) {
+                choice2 = 2;
             }
-            if (ImGui::Selectable("Choice C", choice == 3)) {
-                choice = 3;
+            if (ImGui::Selectable("Choice C", choice2 == 3)) {
+                choice2 = 3;
             }
             ImGui::EndCombo();
         }
@@ -261,11 +504,10 @@ void ImguiWidget::buildInterface() {
         ImGui::TreePop();
     }
 
-    if (ImGui::TreeNode("Drag Controls")) {
-        static float sliderVal;
-        ImGui::DragFloat("Drag Float", &sliderVal, 1.0, 0, 1000, "%.2f", 1.0);
-        static int sliderVal2;
-        ImGui::DragInt("Drag Int", &sliderVal2, 1.0, 0, 1000, "%.2f");
+    if (ImGui::TreeNode("Drag Controls / Global Variables")) {
+        ImGui::DragFloat("Drag Float", &g_dragVal1, 1.0, 0, 1000, "%.2f", 1.0);
+        ImGui::DragInt("Drag Int", &g_dragVal2, 1.0, 0, 1000, "%.2f");
+        ImGui::TextUnformatted("Note: These values are global and synched between windows.");
         ImGui::TreePop();
     }
 
@@ -278,14 +520,10 @@ void ImguiWidget::buildInterface() {
     }
 
     if (ImGui::TreeNode("Input")) {
-        static char text[255];
-        ImGui::InputText("Text", text, IM_ARRAYSIZE(text));
-
-        static int i0 = 123;
-        ImGui::InputInt("Input int", &i0);
-
-        static int i02 = 1234;
-        ImGui::InputInt("Input int2", &i02, 10);
+        // Uses stdlib wrapper implemented in imgui/misc/cpp/imgui_stdlib.c/.h
+        ImGui::InputText ("Text", &userText);
+        ImGui::InputInt("Input int", &userI1);
+        ImGui::InputInt("Input int2", &userI2, 10);
 
         ImGui::TreePop();
     }
@@ -343,14 +581,13 @@ void ImguiWidget::buildInterface() {
     if (ImGui::TreeNode("Images")) {
         ImGui::Text("image_id = %d", image_id);
         // Draw a previously loaded image
-        // ImGui::Image((void*)(intptr_t)my_opengl_texture, ImVec2(my_image_width, my_image_height));
-        ImGui::Image((void*)(intptr_t)image_id, ImVec2(800, 450));
-        // Prameters: image id returned by float_wnd_load_image, diplay width, display height
+        if (image_id)
+            ImGui::Image((void*)(intptr_t)image_id, image_size);
 
         ImGui::TreePop();
     }
 
-    if (ImGui::TreeNode("Misc")) {
+    if (ImGui::TreeNodeEx("Misc", ImGuiTreeNodeFlags_Selected)) {
         // Create a bullet style enumeration
         ImGui::Bullet(); ImGui::TextUnformatted("Bullet");
         ImGui::Bullet(); ImGui::TextUnformatted("Style");
@@ -376,25 +613,10 @@ void ImguiWidget::buildInterface() {
 
     // Let#s play with lists
     if (ImGui::TreeNode("List")) {
-
-        static int selItem = 0;
-        ImDrawList* dl = ImGui::GetWindowDrawList();
-        const ImVec2 posListStart = ImGui::GetCursorScreenPos();
-        if (ImGui::ListBoxHeader("A List box", 10, 5))
-        {
-            for (int i = 0; i < 10; ++i) {
-                ImVec2 pos = ImGui::GetCursorScreenPos();
-                if (selItem == i)
-                    ImGui::TextColored(ImVec4(0,192,255,255),"Line: %d", i);
-                else
-                    ImGui::Value("Line", i);
-                if (ImGui::IsItemClicked())
-                    selItem = i;
-                if (pos.y > posListStart.y && ImGui::IsItemVisible())
-                    dl->AddLine(pos, ImVec2(pos.x + ImGui::GetColumnWidth(), pos.y), ImGui::GetColorU32(ImGuiCol_ScrollbarGrab));
-            }
-            ImGui::ListBoxFooter();
-        }
+        ImGui::ListBox ("A simple List Box", &listSelItem,
+                        listContent.data(),
+                        int(listContent.size()),
+                        int(listContent.size())/2);  // half as high as number of list elements to show how vertical scrolling works
         ImGui::TreePop();
     }
 
@@ -421,10 +643,208 @@ void ImguiWidget::buildInterface() {
 
     }
 
+    // Tables are brand-new to ImGui, as of 1.74 it is alpha status
+    if (ImGui::TreeNode("Table")) {
+        
+        // -- Filter by text search --
+        
+        static char sFilter[100];
+        // Note: "##SearchText" creates a unique id, but due to ## it doesn't create a label"
+        if (ImGui::InputTextWithHint("##SearchText", ICON_FA_SEARCH " Search", sFilter, IM_ARRAYSIZE(sFilter),
+                             ImGuiInputTextFlags_CharsUppercase |
+                             ImGuiInputTextFlags_CharsNoBlank))
+        {
+            // determine if an item is to be shown
+            for (tableDataTy& td: tableList) {
+                if (sFilter[0])         // some filter defined
+                    td.filtered = td.contains(sFilter);
+                else                    // no filter defined -> display all
+                    td.filtered = true;
+            }
+        }
+        
+        // -- The table --
+        
+        // Alternating rows slighly grayish
+        ImGui::PushStyleColor(ImGuiCol_TableRowBgAlt, IM_COL32(0x1a, 0x1a, 0x1a, 0xff));
+        // A table with pretty flexible columns, first column frozen, fully scrollable
+        if (ImGui::BeginTable("Table", 7,
+                              ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable |
+                              ImGuiTableFlags_Hideable | ImGuiTableFlags_Sortable |
+                              ImGuiTableFlags_RowBg |
+                              ImGuiTableFlags_SizingPolicyFixedX | ImGuiTableFlags_Scroll |
+                              ImGuiTableFlags_ScrollFreezeTopRow |
+                              ImGuiTableFlags_ScrollFreezeLeftColumn))
+        {
+            // Prepare our data: We fake some movement by turning the planes (1° per second)
+            const ImGuiIO& io = ImGui::GetIO();
+            for (tableDataTy& td: tableList) {
+                if (td.turnsLeft) {
+                    if ((td.heading -= io.DeltaTime) <    0.0f) td.heading += 360.0;
+                } else {
+                    if ((td.heading += io.DeltaTime) >= 360.0f) td.heading -= 360.0;
+                }
+            }
+            
+            // Set up the columns of the table
+            ImGui::TableSetupColumn("Tail", ImGuiTableColumnFlags_DefaultSort, 60);
+            ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_None, 50);
+            ImGui::TableSetupColumn("Model", ImGuiTableColumnFlags_None, 180);
+            ImGui::TableSetupColumn("Owner", ImGuiTableColumnFlags_None, 200);
+            ImGui::TableSetupColumn("Heading", ImGuiTableColumnFlags_None, 50);
+            ImGui::TableSetupColumn("Left", ImGuiTableColumnFlags_None, 30);
+            ImGui::TableSetupColumn("Actions", ImGuiTableColumnFlags_NoSort, 150);
+            ImGui::TableAutoHeaders();
+            
+            // Sort the data if and as needed
+            const ImGuiTableSortSpecs* sortSpecs = ImGui::TableGetSortSpecs();
+            if (sortSpecs && sortSpecs->SpecsChanged &&
+                sortSpecs->Specs && sortSpecs->SpecsCount >= 1 &&
+                tableList.size() > 1)
+            {
+                // We sort only by one column, no multi-column sort yet
+                const ImGuiTableSortSpecsColumn& colSpec = *(sortSpecs->Specs);
+                // We directly sort the tableList
+                std::sort(tableList.begin(), tableList.end(),
+                          [colSpec](const tableDataTy& a, const tableDataTy& b)
+                {
+                    int cmp =       // less than 0 if a < b
+                    colSpec.ColumnIndex == 0 ? a.reg.compare(b.reg)             :
+                    colSpec.ColumnIndex == 1 ? a.typecode.compare(b.typecode)   :
+                    colSpec.ColumnIndex == 2 ? a.model.compare(b.model)         :
+                    colSpec.ColumnIndex == 3 ? a.owner.compare(b.owner)         :
+                    colSpec.ColumnIndex == 4 ? int(a.heading - b.heading)       :
+                    colSpec.ColumnIndex == 5 ? a.turnsLeft - b.turnsLeft        : 0;
+                    
+                    return colSpec.SortDirection == ImGuiSortDirection_Ascending ?
+                    cmp < 0 : cmp > 0;
+                });
+            }
+
+            // Here we remember which row to delete if any
+            tableDataListTy::iterator delIter = tableList.end();
+
+            // Add rows to the table
+            for (auto iter = tableList.begin(); iter != tableList.end(); ++iter)
+            {
+                tableDataTy& td = *iter;
+                
+                // Skip rows which are not currently filtered
+                if (!td.filtered) continue;
+                
+                ImGui::TableNextRow();
+                ImGui::TextUnformatted(td.reg.c_str());
+                ImGui::TableNextCell();
+                ImGui::TextUnformatted(td.typecode.c_str());
+                ImGui::TableNextCell();
+                ImGui::TextUnformatted(td.model.c_str());
+                ImGui::TableNextCell();
+                ImGui::TextUnformatted(td.owner.c_str());
+                ImGui::TableNextCell();
+                // Heading: left = red / right = green
+                ImGui::TextColored(td.turnsLeft ? ImColor(255, 0, 0) : ImColor(0, 255, 0),
+                                   "%03.0f", td.heading);
+                // Checkbox
+                ImGui::TableNextCell();
+                ImGui::PushID_formatted("Left_%p", (void*)&td); // action widget require a unique id per table row (otherwise only the first line's widget work)
+                ImGui::Checkbox("", &td.turnsLeft);
+                ImGui::PopID();
+                
+                // Actions: A few buttons
+                ImGui::TableNextCell();
+
+                ImGui::PushID_formatted("N_%p", (void*)&td);   // North
+                if (ImGui::ArrowButton("", ImGuiDir_Up))
+                    td.heading = 0.0f;
+                ImGui::PopID();
+
+                ImGui::SameLine();
+                ImGui::PushID_formatted("E_%p", (void*)&td);   // East
+                if (ImGui::ArrowButton("", ImGuiDir_Right))
+                    td.heading = 90.0f;
+                ImGui::PopID();
+
+                ImGui::SameLine();
+                ImGui::PushID_formatted("S_%p", (void*)&td);   // South
+                if (ImGui::ArrowButton("", ImGuiDir_Down))
+                    td.heading = 180.0f;
+                ImGui::PopID();
+
+                ImGui::SameLine();
+                ImGui::PushID_formatted("W_%p", (void*)&td);   // West
+                if (ImGui::ArrowButton("", ImGuiDir_Left))
+                    td.heading = 270.0f;
+                ImGui::PopID();
+
+                ImGui::SameLine();
+                ImGui::PushID_formatted("Del_%p", (void*)&td);
+                if (ImGui::ButtonTooltip(ICON_FA_TRASH_ALT, "Delete row"))
+                    // remember the row to delete, but don't delete right now
+                    delIter = iter;
+                ImGui::PopID();
+            }
+            
+            // Now only delete a row if requested to do so
+            if (delIter != tableList.end())
+                tableList.erase(delIter);
+
+            // -- Add a row to enter new data
+            static char sTail[10] = "", sType[5] = "", sModel[100] = "", sOwner[100] = "";
+            static int iHead = 0;
+            static bool bLeft = false;
+            ImGui::TableNextRow();
+            ImGui::InputTextWithHint("##New_Tail", "Tail", sTail, IM_ARRAYSIZE(sTail));
+
+            ImGui::TableNextCell();
+            ImGui::InputTextWithHint("##New_Type", "Type", sType, IM_ARRAYSIZE(sType));
+
+            ImGui::TableNextCell();
+            ImGui::InputTextWithHint("##New_Model", "Model", sModel, IM_ARRAYSIZE(sModel));
+
+            ImGui::TableNextCell();
+            ImGui::InputTextWithHint("##New_Owner", "Owner", sOwner, IM_ARRAYSIZE(sOwner));
+
+            ImGui::TableNextCell();
+            ImGui::InputInt("##New_Heading", &iHead);
+
+            ImGui::TableNextCell();
+            ImGui::Checkbox("##New_TurnLeft", &bLeft);
+
+            ImGui::TableNextCell();
+            // something entered for all texts?
+            if (sTail[0] && sType[0] && sModel[0] && sOwner[0]) {
+                ImGui::PushID("New_Add");
+                if (ImGui::SmallButton("Add")) {
+                    tableList.emplace_back(tableDataTy{
+                        sTail, sModel, sType, sOwner, float(iHead), bLeft
+                    });
+                    // init our static text for a new entry
+                    sTail[0] = '\0';
+                    sType[0] = '\0';
+                    sModel[0] = '\0';
+                    sOwner[0] = '\0';
+                    iHead = 0;
+                    bLeft = false;
+                }
+                ImGui::PopID();
+            } else {
+                // There is nothing like a disabled button...
+                ImGui::TextDisabled("[Add]");
+            }
+            
+            // End of table
+            ImGui::EndTable();
+
+            
+        }
+        ImGui::PopStyleColor();
+        
+        ImGui::TreePop();
+    }
 
     if (ImGui::TreeNode("Fonts")) {
 
-        ImGui::Text("Default DejaVuSansMono.ttf 13.0f font \n");
+        ImGui::Text("Default DejaVuSansMono.ttf %.1f font \n", FONT_SIZE);
 
         ImGui::TextUnformatted("");
         // Green color
@@ -457,4 +877,32 @@ void ImguiWidget::buildInterface() {
         ImGui::TreePop();
 
     }
+}
+
+// Outside all rendering we can change things like window mode
+float ImguiWidget::cbFlightLoop(float, float, int, void* inRefcon)
+{
+    // refcon is pointer to ImguiWidget
+    ImguiWidget& wnd = *reinterpret_cast<ImguiWidget*>(inRefcon);
+
+    // Has user requested a change in window mode?
+    if (wnd.nextWinPosMode >= 0) {
+        wnd.SetWindowPositioningMode(wnd.nextWinPosMode);
+        // If we pop in, then we need to explicitely set a position for the window to appear
+        if (wnd.nextWinPosMode == xplm_WindowPositionFree) {
+            int left, top, right, bottom;
+            wnd.GetCurrentWindowGeometry(left, top, right, bottom);
+            // Normalize to our starting position (WIN_PAD|WIN_PAD), but keep size unchanged
+            const int width  = right-left;
+            const int height = top-bottom;
+            CalcWinCoords(left, top, right, bottom);
+            right  = left + width;
+            bottom = top - height;
+            wnd.SetWindowGeometry(left, top, right, bottom);
+        }
+        wnd.nextWinPosMode = -1;
+    }
+    
+    // don't call me again
+    return 0.0f;
 }
