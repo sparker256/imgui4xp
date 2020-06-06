@@ -37,6 +37,7 @@
 
 #include "SystemGL.h"
 
+#include <climits>
 #include <string>
 #include <memory>
 
