@@ -109,6 +109,9 @@ int         g_dragVal2  = 0;
 // Trying to find a way to get a image to be displayed
 const std::string IMAGE_NAME = "./Resources/plugins/imgui4xp/imgui_demo.jpg";
 
+// Font size, also roughly defines height of one line
+constexpr float FONT_SIZE = 13.0f;
+
 /// Uses "stb_image" library to load a picture into memory
 /// @param fileName Path to image file
 /// @param[out] imgWidth Image width in pixel
@@ -188,17 +191,17 @@ void configureImgWindow()
 
   // you can use any of these fonts that are provided with X-Plane or find you own.
   // Currently you can only load one font and not sure if this might change in the future.
-  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/DejaVuSans.ttf", 13.0f);
-  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", 13.0f);
-  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Inconsolata.ttf", 13.0f);
-  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/ProFontWindows", 13.0f);
-  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Roboto-Bold.ttf", 13.0f);
-  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/RobotoCondensed-Regular.ttf", 13.0f);
-  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Roboto-Light.ttf", 13.0f);
-  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Roboto-Regular.ttf", 13.0f);
-  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/tahomabd.ttf", 13.0f);
+  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/DejaVuSans.ttf", FONT_SIZE);
+  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", FONT_SIZE);
+  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Inconsolata.ttf", FONT_SIZE);
+  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/ProFontWindows", FONT_SIZE);
+  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Roboto-Bold.ttf", FONT_SIZE);
+  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/RobotoCondensed-Regular.ttf", FONT_SIZE);
+  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Roboto-Light.ttf", FONT_SIZE);
+  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Roboto-Regular.ttf", FONT_SIZE);
+  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/tahomabd.ttf", FONT_SIZE);
 
-    ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", 13.0f);
+    ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", FONT_SIZE);
     
     // Now we merge some icons from the OpenFontsIcons font into the above font
     // (see `imgui/docs/FONTS.txt`)
@@ -219,7 +222,7 @@ void configureImgWindow()
     // Merge the icon font with the text font
     ImgWindow::sFontAtlas->AddFontFromMemoryCompressedTTF(fa_solid_900_compressed_data,
                                                           fa_solid_900_compressed_size,
-                                                          13.0f,
+                                                          FONT_SIZE,
                                                           &config,
                                                           icon_ranges.Data);
 }
@@ -268,6 +271,21 @@ ImguiWidget::ImguiWidget(int left, int top, int right, int bot,
     // Disable reading/writing of "imgui.ini"
     ImGuiIO& io = ImGui::GetIO();
     io.IniFilename = nullptr;
+    
+    // We take the parameter combination "SelfDecorateResizeable" + "LayerFlightOverlay"
+    // to mean: simulate HUD
+    if (decoration  == xplm_WindowDecorationSelfDecoratedResizable &&
+        layer       == xplm_WindowLayerFlightOverlay)
+    {
+        // let's set a fairly transparent, barely visible background
+        ImGuiStyle& style = ImGui::GetStyle();
+        style.Colors[ImGuiCol_WindowBg] = ImColor(0, 0, 0, 0x10);
+        // There's no window decoration, so to move the window we need to
+        // activate a "drag area", here a small strip (roughly double text height)
+        // at the top of the window, ie. the window can be moved by
+        // dragging a spot near the window's top
+        SetWindowDragArea(0, 5, INT_MAX, 5 + 2*int(FONT_SIZE));
+    }
 
     // Create a flight loop id, but don't schedule it yet
     XPLMCreateFlightLoop_t flDef = {
@@ -280,6 +298,7 @@ ImguiWidget::ImguiWidget(int left, int top, int right, int bot,
     
     // Define our own window title
     SetWindowTitle("Imgui v" IMGUI_VERSION " for X-Plane  by William Good");
+    SetWindowResizingLimits(100, 100, 1024, 1024);
     SetVisible(true);
     
     // Initialize the list content
@@ -310,6 +329,19 @@ void ImguiWidget::buildInterface() {
     float win_height = ImGui::GetWindowHeight();
 
     ImGui::TextUnformatted("Hello, World!");
+    
+    // If we are a transparent HUD-like window then we draw 3 lines that look
+    // a bit like a head...so people know where to drag the window to move it
+    if (HasWindowDragArea()) {
+        ImGui::SameLine();
+        ImDrawList* draw_list = ImGui::GetWindowDrawList();
+        ImVec2 pos_start = ImGui::GetCursorPos();
+        float x_end = ImGui::GetWindowContentRegionWidth() - 75;
+        for (int i = 0; i < 3; i++) {
+            draw_list->AddLine(pos_start, {x_end, pos_start.y}, IM_COL32(0xa0, 0xa0, 0xa0, 255), 1.0f);
+            pos_start.y += 5;
+        }
+    }
     
     // Button with fixed width 30 and standard height
     // to pop out the window in an OS window
@@ -812,7 +844,7 @@ void ImguiWidget::buildInterface() {
 
     if (ImGui::TreeNode("Fonts")) {
 
-        ImGui::Text("Default DejaVuSansMono.ttf 13.0f font \n");
+        ImGui::Text("Default DejaVuSansMono.ttf %.1f font \n", FONT_SIZE);
 
         ImGui::TextUnformatted("");
         // Green color
