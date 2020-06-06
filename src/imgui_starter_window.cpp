@@ -587,7 +587,7 @@ void ImguiWidget::buildInterface() {
         ImGui::TreePop();
     }
 
-    if (ImGui::TreeNodeEx("Misc", ImGuiTreeNodeFlags_Selected)) {
+    if (ImGui::TreeNodeEx("Misc")) {
         // Create a bullet style enumeration
         ImGui::Bullet(); ImGui::TextUnformatted("Bullet");
         ImGui::Bullet(); ImGui::TextUnformatted("Style");

@@ -15,6 +15,7 @@
 		25253C6C247FA1370061BFC2 /* imgui_demo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 25253C2B247FA1370061BFC2 /* imgui_demo.cpp */; };
 		25253C6D247FA1370061BFC2 /* imgui_draw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 25253C2C247FA1370061BFC2 /* imgui_draw.cpp */; };
 		25339A002485347500A65BE4 /* imgui_stdlib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 253399F52485347500A65BE4 /* imgui_stdlib.cpp */; };
+		256CA1C7248C47BB009F4AAE /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 256CA1C6248C47BB009F4AAE /* ApplicationServices.framework */; };
 		25804FD524886B2B008961CB /* ImgWindow.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 25804FCD24886B2B008961CB /* ImgWindow.cpp */; };
 		25804FD824886B2B008961CB /* ImgFontAtlas.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 25804FD224886B2B008961CB /* ImgFontAtlas.cpp */; };
 		D6A7BDAA16A1DEA200D1426A /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D6A7BDA916A1DEA200D1426A /* OpenGL.framework */; };
@@ -43,6 +44,7 @@
 		255109CA248439ED002235C2 /* CMakeLists.txt */ = {isa = PBXFileReference; lastKnownFileType = text; name = CMakeLists.txt; path = src/CMakeLists.txt; sourceTree = "<group>"; };
 		255109CB248439ED002235C2 /* imgui_starter_window.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = imgui_starter_window.h; path = src/imgui_starter_window.h; sourceTree = "<group>"; };
 		255109CC248439ED002235C2 /* imgui4xp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = imgui4xp.h; path = src/imgui4xp.h; sourceTree = "<group>"; };
+		256CA1C6248C47BB009F4AAE /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = System/Library/Frameworks/ApplicationServices.framework; sourceTree = SDKROOT; };
 		25804FC424883497008961CB /* IconsFontAwesome5.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = IconsFontAwesome5.h; path = src/IconsFontAwesome5.h; sourceTree = "<group>"; };
 		25804FC624886A62008961CB /* fa-solid-900.inc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.pascal; name = "fa-solid-900.inc"; path = "src/fa-solid-900.inc"; sourceTree = "<group>"; };
 		25804FC824886B2B008961CB /* ImgFontAtlas.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImgFontAtlas.h; sourceTree = "<group>"; };
@@ -60,6 +62,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D6A7BDAA16A1DEA200D1426A /* OpenGL.framework in Frameworks */,
+				256CA1C7248C47BB009F4AAE /* ApplicationServices.framework in Frameworks */,
 				D6A7BDC116A1DEC000D1426A /* CoreFoundation.framework in Frameworks */,
 				25253B35247F9FD10061BFC2 /* XPLM.framework in Frameworks */,
 			);
@@ -155,6 +158,7 @@
 		D6A7BDAD16A1DEA700D1426A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				256CA1C6248C47BB009F4AAE /* ApplicationServices.framework */,
 				25253B34247F9FD10061BFC2 /* XPLM.framework */,
 				D6A7BDC016A1DEC000D1426A /* CoreFoundation.framework */,
 				D6A7BDA916A1DEA200D1426A /* OpenGL.framework */,
