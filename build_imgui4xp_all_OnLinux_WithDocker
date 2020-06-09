@@ -1,8 +1,10 @@
 #!/bin/bash
 #
 # How to run
+# Change this to match your install
 # ./xp11_imgui4xp_plugin_builder/imgui4xp/build_imgui4xp_all_OnLinux_WithDocker
 
+# Change this to match your install
 cd xp11_imgui4xp_plugin_builder/imgui4xp &&
 mkdir -p imgui4xp/lin_x64 &&
 mkdir -p imgui4xp/win_x64 &&
