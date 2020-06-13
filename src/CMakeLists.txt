@@ -81,11 +81,8 @@ find_library(GLUT_LIBRARY NAMES glut GLUT glut64)  # apt install freeglut3-dev
 
 # Link X-Plane plugin system libraries. They are only provided for OS X and Windows.
 if (WIN32 OR APPLE)
-# if (WIN32)
     find_library(XPLM_LIBRARY NAMES XPLM XPLM_64.lib)
     target_link_libraries(imgui4xp ${XPLM_LIBRARY})
-#    find_library(XPWIDGETS_LIBRARY NAMES XPWidgets XPWidgets_64.lib)
-#    target_link_libraries(imgui4xp ${XPLM_LIBRARY} ${XPWIDGETS_LIBRARY})
 endif ()
 
 # Link library for dynamic loading of shared objects on UNIX systems.
@@ -96,15 +93,10 @@ endif ()
 
 # Link OS X core system libraries.
 if (APPLE)
-    find_library(IOKIT_LIBRARY IOKit)
+    find_library(APPLICATION_SERVICES ApplicationServices)
     find_library(CORE_FOUNDATION_LIBRARY CoreFoundation)
-    find_library(GLUT_LIBRARY GLUT)
     find_library(OpenGL_LIBRARY OpenGL)
-    find_library(Cocoa_LIBRARY Cocoa)
-
-    target_link_libraries(imgui4xp ${IOKIT_LIBRARY} ${CORE_FOUNDATION_LIBRARY} ${GLUT_LIBRARY})
-    target_link_libraries(imgui4xp ${OpenGL_LIBRARY} ${Cocoa_LIBRARY})
-
+    target_link_libraries(imgui4xp ${APPLICATION_SERVICES} ${CORE_FOUNDATION_LIBRARY} ${OpenGL_LIBRARY})
 endif ()
 
 if (WIN32)
@@ -123,7 +115,7 @@ elseif (APPLE)
     # conflict with other plugins, in particular ones with Lua interpreter
     # embedded.
     target_link_libraries(imgui4xp "-exported_symbols_list ${CMAKE_SOURCE_DIR}/imgui4xp.sym_mac")
-    target_link_libraries(imgui4xp "-framework XPLM -framework XPWidgets -ldl")
+    target_link_libraries(imgui4xp "-ldl")
 elseif (UNIX)
     # Specify additional runtime search laths for dynamically-linked libraries.
     # Restrict set of symbols exported from the plugin. This reduces changes of

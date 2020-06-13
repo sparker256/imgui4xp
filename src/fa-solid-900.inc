@@ -1,5 +1,18 @@
 // File: 'fa-solid-900.ttf' (202616 bytes)
 // Exported using binary_to_compressed_c.cpp
+
+// The source font was downloaded from
+// https://github.com/FortAwesome/Font-Awesome/blob/master/webfonts/fa-solid-900.ttf
+// Please read here more about Font Awesome's icons:
+// https://fontawesome.com/icons?d=gallery&m=free
+// See here for the license conditions:
+// https://github.com/FortAwesome/Font-Awesome/blob/master/LICENSE.txt
+
+// The below array represents the entire .ttf file.
+// The array has been generated using binary_to_compressed_c.cpp
+// that comes with ImGui:
+// https://github.com/ocornut/imgui/blob/tables/misc/fonts/binary_to_compressed_c.cpp
+
 static const unsigned int fa_solid_900_compressed_size = 143424;
 static const unsigned int fa_solid_900_compressed_data[143424/4] =
 {
