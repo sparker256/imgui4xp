@@ -118,7 +118,7 @@ ImgWindow::ImgWindow(
 	if (mFontAtlas) {
         mFontTexture = static_cast<GLuint>(reinterpret_cast<intptr_t>(io.Fonts->TexID));
     } else {
-        if (iFontAtlas->TexID == nullptr) {
+        if (!iFontAtlas || iFontAtlas->TexID == nullptr) {
             // fallback binding if an atlas wasn't explicitly set.
             unsigned char *pixels;
             int width, height;
