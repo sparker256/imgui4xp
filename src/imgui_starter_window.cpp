@@ -472,7 +472,7 @@ void ImguiWidget::buildInterface() {
     if (ImGui::TreeNode("Sliders")) {
         ImGui::SliderFloat("Slider [0..1000]", &sliderVal1, 0, 1000, "Value %.2f");
         ImGui::SliderFloat("Power Slider [0..100000]", &sliderVal2, 0, 100000, "Value %.2f", 3.0);
-        ImGui::SliderInt("Int Slider [0..100]", &sliderVal3, 0, 100, "Value %d");
+        ImGui::SliderInt("Int Slider [0..100]", &sliderVal3, 0, 100, "Value %.0d");
         ImGui::SliderAngle("Angle Slider", &sliderAngle, -180, 180);
 
         ImGui::TreePop();
@@ -506,7 +506,7 @@ void ImguiWidget::buildInterface() {
 
     if (ImGui::TreeNode("Drag Controls / Global Variables")) {
         ImGui::DragFloat("Drag Float", &g_dragVal1, 1.0, 0, 1000, "%.2f", 1.0);
-        ImGui::DragInt("Drag Int", &g_dragVal2, 1.0, 0, 1000, "%d");
+        ImGui::DragInt("Drag Int", &g_dragVal2, 1.0, 0, 1000, "%.2d");
         ImGui::TextUnformatted("Note: These values are global and synched between windows.");
         ImGui::TreePop();
     }
