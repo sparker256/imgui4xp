@@ -52,3 +52,7 @@ An Xcode project is provided as `imgui4xp.xcodeproj`.
 You may want to change the value of the user-defined build macro
 `XPLANE11_ROOT` in the build settings to point to your X-Plane 11
 installation. Then the resulting binary is installed there right away.
+
+## Imgui4xp
+
+<img width="868" alt="Imgui4xp" src="https://github.com/sparker256/Imgui4xp/blob/master/imgui4xp_Github.jpg">
