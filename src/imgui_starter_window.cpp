@@ -521,7 +521,21 @@ void ImguiWidget::buildInterface() {
 
     if (ImGui::TreeNode("Input")) {
         // Uses stdlib wrapper implemented in imgui/misc/cpp/imgui_stdlib.c/.h
-        ImGui::InputText ("Text", &userText);
+        static char text2[1024 * 16] =
+            "/*\n"
+            " The Pentium F00F bug, shorthand for F0 0F C7 C8,\n"
+            " the hexadecimal encoding of one offending instruction,\n"
+            " more formally, the invalid operand with locked CMPXCHG8B\n"
+            " instruction bug, is a design flaw in the majority of\n"
+            " Intel Pentium, Pentium MMX, and Pentium OverDrive\n"
+            " processors (all in the P5 microarchitecture).\n"
+            "*/\n\n"
+            "label:\n"
+            "\tlock cmpxchg8b eax\n";
+        static char text3[1024] = "";
+        ImGui::InputText ("One Line Text", &userText);
+        ImGui::InputTextMultiline ("Multiline Text", text2, IM_ARRAYSIZE(text2));
+        ImGui::InputTextWithHint ("Text With a Hint", "hint", text3, IM_ARRAYSIZE(text3));
         ImGui::InputInt("Input int", &userI1);
         ImGui::InputInt("Input int2", &userI2, 10);
 
