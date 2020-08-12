@@ -1,5 +1,8 @@
 FROM ubuntu:18.04
 
+# if you get 404 not found errors then use this line to first get the .image file to build.
+# RUN sed -i -e 's/http:\/\/archive.ubuntu.com\/ubuntu\//mirror:\/\/mirrors.ubuntu.com\/mirrors.txt/' /etc/apt/sources.list && apt-get clean && apt-get update
+
 RUN sed -i -e 's/http:\/\/archive.ubuntu.com\/ubuntu\//mirror:\/\/mirrors.ubuntu.com\/mirrors.txt/' /etc/apt/sources.list && apt-get update
 
 # Install Linux toolchain (GCC).

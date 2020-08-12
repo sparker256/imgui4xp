@@ -9,7 +9,7 @@
  *
  */
 
-#define VERSION_NUMBER "1.07 build " __DATE__ " " __TIME__
+#define VERSION_NUMBER "1.08 build " __DATE__ " " __TIME__
 
 // All our headers combined
 #include "imgui4xp.h"
@@ -87,7 +87,7 @@ void CBMenu (void* /*inMenuRef*/, void* inItemRef)
     else if (inItemRef == (void*)3)
     {
         AddWindow(xplm_WindowDecorationSelfDecoratedResizable,
-                  xplm_WindowLayerFlightOverlay);
+                  xplm_WindowLayerFloatingWindows);
     }
 }
 
