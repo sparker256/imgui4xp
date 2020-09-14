@@ -275,7 +275,7 @@ ImguiWidget::ImguiWidget(int left, int top, int right, int bot,
     // We take the parameter combination "SelfDecorateResizeable" + "LayerFlightOverlay"
     // to mean: simulate HUD
     if (decoration  == xplm_WindowDecorationSelfDecoratedResizable &&
-        layer       == xplm_WindowLayerFlightOverlay)
+        layer       == xplm_WindowLayerFloatingWindows)
     {
         // let's set a fairly transparent, barely visible background
         ImGuiStyle& style = ImGui::GetStyle();
