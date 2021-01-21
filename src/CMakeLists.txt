@@ -2,7 +2,7 @@
 #
 
 cmake_minimum_required(VERSION 3.9)
-project(imgui4xp VERSION 1.0.0 DESCRIPTION "imgui4xp X-Plane plugin")
+project(imgui4xp VERSION 1.10.0 DESCRIPTION "imgui4xp X-Plane plugin")
 
 set(CMAKE_CXX_STANDARD 14)
 
@@ -58,6 +58,7 @@ list(APPEND IMGUI4XP_SRCS
     imgui/imgui.cpp
     imgui/imgui_demo.cpp
     imgui/imgui_draw.cpp
+    imgui/imgui_tables.cpp
     imgui/imgui_widgets.cpp
     imgui/misc/cpp/imgui_stdlib.cpp
     ImgWindow/ImgFontAtlas.cpp
