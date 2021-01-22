@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2507D22C25BA27EE00584662 /* imgui_tables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2507D22B25BA27EE00584662 /* imgui_tables.cpp */; };
 		25253B35247F9FD10061BFC2 /* XPLM.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 25253B34247F9FD10061BFC2 /* XPLM.framework */; };
 		25253B3A247FA01F0061BFC2 /* imgui4xp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 25253B38247FA01F0061BFC2 /* imgui4xp.cpp */; };
 		25253B3B247FA01F0061BFC2 /* imgui_starter_window.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 25253B39247FA01F0061BFC2 /* imgui_starter_window.cpp */; };
@@ -23,6 +24,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		2507D22B25BA27EE00584662 /* imgui_tables.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = imgui_tables.cpp; sourceTree = "<group>"; };
+		2507D39525BA373400584662 /* build_imgui4xp_all_OnLinux_WithDocker */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = build_imgui4xp_all_OnLinux_WithDocker; sourceTree = "<group>"; };
 		25253B34247F9FD10061BFC2 /* XPLM.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XPLM.framework; path = src/XPSDK302/Libraries/Mac/XPLM.framework; sourceTree = "<group>"; };
 		25253B38247FA01F0061BFC2 /* imgui4xp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = imgui4xp.cpp; path = src/imgui4xp.cpp; sourceTree = SOURCE_ROOT; };
 		25253B39247FA01F0061BFC2 /* imgui_starter_window.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = imgui_starter_window.cpp; path = src/imgui_starter_window.cpp; sourceTree = SOURCE_ROOT; };
@@ -74,17 +77,18 @@
 		25253B50247FA1370061BFC2 /* imgui */ = {
 			isa = PBXGroup;
 			children = (
-				253399EA2485347500A65BE4 /* misc */,
 				254ED5952482C48D002C4A62 /* imconfig.h */,
+				25253C2B247FA1370061BFC2 /* imgui_demo.cpp */,
+				25253C2C247FA1370061BFC2 /* imgui_draw.cpp */,
 				254ED5972482C48D002C4A62 /* imgui_internal.h */,
+				2507D22B25BA27EE00584662 /* imgui_tables.cpp */,
+				25253B69247FA1370061BFC2 /* imgui_widgets.cpp */,
+				25253B72247FA1370061BFC2 /* imgui.cpp */,
 				254ED5962482C48D002C4A62 /* imgui.h */,
 				254ED5942482C48D002C4A62 /* imstb_rectpack.h */,
 				254ED5922482C48D002C4A62 /* imstb_textedit.h */,
 				254ED5932482C48D002C4A62 /* imstb_truetype.h */,
-				25253C2B247FA1370061BFC2 /* imgui_demo.cpp */,
-				25253C2C247FA1370061BFC2 /* imgui_draw.cpp */,
-				25253B69247FA1370061BFC2 /* imgui_widgets.cpp */,
-				25253B72247FA1370061BFC2 /* imgui.cpp */,
+				253399EA2485347500A65BE4 /* misc */,
 			);
 			name = imgui;
 			path = src/imgui;
@@ -140,6 +144,7 @@
 		D607B15F09A5563000699BC3 = {
 			isa = PBXGroup;
 			children = (
+				2507D39525BA373400584662 /* build_imgui4xp_all_OnLinux_WithDocker */,
 				25253C6E24805DD10061BFC2 /* README.md */,
 				D6A7BDAD16A1DEA700D1426A /* Frameworks */,
 				AC4E46B809C2E0B3006B7E1B /* Source */,
@@ -220,6 +225,7 @@
 				25253C6D247FA1370061BFC2 /* imgui_draw.cpp in Sources */,
 				25253B3A247FA01F0061BFC2 /* imgui4xp.cpp in Sources */,
 				25804FD524886B2B008961CB /* ImgWindow.cpp in Sources */,
+				2507D22C25BA27EE00584662 /* imgui_tables.cpp in Sources */,
 				25253B3B247FA01F0061BFC2 /* imgui_starter_window.cpp in Sources */,
 				25253C39247FA1370061BFC2 /* imgui_widgets.cpp in Sources */,
 				25253C3A247FA1370061BFC2 /* imgui.cpp in Sources */,
@@ -312,7 +318,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = sparker.example.imgui4xp;
 				PRODUCT_NAME = "${TARGET_NAME}";
 				SDKROOT = macosx;
-				XPLANE11_ROOT = "$(USER_APPS_DIR)/X-Plane BETA";
+				XPLANE11_ROOT = "$(USER_APPS_DIR)/X-Plane/Release";
 				XPSDK_ROOT = src/XPSDK302;
 			};
 			name = Debug;
@@ -395,7 +401,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = sparker.example.imgui4xp;
 				PRODUCT_NAME = "${TARGET_NAME}";
 				SDKROOT = macosx;
-				XPLANE11_ROOT = "$(USER_APPS_DIR)/X-Plane BETA";
+				XPLANE11_ROOT = "$(USER_APPS_DIR)/X-Plane/Release";
 				XPSDK_ROOT = src/XPSDK302;
 			};
 			name = Release;

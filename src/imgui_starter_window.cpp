@@ -388,7 +388,7 @@ void ImguiWidget::buildInterface() {
 
     // Grouping a few lines...
     ImGui::BeginGroup();
-    ImGui::Text("Window size: width = %f  height = %f", win_width, win_height);
+    ImGui::Text("Window size: width = %.0f  height = %.0f", win_width, win_height);
     
     ImGui::TextUnformatted("Two Widgets");
     ImGui::SameLine();
@@ -686,9 +686,8 @@ void ImguiWidget::buildInterface() {
                               ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable |
                               ImGuiTableFlags_Hideable | ImGuiTableFlags_Sortable |
                               ImGuiTableFlags_RowBg |
-                              ImGuiTableFlags_SizingPolicyFixedX | ImGuiTableFlags_Scroll |
-                              ImGuiTableFlags_ScrollFreezeTopRow |
-                              ImGuiTableFlags_ScrollFreezeLeftColumn))
+                              ImGuiTableFlags_SizingFixedFit |
+                              ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY))
         {
             // Prepare our data: We fake some movement by turning the planes (1° per second)
             const ImGuiIO& io = ImGui::GetIO();
@@ -705,19 +704,20 @@ void ImguiWidget::buildInterface() {
             ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_None, 50);
             ImGui::TableSetupColumn("Model", ImGuiTableColumnFlags_None, 180);
             ImGui::TableSetupColumn("Owner", ImGuiTableColumnFlags_None, 200);
-            ImGui::TableSetupColumn("Heading", ImGuiTableColumnFlags_None, 50);
+            ImGui::TableSetupColumn("Heading", ImGuiTableColumnFlags_None, 110);
             ImGui::TableSetupColumn("Left", ImGuiTableColumnFlags_None, 30);
             ImGui::TableSetupColumn("Actions", ImGuiTableColumnFlags_NoSort, 150);
-            ImGui::TableAutoHeaders();
+            ImGui::TableSetupScrollFreeze(1,1);
+            ImGui::TableHeadersRow();
             
             // Sort the data if and as needed
-            const ImGuiTableSortSpecs* sortSpecs = ImGui::TableGetSortSpecs();
-            if (sortSpecs && sortSpecs->SpecsChanged &&
+            ImGuiTableSortSpecs* sortSpecs = ImGui::TableGetSortSpecs();
+            if (sortSpecs && sortSpecs->SpecsDirty &&
                 sortSpecs->Specs && sortSpecs->SpecsCount >= 1 &&
                 tableList.size() > 1)
             {
                 // We sort only by one column, no multi-column sort yet
-                const ImGuiTableSortSpecsColumn& colSpec = *(sortSpecs->Specs);
+                const ImGuiTableColumnSortSpecs& colSpec = *(sortSpecs->Specs);
                 // We directly sort the tableList
                 std::sort(tableList.begin(), tableList.end(),
                           [colSpec](const tableDataTy& a, const tableDataTy& b)
@@ -733,6 +733,7 @@ void ImguiWidget::buildInterface() {
                     return colSpec.SortDirection == ImGuiSortDirection_Ascending ?
                     cmp < 0 : cmp > 0;
                 });
+                sortSpecs->SpecsDirty = false;
             }
 
             // Here we remember which row to delete if any
@@ -747,25 +748,26 @@ void ImguiWidget::buildInterface() {
                 if (!td.filtered) continue;
                 
                 ImGui::TableNextRow();
+                ImGui::TableNextColumn();
                 ImGui::TextUnformatted(td.reg.c_str());
-                ImGui::TableNextCell();
+                ImGui::TableNextColumn();
                 ImGui::TextUnformatted(td.typecode.c_str());
-                ImGui::TableNextCell();
+                ImGui::TableNextColumn();
                 ImGui::TextUnformatted(td.model.c_str());
-                ImGui::TableNextCell();
+                ImGui::TableNextColumn();
                 ImGui::TextUnformatted(td.owner.c_str());
-                ImGui::TableNextCell();
+                ImGui::TableNextColumn();
                 // Heading: left = red / right = green
                 ImGui::TextColored(td.turnsLeft ? ImColor(255, 0, 0) : ImColor(0, 255, 0),
                                    "%03.0f", td.heading);
                 // Checkbox
-                ImGui::TableNextCell();
+                ImGui::TableNextColumn();
                 ImGui::PushID_formatted("Left_%p", (void*)&td); // action widget require a unique id per table row (otherwise only the first line's widget work)
                 ImGui::Checkbox("", &td.turnsLeft);
                 ImGui::PopID();
                 
                 // Actions: A few buttons
-                ImGui::TableNextCell();
+                ImGui::TableNextColumn();
 
                 ImGui::PushID_formatted("N_%p", (void*)&td);   // North
                 if (ImGui::ArrowButton("", ImGuiDir_Up))
@@ -807,24 +809,25 @@ void ImguiWidget::buildInterface() {
             static int iHead = 0;
             static bool bLeft = false;
             ImGui::TableNextRow();
+            ImGui::TableNextColumn();
             ImGui::InputTextWithHint("##New_Tail", "Tail", sTail, IM_ARRAYSIZE(sTail));
 
-            ImGui::TableNextCell();
+            ImGui::TableNextColumn();
             ImGui::InputTextWithHint("##New_Type", "Type", sType, IM_ARRAYSIZE(sType));
 
-            ImGui::TableNextCell();
+            ImGui::TableNextColumn();
             ImGui::InputTextWithHint("##New_Model", "Model", sModel, IM_ARRAYSIZE(sModel));
 
-            ImGui::TableNextCell();
+            ImGui::TableNextColumn();
             ImGui::InputTextWithHint("##New_Owner", "Owner", sOwner, IM_ARRAYSIZE(sOwner));
 
-            ImGui::TableNextCell();
+            ImGui::TableNextColumn();
             ImGui::InputInt("##New_Heading", &iHead);
 
-            ImGui::TableNextCell();
+            ImGui::TableNextColumn();
             ImGui::Checkbox("##New_TurnLeft", &bLeft);
 
-            ImGui::TableNextCell();
+            ImGui::TableNextColumn();
             // something entered for all texts?
             if (sTail[0] && sType[0] && sModel[0] && sOwner[0]) {
                 ImGui::PushID("New_Add");
