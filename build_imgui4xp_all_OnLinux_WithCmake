@@ -1,43 +1,39 @@
 #!/bin/bash
 #
 # How to run
-# Change this to match your install
-# ./xp11_imgui4xp_plugin_builder/imgui4xp/build_imgui4xp_all_OnLinux_WithCmake
+# cd $imgui4xp Repo
+# ./build_imgui4xp_all_OnLinux_WithCmake
 
-# Change this to match your install
-cd xp11_imgui4xp_plugin_builder/imgui4xp &&
-mkdir -p release/imgui4xp/lin_x64 &&
-mkdir -p release/imgui4xp/win_x64 &&
-mkdir -p release/imgui4xp/mac_x64 &&
-mkdir -p src/build &&
+rm -r imgui4xp/win_x64/*.xpl
+rm -r imgui4xp/lin_x64/*.xpl
+rm -r imgui4xp/mac_x64/*.xpl
 
-cd src
+
+# Windows build
+
+ rm -r build/*
+ cmake -S ./src -B ./build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_TOOLCHAIN_FILE=../src/Toolchain-mingw-w64-x86-64.cmake
+ cmake --build ./build -v
+ cp ./build/imgui4xp.xpl ./imgui4xp/win_x64/imgui4xp.xpl
+ 
+ 
+ # Linux build
+
 rm -r build/*
-cd build
-cmake ..
-make VERBOSE=1
-cd /home/bill/xp11_imgui4xp_plugin_builder/imgui4xp
-cp src/build/imgui4xp.xpl release/imgui4xp/lin_x64/
+cmake -S ./src -B ./build -DCMAKE_BUILD_TYPE=RelWithDebInfo
+cmake --build ./build -v
+cp ./build/imgui4xp.xpl ./imgui4xp/lin_x64/imgui4xp.xpl
 
-cd src
+
+# Mac build
+
 rm -r build/*
-cd build
-# Change this to match your install
-cmake -DCMAKE_TOOLCHAIN_FILE=~/xp11_imgui4xp_plugin_builder/imgui4xp/src/Toolchain-mingw-w64-x86-64.cmake ..
-make VERBOSE=1
-cd /home/bill/xp11_imgui4xp_plugin_builder/imgui4xp
-cp src/build/imgui4xp.xpl release/imgui4xp/win_x64/
+cmake -S ./src -B ./build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_TOOLCHAIN_FILE=../src/Toolchain-ubuntu-osxcross-x86_64-11.3.cmake
+cmake --build ./build -v
+cp ./build/imgui4xp.xpl ./imgui4xp/mac_x64/imgui4xp.xpl
 
-cd src
-rm -r build/*
-cd build
-# Change this to match your install
-cmake -DCMAKE_TOOLCHAIN_FILE=~/xp11_imgui4xp_plugin_builder/imgui4xp/src/Toolchain-ubuntu-osxcross-10.11.cmake ..
-make VERBOSE=1
-cd /home/bill/xp11_imgui4xp_plugin_builder/imgui4xp
-cp src/build/imgui4xp.xpl release/imgui4xp/mac_x64/
 
-cp imgui_demo.jpg release/imgui4xp/
+cp imgui_demo.jpg imgui4xp/
 
 exec $SHELL
 #

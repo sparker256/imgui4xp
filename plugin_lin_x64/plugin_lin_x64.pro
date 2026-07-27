@@ -7,9 +7,9 @@ CONFIG -= thread exceptions qt rtti debug
 
 VERSION = 1.0.0
 
-INCLUDEPATH += ../src/XPSDK302/CHeaders/XPLM
-INCLUDEPATH += ../src/XPSDK302/CHeaders/Wrappers
-INCLUDEPATH += ../src/XPSDK302/CHeaders/Widgets
+INCLUDEPATH += ../src/SDK/CHeaders/XPLM
+INCLUDEPATH += ../src/SDK/CHeaders/Wrappers
+INCLUDEPATH += ../src/SDK/CHeaders/Widgets
 INCLUDEPATH += ../src
 INCLUDEPATH += ../src/ImgWindow
 INCLUDEPATH += ../src/imgui
