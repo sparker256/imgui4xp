@@ -336,7 +336,7 @@ void ImguiWidget::buildInterface() {
         ImGui::SameLine();
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
         ImVec2 pos_start = ImGui::GetCursorPos();
-        float x_end = ImGui::GetWindowContentRegionWidth() - 75;
+        float x_end = ImGui::GetContentRegionAvail().x - 75;
         for (int i = 0; i < 3; i++) {
             draw_list->AddLine(pos_start, {x_end, pos_start.y}, IM_COL32(0xa0, 0xa0, 0xa0, 255), 1.0f);
             pos_start.y += 5;
@@ -358,21 +358,21 @@ void ImguiWidget::buildInterface() {
 
         if (bBtnVR) {
             // Same line, but right-alinged
-            ImGui::SameLine(ImGui::GetWindowContentRegionWidth() - (numBtn * btnWidth));
+            ImGui::SameLine(ImGui::GetContentRegionAvail().x - (numBtn * btnWidth));
             if (ImGui::ButtonTooltip(ICON_FA_EXTERNAL_LINK_SQUARE_ALT, "Move into VR"))
                 nextWinPosMode = xplm_WindowVR;
             --numBtn;
         }
         if (bBtnPopIn) {
             // Same line, but right-alinged
-            ImGui::SameLine(ImGui::GetWindowContentRegionWidth() - (numBtn * btnWidth));
+            ImGui::SameLine(ImGui::GetContentRegionAvail().x - (numBtn * btnWidth));
             if (ImGui::ButtonTooltip(ICON_FA_WINDOW_RESTORE, "Move back into X-Plane"))
                 nextWinPosMode = xplm_WindowPositionFree;
             --numBtn;
         }
         if (bBtnPopOut) {
             // Same line, but right-alinged
-            ImGui::SameLine(ImGui::GetWindowContentRegionWidth() - (numBtn * btnWidth));
+            ImGui::SameLine(ImGui::GetContentRegionAvail().x - (numBtn * btnWidth));
             if (ImGui::ButtonTooltip(ICON_FA_WINDOW_MAXIMIZE, "Pop out into separate window"))
                 nextWinPosMode = xplm_WindowPopOut;
             --numBtn;

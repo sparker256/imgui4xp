@@ -3,8 +3,18 @@
 
 cmake_minimum_required(VERSION 3.9)
 project(imgui4xp VERSION 1.10.0 DESCRIPTION "imgui4xp X-Plane plugin")
+# We will enable this when we have a SDK supporting arm
+# X-Plane supports OS X 11.0+, so this should ensure Xbtn2cmd can run on
+# all supported versions.
+set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Minimum macOS version" FORCE)
+set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "Build architectures for mac OS X" FORCE)
 
-set(CMAKE_CXX_STANDARD 14)
+# By default, use optimized release configuration.
+if (NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "")
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "" FORCE)
+endif ()
+
+set(CMAKE_CXX_STANDARD 17)
 
 # Set include directories used by our code and dependencies.
 include_directories("${CMAKE_SOURCE_DIR}/")
