@@ -2,7 +2,7 @@
 #
 
 cmake_minimum_required(VERSION 3.9)
-project(imgui4xp VERSION 1.10.0 DESCRIPTION "imgui4xp X-Plane plugin")
+project(imgui4xp VERSION 1.11.0 DESCRIPTION "imgui4xp X-Plane plugin")
 # We will enable this when we have a SDK supporting arm
 # X-Plane supports OS X 11.0+, so this should ensure Xbtn2cmd can run on
 # all supported versions.

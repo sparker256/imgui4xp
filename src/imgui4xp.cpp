@@ -9,7 +9,7 @@
  *
  */
 
-#define VERSION_NUMBER "1.10 build " __DATE__ " " __TIME__
+#define VERSION_NUMBER "1.11 build " __DATE__ " " __TIME__
 
 // All our headers combined
 #include "imgui4xp.h"
