@@ -189,12 +189,15 @@ void configureImgWindow()
   // together and I was heading down that path, but I think I forgot to finish it.
 
 
-  // you can use any of these fonts that are provided with X-Plane or find you own.
-  // Currently you can only load one font and not sure if this might change in the future.
+  // you can use any of these fonts that are provided with X-Plane 12 or find you own.
+  // We can now use more than one font so will show two.
+  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/B612Mono-Regular.ttf", FONT_SIZE);
   // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/DejaVuSans.ttf", FONT_SIZE);
   // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", FONT_SIZE);
   // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Inconsolata.ttf", FONT_SIZE);
-  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/ProFontWindows", FONT_SIZE);
+  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Menlo-Regular.ttf", FONT_SIZE);
+  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/NotoSansCJK-SC-Regular.otf", FONT_SIZE);
+  // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/ProFontWindows.ttf", FONT_SIZE);
   // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Roboto-Bold.ttf", FONT_SIZE);
   // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/RobotoCondensed-Regular.ttf", FONT_SIZE);
   // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Roboto-Light.ttf", FONT_SIZE);
@@ -202,6 +205,7 @@ void configureImgWindow()
   // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/tahomabd.ttf", FONT_SIZE);
 
     ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", FONT_SIZE);
+    ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/ProFontWindows.ttf", FONT_SIZE);
     
     // Now we merge some icons from the OpenFontsIcons font into the above font
     // (see `imgui/docs/FONTS.txt`)
@@ -297,7 +301,7 @@ ImguiWidget::ImguiWidget(int left, int top, int right, int bot,
     flId = XPLMCreateFlightLoop(&flDef);
     
     // Define our own window title
-    SetWindowTitle("Imgui v" IMGUI_VERSION " for X-Plane  by William Good");
+    SetWindowTitle("imgui4xp imgui v" IMGUI_VERSION " for X-Plane  by William Good");
     SetWindowResizingLimits(100, 100, 1024, 1024);
     SetVisible(true);
     
@@ -871,20 +875,83 @@ void ImguiWidget::buildInterface() {
         ImGui::PopStyleColor();
 
         ImGui::TextUnformatted("");
-        // Red color
-        col = ImColor(255, 0, 0, 255);
+        // Green color
+        col = ImColor(0, 255, 0, 255);
         ImGui::PushStyleColor(ImGuiCol_Text, col);
-        ImGui::SetWindowFontScale(1.5);
-        ImGui::TextUnformatted("Some Red Text with DejaVuSansMono 13 font with font scale of 1.5");
+        ImGui::SetWindowFontScale(0.5);
+        ImGui::TextUnformatted("Some Green Text with DejaVuSansMono 13 font with font scale of 0.5");
         ImGui::SetWindowFontScale(1.0);
         ImGui::PopStyleColor();
 
         ImGui::TextUnformatted("");
-        // Blue color
-        col = ImColor(0, 0, 255, 255);
+        // Green color
+        col = ImColor(0, 255, 0, 255);
+        ImGui::PushStyleColor(ImGuiCol_Text, col);
+        ImGui::SetWindowFontScale(0.625);
+        ImGui::TextUnformatted("Some Green Text with DejaVuSansMono 13 font with font scale of 0.625");
+        ImGui::SetWindowFontScale(1.0);
+        ImGui::PopStyleColor();
+
+        ImGui::TextUnformatted("");
+        // Green color
+        col = ImColor(0, 255, 0, 255);
+        ImGui::PushStyleColor(ImGuiCol_Text, col);
+        ImGui::SetWindowFontScale(0.75);
+        ImGui::TextUnformatted("Some Green Text with DejaVuSansMono 13 font with font scale of 0.75");
+        ImGui::SetWindowFontScale(1.0);
+        ImGui::PopStyleColor();
+
+        ImGui::TextUnformatted("");
+        // Green color
+        col = ImColor(0, 255, 0, 255);
+        ImGui::PushStyleColor(ImGuiCol_Text, col);
+        ImGui::SetWindowFontScale(0.875);
+        ImGui::TextUnformatted("Some Green Text with DejaVuSansMono 13 font with font scale of 0.875");
+        ImGui::SetWindowFontScale(1.0);
+        ImGui::PopStyleColor();
+
+        ImGui::TextUnformatted("");
+        // Green color
+        col = ImColor(0, 255, 0, 255);
+        ImGui::PushStyleColor(ImGuiCol_Text, col);
+        ImGui::SetWindowFontScale(1.0);
+        ImGui::TextUnformatted("Some Green Text with DejaVuSansMono 13 font with font scale of 1.0");
+        ImGui::SetWindowFontScale(1.0);
+        ImGui::PopStyleColor();
+
+        ImGui::TextUnformatted("");
+        // Green color
+        col = ImColor(0, 255, 0, 255);
+        ImGui::PushStyleColor(ImGuiCol_Text, col);
+        ImGui::SetWindowFontScale(1.125);
+        ImGui::TextUnformatted("Some Green Text with DejaVuSansMono 13 font with font scale of 1.125");
+        ImGui::SetWindowFontScale(1.0);
+        ImGui::PopStyleColor();
+
+        ImGui::TextUnformatted("");
+        // Green color
+        col = ImColor(0, 255, 0, 255);
         ImGui::PushStyleColor(ImGuiCol_Text, col);
         ImGui::SetWindowFontScale(1.25);
-        ImGui::TextUnformatted("Some Blue Text with DejaVuSansMono 13 font with font scale of 1.25");
+        ImGui::TextUnformatted("Some Green Text with DejaVuSansMono 13 font with font scale of 1.25");
+        ImGui::SetWindowFontScale(1.0);
+        ImGui::PopStyleColor();
+
+        ImGui::TextUnformatted("");
+        // Green color
+        col = ImColor(0, 255, 0, 255);
+        ImGui::PushStyleColor(ImGuiCol_Text, col);
+        ImGui::SetWindowFontScale(1.375);
+        ImGui::TextUnformatted("Some Green Text with DejaVuSansMono 13 font with font scale of 1.375");
+        ImGui::SetWindowFontScale(1.0);
+        ImGui::PopStyleColor();
+
+        ImGui::TextUnformatted("");
+        // Green color
+        col = ImColor(0, 255, 0, 255);
+        ImGui::PushStyleColor(ImGuiCol_Text, col);
+        ImGui::SetWindowFontScale(1.5);
+        ImGui::TextUnformatted("Some Green Text with DejaVuSansMono 13 font with font scale of 1.5");
         ImGui::SetWindowFontScale(1.0);
         ImGui::PopStyleColor();
 
@@ -892,7 +959,12 @@ void ImguiWidget::buildInterface() {
         ImGui::Text("Using ShowStyleEditor() to see if new fonts have loaded\n");
         ImGui::ShowStyleEditor();
         ImGui::TreePop();
+    }
 
+    if (ImGui::TreeNode("show imgui demo window")) {
+
+        ImGui::ShowDemoWindow();
+        ImGui::TreePop();
     }
 }
 
