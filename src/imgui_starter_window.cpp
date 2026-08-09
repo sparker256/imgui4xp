@@ -332,6 +332,8 @@ void ImguiWidget::buildInterface() {
     float win_width = ImGui::GetWindowWidth();
     float win_height = ImGui::GetWindowHeight();
 
+    ImGuiStyle& style = ImGui::GetStyle();
+
     ImGui::TextUnformatted("Hello, World!");
     
     // If we are a transparent HUD-like window then we draw 3 lines that look
@@ -597,12 +599,16 @@ void ImguiWidget::buildInterface() {
     }
 
     if (ImGui::TreeNode("Images")) {
-        ImGui::Text("image_id = %d", image_id);
-        // Draw a previously loaded image
-        if (image_id)
-            ImGui::Image((void*)(intptr_t)image_id, image_size);
+    ImGui::Text("image_id = %d", image_id);
+    // Draw a previously loaded image
+    if (image_id)
+    {
+      // ImGui::Image((void*)(intptr_t)image_id, image_size);
+      auto tex_ref = ImTextureRef(image_id);
+      ImGui::Image(tex_ref, image_size);
+    }
 
-        ImGui::TreePop();
+    ImGui::TreePop();
     }
 
     if (ImGui::TreeNodeEx("Misc")) {
@@ -878,86 +884,104 @@ void ImguiWidget::buildInterface() {
         // Green color
         col = ImColor(0, 255, 0, 255);
         ImGui::PushStyleColor(ImGuiCol_Text, col);
-        ImGui::SetWindowFontScale(0.5);
+        ImGui::PushFont(NULL, style.FontSizeBase * 0.5f);
         ImGui::TextUnformatted("Some Green Text with DejaVuSansMono 13 font with font scale of 0.5");
-        ImGui::SetWindowFontScale(1.0);
+        ImGui::PopFont();
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.0f);
         ImGui::PopStyleColor();
 
         ImGui::TextUnformatted("");
+        ImGui::PopFont();
         // Green color
         col = ImColor(0, 255, 0, 255);
         ImGui::PushStyleColor(ImGuiCol_Text, col);
-        ImGui::SetWindowFontScale(0.625);
+        ImGui::PushFont(NULL, style.FontSizeBase * 0.625f);
         ImGui::TextUnformatted("Some Green Text with DejaVuSansMono 13 font with font scale of 0.625");
-        ImGui::SetWindowFontScale(1.0);
+        ImGui::PopFont();
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.0f);
         ImGui::PopStyleColor();
 
         ImGui::TextUnformatted("");
+        ImGui::PopFont();
         // Green color
         col = ImColor(0, 255, 0, 255);
         ImGui::PushStyleColor(ImGuiCol_Text, col);
-        ImGui::SetWindowFontScale(0.75);
+        ImGui::PushFont(NULL, style.FontSizeBase * 0.75f);
         ImGui::TextUnformatted("Some Green Text with DejaVuSansMono 13 font with font scale of 0.75");
-        ImGui::SetWindowFontScale(1.0);
+        ImGui::PopFont();
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.0f);
         ImGui::PopStyleColor();
 
         ImGui::TextUnformatted("");
+        ImGui::PopFont();
         // Green color
         col = ImColor(0, 255, 0, 255);
         ImGui::PushStyleColor(ImGuiCol_Text, col);
-        ImGui::SetWindowFontScale(0.875);
+        ImGui::PushFont(NULL, style.FontSizeBase * 0.875f);
         ImGui::TextUnformatted("Some Green Text with DejaVuSansMono 13 font with font scale of 0.875");
-        ImGui::SetWindowFontScale(1.0);
+        ImGui::PopFont();
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.0f);
         ImGui::PopStyleColor();
 
         ImGui::TextUnformatted("");
+        ImGui::PopFont();
         // Green color
         col = ImColor(0, 255, 0, 255);
         ImGui::PushStyleColor(ImGuiCol_Text, col);
-        ImGui::SetWindowFontScale(1.0);
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.0f);
         ImGui::TextUnformatted("Some Green Text with DejaVuSansMono 13 font with font scale of 1.0");
-        ImGui::SetWindowFontScale(1.0);
+        ImGui::PopFont();
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.0f);
         ImGui::PopStyleColor();
 
         ImGui::TextUnformatted("");
+        ImGui::PopFont();
         // Green color
         col = ImColor(0, 255, 0, 255);
         ImGui::PushStyleColor(ImGuiCol_Text, col);
-        ImGui::SetWindowFontScale(1.125);
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.125f);
         ImGui::TextUnformatted("Some Green Text with DejaVuSansMono 13 font with font scale of 1.125");
-        ImGui::SetWindowFontScale(1.0);
+        ImGui::PopFont();
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.0f);
         ImGui::PopStyleColor();
 
         ImGui::TextUnformatted("");
+        ImGui::PopFont();
         // Green color
         col = ImColor(0, 255, 0, 255);
         ImGui::PushStyleColor(ImGuiCol_Text, col);
-        ImGui::SetWindowFontScale(1.25);
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.25f);
         ImGui::TextUnformatted("Some Green Text with DejaVuSansMono 13 font with font scale of 1.25");
-        ImGui::SetWindowFontScale(1.0);
+        ImGui::PopFont();
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.0f);
         ImGui::PopStyleColor();
 
         ImGui::TextUnformatted("");
+        ImGui::PopFont();
         // Green color
         col = ImColor(0, 255, 0, 255);
         ImGui::PushStyleColor(ImGuiCol_Text, col);
-        ImGui::SetWindowFontScale(1.375);
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.375f);
         ImGui::TextUnformatted("Some Green Text with DejaVuSansMono 13 font with font scale of 1.375");
-        ImGui::SetWindowFontScale(1.0);
+        ImGui::PopFont();
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.0f);
         ImGui::PopStyleColor();
 
         ImGui::TextUnformatted("");
+        ImGui::PopFont();
         // Green color
         col = ImColor(0, 255, 0, 255);
         ImGui::PushStyleColor(ImGuiCol_Text, col);
-        ImGui::SetWindowFontScale(1.5);
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.5f);
         ImGui::TextUnformatted("Some Green Text with DejaVuSansMono 13 font with font scale of 1.5");
-        ImGui::SetWindowFontScale(1.0);
+        ImGui::PopFont();
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.0f);
         ImGui::PopStyleColor();
 
         ImGui::TextUnformatted("");
         ImGui::Text("Using ShowStyleEditor() to see if new fonts have loaded\n");
         ImGui::ShowStyleEditor();
+        ImGui::PopFont();
         ImGui::TreePop();
     }
 
