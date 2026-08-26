@@ -204,8 +204,19 @@ void configureImgWindow()
   // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Roboto-Regular.ttf", FONT_SIZE);
   // ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/tahomabd.ttf", FONT_SIZE);
 
-    ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/DejaVuSansMono.ttf", FONT_SIZE);
-    ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/ProFontWindows.ttf", FONT_SIZE);
+  Font1 = ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/ProFontWindows.ttf", 13);
+  Font2 = ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/ProFontWindows.ttf", 15);
+  Font3 = ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/ProFontWindows.ttf", 20);
+
+  Font4 = ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Roboto-Light.ttf", 13);
+  Font5 = ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Roboto-Light.ttf", 15);
+  Font6 = ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Roboto-Light.ttf", 20);
+
+  Font7 = ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Roboto-Regular.ttf", 13);
+  Font8 = ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Roboto-Regular.ttf", 15);
+  Font9 = ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Roboto-Regular.ttf", 20);
+
+
     
     // Now we merge some icons from the OpenFontsIcons font into the above font
     // (see `imgui/docs/FONTS.txt`)
@@ -301,7 +312,7 @@ ImguiWidget::ImguiWidget(int left, int top, int right, int bot,
     flId = XPLMCreateFlightLoop(&flDef);
     
     // Define our own window title
-    SetWindowTitle("imgui4xp imgui v" IMGUI_VERSION " for X-Plane  by William Good");
+    SetWindowTitle("imgui4xp Using imgui v" IMGUI_VERSION " for X-Plane 12 by William Good");
     SetWindowResizingLimits(100, 100, 1024, 1024);
     SetVisible(true);
     
@@ -331,6 +342,8 @@ void ImguiWidget::buildInterface() {
 
     float win_width = ImGui::GetWindowWidth();
     float win_height = ImGui::GetWindowHeight();
+
+    ImGuiStyle& style = ImGui::GetStyle();
 
     ImGui::TextUnformatted("Hello, World!");
     
@@ -599,10 +612,13 @@ void ImguiWidget::buildInterface() {
     if (ImGui::TreeNode("Images")) {
         ImGui::Text("image_id = %d", image_id);
         // Draw a previously loaded image
-        if (image_id)
-            ImGui::Image((void*)(intptr_t)image_id, image_size);
+        if (image_id) {
+            // ImGui::Image((void*)(intptr_t)image_id, image_size);
+            auto tex_ref = ImTextureRef(image_id);
+            ImGui::Image(tex_ref, image_size);
+        }
 
-        ImGui::TreePop();
+    ImGui::TreePop();
     }
 
     if (ImGui::TreeNodeEx("Misc")) {
@@ -863,101 +879,264 @@ void ImguiWidget::buildInterface() {
         ImGui::TreePop();
     }
 
-    if (ImGui::TreeNode("Fonts")) {
+    if (ImGui::TreeNode("Fonts Scaling")) {
 
-        ImGui::Text("Default DejaVuSansMono.ttf %.1f font \n", FONT_SIZE);
+        ImGui::Text("Default ProFontWindows.ttf %.1f font \n", FONT_SIZE);
 
         ImGui::TextUnformatted("");
         // Green color
         ImVec4 col = ImColor(0, 255, 0, 255);
         ImGui::PushStyleColor(ImGuiCol_Text, col);
-        ImGui::TextUnformatted("Some Green Text with DejaVuSansMono 13 font");
+        ImGui::TextUnformatted("Some Green Text with ProFontWindows 13 font");
         ImGui::PopStyleColor();
-
         ImGui::TextUnformatted("");
+
         // Green color
         col = ImColor(0, 255, 0, 255);
         ImGui::PushStyleColor(ImGuiCol_Text, col);
-        ImGui::SetWindowFontScale(0.5);
-        ImGui::TextUnformatted("Some Green Text with DejaVuSansMono 13 font with font scale of 0.5");
-        ImGui::SetWindowFontScale(1.0);
+        // ImGui::SetWindowFontScale(0.5);
+        ImGui::PushFont(NULL, style.FontSizeBase * 0.5f);
+        ImGui::TextUnformatted("Some Green Text with ProFontWindows 13 font with font scale of 0.5");
+        // ImGui::SetWindowFontScale(1.0);
+        ImGui::PopFont();
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.0f);
         ImGui::PopStyleColor();
-
         ImGui::TextUnformatted("");
+        ImGui::PopFont();
+
         // Green color
         col = ImColor(0, 255, 0, 255);
         ImGui::PushStyleColor(ImGuiCol_Text, col);
-        ImGui::SetWindowFontScale(0.625);
-        ImGui::TextUnformatted("Some Green Text with DejaVuSansMono 13 font with font scale of 0.625");
-        ImGui::SetWindowFontScale(1.0);
+        // ImGui::SetWindowFontScale(0.625);
+        ImGui::PushFont(NULL, style.FontSizeBase * 0.625f);
+        ImGui::TextUnformatted("Some Green Text with ProFontWindows 13 font with font scale of 0.625");
+        // ImGui::SetWindowFontScale(1.0);
+        ImGui::PopFont();
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.0f);
         ImGui::PopStyleColor();
-
         ImGui::TextUnformatted("");
+        ImGui::PopFont();
+
         // Green color
         col = ImColor(0, 255, 0, 255);
         ImGui::PushStyleColor(ImGuiCol_Text, col);
-        ImGui::SetWindowFontScale(0.75);
-        ImGui::TextUnformatted("Some Green Text with DejaVuSansMono 13 font with font scale of 0.75");
-        ImGui::SetWindowFontScale(1.0);
+        // ImGui::SetWindowFontScale(0.75);
+        ImGui::PushFont(NULL, style.FontSizeBase * 0.75f);
+        ImGui::TextUnformatted("Some Green Text with ProFontWindows 13 font with font scale of 0.75");
+        // ImGui::SetWindowFontScale(1.0);
+        ImGui::PopFont();
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.0f);
         ImGui::PopStyleColor();
-
         ImGui::TextUnformatted("");
+        ImGui::PopFont();
+
         // Green color
         col = ImColor(0, 255, 0, 255);
         ImGui::PushStyleColor(ImGuiCol_Text, col);
-        ImGui::SetWindowFontScale(0.875);
-        ImGui::TextUnformatted("Some Green Text with DejaVuSansMono 13 font with font scale of 0.875");
-        ImGui::SetWindowFontScale(1.0);
+        // ImGui::SetWindowFontScale(0.875);
+        ImGui::PushFont(NULL, style.FontSizeBase * 0.875f);
+        ImGui::TextUnformatted("Some Green Text with ProFontWindows 13 font with font scale of 0.875");
+        // ImGui::SetWindowFontScale(1.0);
+        ImGui::PopFont();
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.0f);
         ImGui::PopStyleColor();
-
         ImGui::TextUnformatted("");
+        ImGui::PopFont();
+
+
         // Green color
         col = ImColor(0, 255, 0, 255);
         ImGui::PushStyleColor(ImGuiCol_Text, col);
-        ImGui::SetWindowFontScale(1.0);
-        ImGui::TextUnformatted("Some Green Text with DejaVuSansMono 13 font with font scale of 1.0");
-        ImGui::SetWindowFontScale(1.0);
+        // ImGui::SetWindowFontScale(1.0);
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.0f);
+        ImGui::TextUnformatted("Some Green Text with ProFontWindows 13 font with font scale of 1.0");
+        // ImGui::SetWindowFontScale(1.0);
+        ImGui::PopFont();
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.0f);
         ImGui::PopStyleColor();
-
         ImGui::TextUnformatted("");
+        ImGui::PopFont();
+
         // Green color
         col = ImColor(0, 255, 0, 255);
         ImGui::PushStyleColor(ImGuiCol_Text, col);
-        ImGui::SetWindowFontScale(1.125);
-        ImGui::TextUnformatted("Some Green Text with DejaVuSansMono 13 font with font scale of 1.125");
-        ImGui::SetWindowFontScale(1.0);
+        // ImGui::SetWindowFontScale(1.125);
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.125f);
+        ImGui::TextUnformatted("Some Green Text with ProFontWindows 13 font with font scale of 1.125");
+        // ImGui::SetWindowFontScale(1.0);
+        ImGui::PopFont();
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.0f);
         ImGui::PopStyleColor();
-
         ImGui::TextUnformatted("");
+        ImGui::PopFont();
+
         // Green color
         col = ImColor(0, 255, 0, 255);
         ImGui::PushStyleColor(ImGuiCol_Text, col);
-        ImGui::SetWindowFontScale(1.25);
-        ImGui::TextUnformatted("Some Green Text with DejaVuSansMono 13 font with font scale of 1.25");
-        ImGui::SetWindowFontScale(1.0);
+        // ImGui::SetWindowFontScale(1.25);
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.125f);
+        ImGui::TextUnformatted("Some Green Text with ProFontWindows 13 font with font scale of 1.25");
+        // ImGui::SetWindowFontScale(1.0);
+        ImGui::PopFont();
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.0f);
         ImGui::PopStyleColor();
-
         ImGui::TextUnformatted("");
+        ImGui::PopFont();
+
         // Green color
         col = ImColor(0, 255, 0, 255);
         ImGui::PushStyleColor(ImGuiCol_Text, col);
-        ImGui::SetWindowFontScale(1.375);
-        ImGui::TextUnformatted("Some Green Text with DejaVuSansMono 13 font with font scale of 1.375");
-        ImGui::SetWindowFontScale(1.0);
+        // ImGui::SetWindowFontScale(1.375);
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.375f);
+        ImGui::TextUnformatted("Some Green Text with ProFontWindows 13 font with font scale of 1.375");
+        // ImGui::SetWindowFontScale(1.0);
+        ImGui::PopFont();
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.0f);
         ImGui::PopStyleColor();
-
         ImGui::TextUnformatted("");
+        ImGui::PopFont();
+
         // Green color
         col = ImColor(0, 255, 0, 255);
         ImGui::PushStyleColor(ImGuiCol_Text, col);
-        ImGui::SetWindowFontScale(1.5);
-        ImGui::TextUnformatted("Some Green Text with DejaVuSansMono 13 font with font scale of 1.5");
-        ImGui::SetWindowFontScale(1.0);
+        // ImGui::SetWindowFontScale(1.5);
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.5f);
+        ImGui::TextUnformatted("Some Green Text with ProFontWindows 13 font with font scale of 1.5");
+        // ImGui::SetWindowFontScale(1.0);
+        ImGui::PopFont();
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.0f);
         ImGui::PopStyleColor();
-
         ImGui::TextUnformatted("");
+
         ImGui::Text("Using ShowStyleEditor() to see if new fonts have loaded\n");
         ImGui::ShowStyleEditor();
+        ImGui::PopFont();
+        ImGui::TreePop();
+    }
+
+    if (ImGui::TreeNode("Fonts different fonts with different sizes and colors")) {
+
+        // Green color
+        ImVec4 col = ImColor(0, 255, 0, 255);
+        ImGui::PushStyleColor(ImGuiCol_Text, col);
+        // ImGui::SetWindowFontScale(0.5);
+        ImGui::PushFont(Font1, Font1->LegacySize);
+        ImGui::TextUnformatted("Some Green Text with ProFontWindows size 13");
+        // ImGui::SetWindowFontScale(1.0);
+        ImGui::PopFont();
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.0f);
+        ImGui::PopStyleColor();
+        ImGui::TextUnformatted("");
+        ImGui::PopFont();
+
+        // Bright Teal color
+        col = ImColor(0, 255, 255, 255);
+        ImGui::PushStyleColor(ImGuiCol_Text, col);
+        // ImGui::SetWindowFontScale(0.5);
+        ImGui::PushFont(Font2, Font2->LegacySize);
+        ImGui::TextUnformatted("Some Bright Teal Text with ProFontWindows size 15");
+        // ImGui::SetWindowFontScale(1.0);
+        ImGui::PopFont();
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.0f);
+        ImGui::PopStyleColor();
+        ImGui::TextUnformatted("");
+        ImGui::PopFont();
+
+        // Red color
+        col = ImColor(255, 0, 0, 255);
+        ImGui::PushStyleColor(ImGuiCol_Text, col);
+        // ImGui::SetWindowFontScale(0.5);
+        ImGui::PushFont(Font3, Font3->LegacySize);
+        ImGui::TextUnformatted("Some Red Text with ProFontWindows size 20");
+        // ImGui::SetWindowFontScale(1.0);
+        ImGui::PopFont();
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.0f);
+        ImGui::PopStyleColor();
+        ImGui::TextUnformatted("");
+        ImGui::PopFont();
+
+
+        // Green color
+        col = ImColor(0, 255, 0, 255);
+        ImGui::PushStyleColor(ImGuiCol_Text, col);
+        // ImGui::SetWindowFontScale(0.5);
+        ImGui::PushFont(Font4, Font4->LegacySize);
+        ImGui::TextUnformatted("Some Green Text with Roboto-Light size 13");
+        // ImGui::SetWindowFontScale(1.0);
+        ImGui::PopFont();
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.0f);
+        ImGui::PopStyleColor();
+        ImGui::TextUnformatted("");
+        ImGui::PopFont();
+
+        // Bright Teal color
+        col = ImColor(0, 255, 255, 255);
+        ImGui::PushStyleColor(ImGuiCol_Text, col);
+        // ImGui::SetWindowFontScale(0.5);
+        ImGui::PushFont(Font5, Font5->LegacySize);
+        ImGui::TextUnformatted("Some Bright Teal Text with Roboto-Light size 15");
+        // ImGui::SetWindowFontScale(1.0);
+        ImGui::PopFont();
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.0f);
+        ImGui::PopStyleColor();
+        ImGui::TextUnformatted("");
+        ImGui::PopFont();
+
+        // Red color
+        col = ImColor(255, 0, 0, 255);
+        ImGui::PushStyleColor(ImGuiCol_Text, col);
+        // ImGui::SetWindowFontScale(0.5);
+        ImGui::PushFont(Font6, Font6->LegacySize);
+        ImGui::TextUnformatted("Some Red Text with Roboto-Light size 20");
+        // ImGui::SetWindowFontScale(1.0);
+        ImGui::PopFont();
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.0f);
+        ImGui::PopStyleColor();
+        ImGui::TextUnformatted("");
+        ImGui::PopFont();
+
+
+
+        // Green color
+        col = ImColor(0, 255, 0, 255);
+        ImGui::PushStyleColor(ImGuiCol_Text, col);
+        // ImGui::SetWindowFontScale(0.5);
+        ImGui::PushFont(Font7, Font7->LegacySize);
+        ImGui::TextUnformatted("Some Green Text with Roboto-Regular size 13");
+        // ImGui::SetWindowFontScale(1.0);
+        ImGui::PopFont();
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.0f);
+        ImGui::PopStyleColor();
+        ImGui::TextUnformatted("");
+        ImGui::PopFont();
+
+        // Bright Teal color
+        col = ImColor(0, 255, 255, 255);
+        ImGui::PushStyleColor(ImGuiCol_Text, col);
+        // ImGui::SetWindowFontScale(0.5);
+        ImGui::PushFont(Font8, Font8->LegacySize);
+        ImGui::TextUnformatted("Some Bright Teal Text with Roboto-Regular size 15");
+        // ImGui::SetWindowFontScale(1.0);
+        ImGui::PopFont();
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.0f);
+        ImGui::PopStyleColor();
+        ImGui::TextUnformatted("");
+        ImGui::PopFont();
+
+        // Red color
+        col = ImColor(255, 0, 0, 255);
+        ImGui::PushStyleColor(ImGuiCol_Text, col);
+        // ImGui::SetWindowFontScale(0.5);
+        ImGui::PushFont(Font9, Font9->LegacySize);
+        ImGui::TextUnformatted("Some Red Text with Roboto-Regular size 20");
+        // ImGui::SetWindowFontScale(1.0);
+        ImGui::PopFont();
+        ImGui::PushFont(NULL, style.FontSizeBase * 1.0f);
+        ImGui::PopStyleColor();
+        ImGui::TextUnformatted("");
+        ImGui::PopFont();
+
+
         ImGui::TreePop();
     }
 

@@ -19,6 +19,16 @@ void configureImgWindow();
 // Cleanup one-time setup
 void cleanupAfterImgWindow();
 
+inline ImFont* Font1 = nullptr;
+inline ImFont* Font2 = nullptr;
+inline ImFont* Font3 = nullptr;
+inline ImFont* Font4 = nullptr;
+inline ImFont* Font5 = nullptr;
+inline ImFont* Font6 = nullptr;
+inline ImFont* Font7 = nullptr;
+inline ImFont* Font8 = nullptr;
+inline ImFont* Font9 = nullptr;
+
 // Our own class defining our own UI
 class ImguiWidget: public ImgWindow {
 protected:
