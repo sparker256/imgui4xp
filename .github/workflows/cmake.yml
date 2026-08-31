@@ -1,0 +1,89 @@
+name: CMake
+
+on: [push]
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: RelWithDebInfo
+  I4XP_VERSION: 1.12
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest          
+
+    runs-on: ${{matrix.os}}
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: "Windows: Configure environment"
+      if: runner.os == 'Windows'
+      shell: bash
+      run: |
+        # Select MinGW toolchain instead of the default MSVC.
+        echo "CMAKE_GENERATOR=MinGW Makefiles" >> $GITHUB_ENV
+
+    - name: "Linux: Install dependency libraries"
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends freeglut3-dev libudev-dev libopenal-dev
+
+    - name: Configure CMake
+      working-directory: ${{github.workspace}}/src
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+
+    - name: Build
+      working-directory: ${{github.workspace}}/src
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+
+    - name: Test
+      working-directory: ${{github.workspace}}/build
+      run: ctest -C ${{env.BUILD_TYPE}}
+      
+    - uses: actions/upload-artifact@v7
+      with:
+        name: binaries-${{matrix.os}}
+        path: ${{github.workspace}}/build/*.xpl
+        if-no-files-found: error
+
+  package:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/upload-artifact/merge@v7
+        with:
+          name: binaries
+          pattern: binaries-*
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: binaries
+          path: imgui4xp/lin_x64
+      - name: Test artifact download     
+        run: ls -R -l
+      - name: Rename lin.xpl to imgui4xp.xpl
+        run: mv imgui4xp/lin_x64/lin.xpl imgui4xp/lin_x64/imgui4xp.xpl
+      - name: List folder     
+        run: ls -R -l  
+      - name: Rename win.xpl to imgui4xp/win_x64/imgui4xp.xpl
+        run: mv imgui4xp/lin_x64/win.xpl imgui4xp/win_x64/imgui4xp.xpl
+      - name: Rename mac.xpl to imgui4xp/mac_x64/imgui4xp.xpl
+        run: mv imgui4xp/lin_x64/mac.xpl imgui4xp/mac_x64/imgui4xp.xpl
+      - name: List Final Folder     
+        run: ls -R -l  
+      - uses: actions/upload-artifact@v7
+        with:
+          name: imgui4xp_v${{env.I4XP_VERSION}}
+          path: |
+            ${{github.workspace}}/imgui4xp*
+          if-no-files-found: error
