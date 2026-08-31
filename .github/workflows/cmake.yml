@@ -20,11 +20,11 @@ jobs:
     runs-on: ${{matrix.os}}
 
     steps:
-    - name: checkout all the submodules
-      uses: actions/checkout@v6
-      with:
-      	submodules: recursive
-    
+    - name: Checkout all the submodules
+    uses: actions/checkout@v6
+    with:
+      submodules: recursive
+
     - uses: actions/checkout@v6
 
     - name: "Windows: Configure environment"
