@@ -74,13 +74,13 @@ jobs:
       - name: Test artifact download     
         run: ls -R -l
       - name: Rename lin.xpl to imgui4xp.xpl
-        run: mv imgui4xp/lin_x64/imgui4xp.xpl imgui4xp/lin_x64/imgui4xp.xpl
+       # run: mv imgui4xp/lin_x64/imgui4xp.xpl imgui4xp/lin_x64/imgui4xp.xpl
       - name: List folder     
         run: ls -R -l  
       - name: Rename win.xpl to imgui4xp/win_x64/imgui4xp.xpl
-        run: mv imgui4xp/win_x64/imgui4xp.xpl imgui4xp/win_x64/imgui4xp.xpl
+      #  run: mv imgui4xp/win_x64/imgui4xp.xpl imgui4xp/win_x64/imgui4xp.xpl
       - name: Rename mac.xpl to imgui4xp/mac_x64/imgui4xp.xpl
-        run: mv imgui4xp/mac_x64/imgui4xp.xpl imgui4xp/mac_x64/imgui4xp.xpl
+      #  run: mv imgui4xp/mac_x64/imgui4xp.xpl imgui4xp/mac_x64/imgui4xp.xpl
       - name: List Final Folder     
         run: ls -R -l  
       - uses: actions/upload-artifact@v7
