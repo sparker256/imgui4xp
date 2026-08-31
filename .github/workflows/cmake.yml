@@ -19,43 +19,41 @@ jobs:
           - macos-latest
 
     steps:
-    - name: Checkout all the submodules
-    uses: actions/checkout@v6
-    with:
-      submodules: recursive
+      - name: Checkout all the submodules
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
 
-    - uses: actions/checkout@v6
+      - name: "Windows: Configure environment"
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          # Select MinGW toolchain instead of the default MSVC.
+          echo "CMAKE_GENERATOR=MinGW Makefiles" >> $GITHUB_ENV
 
-    - name: "Windows: Configure environment"
-      if: runner.os == 'Windows'
-      shell: bash
-      run: |
-        # Select MinGW toolchain instead of the default MSVC.
-        echo "CMAKE_GENERATOR=MinGW Makefiles" >> $GITHUB_ENV
+      - name: "Linux: Install dependency libraries"
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends freeglut3-dev libudev-dev libopenal-dev
 
-    - name: "Linux: Install dependency libraries"
-      if: runner.os == 'Linux'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y --no-install-recommends freeglut3-dev libudev-dev libopenal-dev
+      - name: Configure CMake
+        working-directory: ${{github.workspace}}/src
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
-    - name: Configure CMake
-      working-directory: ${{github.workspace}}/src
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+      - name: Build
+        working-directory: ${{github.workspace}}/src
+        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
 
-    - name: Build
-      working-directory: ${{github.workspace}}/src
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
-
-    - name: Test
-      working-directory: ${{github.workspace}}/build
-      run: ctest -C ${{env.BUILD_TYPE}}
-      
-    - uses: actions/upload-artifact@v7
-      with:
-        name: binaries-${{matrix.os}}
-        path: ${{github.workspace}}/build/*.xpl
-        if-no-files-found: error
+      - name: Test
+        working-directory: ${{github.workspace}}/build
+        run: ctest -C ${{env.BUILD_TYPE}}
+        
+      - uses: actions/upload-artifact@v7
+        with:
+          name: binaries-${{matrix.os}}
+          path: ${{github.workspace}}/build/*.xpl
+          if-no-files-found: error
 
   package:
     needs: build
