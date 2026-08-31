@@ -60,7 +60,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       
       - uses: actions/upload-artifact/merge@v7
         with:
@@ -74,6 +74,7 @@ jobs:
       - name: Test artifact download     
         run: ls -R -l
 #      - name: Rename lin.xpl to imgui4xp.xpl
+#      When built already in right place so no need to move it. 
 #       # run: mv imgui4xp/lin_x64/imgui4xp.xpl imgui4xp/lin_x64/imgui4xp.xpl
       - name: List folder     
         run: ls -R -l  
