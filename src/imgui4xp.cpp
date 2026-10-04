@@ -116,6 +116,7 @@ PLUGIN_API int XPluginStart(char * outName, char * outSig, char * outDesc) {
 }
 
 PLUGIN_API void	XPluginStop(void) {
+    cleanupAfterImgWindow();
 }
 
 PLUGIN_API void XPluginDisable(void) {

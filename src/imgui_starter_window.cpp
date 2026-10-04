@@ -118,23 +118,16 @@ constexpr float FONT_SIZE = 13.0f;
 /// @param[out] imgHeight Image height in pixel
 /// @return texture id
 /// @exception std::runtime_error if image not found
-int loadImage(const std::string& fileName, int& imgWidth, int& imgHeight) {
+ImTextureID loadImage(const std::string& fileName, int& imgWidth, int& imgHeight) {
     int nComps;
-    uint8_t *data = stbi_load(fileName.c_str(), &imgWidth, &imgHeight, &nComps, sizeof(uint32_t));
+    uint8_t *data = stbi_load(fileName.c_str(), &imgWidth, &imgHeight, &nComps, 4);
 
     if (!data) {
         throw std::runtime_error(std::string("Couldn't load image: ") + stbi_failure_reason());
     }
 
-    int id;
-    XPLMGenerateTextureNumbers(&id, 1);
-    XPLMBindTexture2d(id, 0);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-    glTexImage2D(GL_TEXTURE_2D, 0,
-            GL_RGBA, imgWidth, imgHeight, 0,
-            GL_RGBA, GL_UNSIGNED_BYTE, data);
+    // Unified Multiplexing API: Let ImgWindow abstract Panel Graphics vs OpenGL fallback
+    ImTextureID id = ImgWindow::CreateTexture(data, imgWidth, imgHeight);
 
     stbi_image_free(data);
 
@@ -145,17 +138,17 @@ int loadImage(const std::string& fileName, int& imgWidth, int& imgHeight) {
 /// @param fileName Path to image file
 /// @param[out] imgSize Image size in pixel
 /// @return texture id for loaded image, or 0 in case of failure
-int try2load_image(const std::string& fileName, ImVec2& imgSize) {
+ImTextureID try2load_image(const std::string& fileName, ImVec2& imgSize) {
     try {
         int imgWidth=0, imgHeight=0;
-        int ret = loadImage(fileName, imgWidth, imgHeight);
+        ImTextureID ret = loadImage(fileName, imgWidth, imgHeight);
         imgSize.x = float(imgWidth);
         imgSize.y = float(imgHeight);
         return ret;
     } catch (const std::exception &e) {
         std::string err = std::string("imgui4xp Error: ") + e.what() + " in " + fileName + "\n";
         XPLMDebugString(err.c_str());
-        return 0;
+        return (ImTextureID)0;
     }
 }
 
@@ -245,8 +238,26 @@ void configureImgWindow()
 // Undo what we did in configureImgWindow()
 void cleanupAfterImgWindow()
 {
-    // We just destroy the font atlas
-    ImgWindow::sFontAtlas.reset();
+    // Clean up our custom loaded image texture
+    if (ImguiWidget::image_id) {
+        ImgWindow::DeleteTexture(ImguiWidget::image_id);
+        ImguiWidget::image_id = (ImTextureID)0;
+    }
+
+#if defined(IMGUI_VERSION_NUM) && (IMGUI_VERSION_NUM >= 19200) /* only on v1.92+ */
+    // Immediately sever ImGui's internal reference first to prevent dangling pointer / Use-After-Free races
+    if (ImGui::GetCurrentContext() != nullptr) {
+        ImGui::GetIO().Fonts = NULL;
+    }
+#endif
+
+    // Destroy the font atlas
+    if (ImgWindow::sFontAtlas) {
+        ImgWindow::sFontAtlas.reset();
+    }
+
+    // Flush the queue to ensure all deferred textures are deleted from VRAM
+    ImgWindow::Shutdown();
 }
 
 //
@@ -255,8 +266,8 @@ void cleanupAfterImgWindow()
 
 // texture number and size of the image we want to show
 // (static, because we want to load the image into a texture just once)
-int      ImguiWidget::image_id = 0;
-ImVec2   ImguiWidget::image_size;
+ImTextureID  ImguiWidget::image_id = (ImTextureID)0;
+ImVec2       ImguiWidget::image_size;
 
 // Counter for the number of windows opened
 int      ImguiWidget::num_win = 0;
@@ -610,12 +621,10 @@ void ImguiWidget::buildInterface() {
     }
 
     if (ImGui::TreeNode("Images")) {
-        ImGui::Text("image_id = %d", image_id);
+        ImGui::Text("image_id = %llu", (unsigned long long)image_id);
         // Draw a previously loaded image
         if (image_id) {
-            // ImGui::Image((void*)(intptr_t)image_id, image_size);
-            auto tex_ref = ImTextureRef(image_id);
-            ImGui::Image(tex_ref, image_size);
+            ImGui::Image(image_id, image_size);
         }
 
     ImGui::TreePop();
