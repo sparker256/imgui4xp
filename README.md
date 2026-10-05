@@ -10,7 +10,7 @@ First clone imgui4xp using this command "git clone --recurse-submodules https://
 
 > [!NOTE]
 > If you already cloned without `--recurse-submodules` and find that
-
+>
 > `src/ImgWindow` is _empty_, just run: `git submodule update --init --recursive`
 
 ## Multi Platform Build from Linux
