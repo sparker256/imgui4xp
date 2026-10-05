@@ -9,7 +9,7 @@ Thanks to kuroneko on x-plane.org and his repository at https://github.com/xsqua
 First clone imgui4xp using this command "git clone --recurse-submodules https://github.com/sparker256/imgui4xp.git" and put the resulting imgui4xp folder wherever you like. I normally put myself in the folder where I want the repository folder to reside first.
 
 > [!NOTE]
-> If you already cloned without `--recurse-submodules` and find that
+> If you already cloned without `--recurse-submodules` and find that\n
 > `src/ImgWindow` is _empty_, just run: `git submodule update --init --recursive`
 
 ## Multi Platform Build from Linux
