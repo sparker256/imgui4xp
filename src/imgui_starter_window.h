@@ -31,10 +31,11 @@ inline ImFont* Font9 = nullptr;
 
 // Our own class defining our own UI
 class ImguiWidget: public ImgWindow {
+public:
+    // texture ID and size of the image we want to show
+    static ImTextureID  image_id;
+    static ImVec2       image_size;
 protected:
-    // texture number and size of the image we want to show
-    static int      image_id;
-    static ImVec2   image_size;
     // Counter for the number of windows opened
     static int      num_win;
     // I am window number...

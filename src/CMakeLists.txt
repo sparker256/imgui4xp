@@ -39,6 +39,9 @@ add_definitions(-DXPLM200=1 -DXPLM210=1 -DXPLM300=1 -DXPLM301=1)
 # Define platform macros.
 add_definitions(-DAPL=$<BOOL:${APPLE}> -DIBM=$<BOOL:${WIN32}> -DLIN=$<AND:$<BOOL:${UNIX}>,$<NOT:$<BOOL:${APPLE}>>>)
 
+# Build ImGui for Panel Graphics bridge (with OpenGL for older X-Plane versions)
+add_definitions(-DIMGWINDOW_USE_PANEL_GRAPHICS)
+
 # Visual Studio defines compiler switches via CMakeSettings.json
 if (NOT MSVC)
     # Force-enable exception support. This is most likely redundant, although for C
