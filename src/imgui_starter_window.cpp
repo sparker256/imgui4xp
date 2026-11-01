@@ -1485,7 +1485,8 @@ void ImGeeShowcaseWidget::buildInterface()
 
     // Steppers + Slider + Reset + Fit + Cursor suite (fixed width in chrome)
     const float zoom_suite_w = 296.0f;
-    const float min_offset = (ImGui::GetItemRectMax().x - ImGui::GetWindowPos().x) + ImGui::GetStyle().ItemSpacing.x;
+    const float title_w = Font9 ? Font9->CalcTextSizeA(Font9->LegacySize, FLT_MAX, -1.0f, "ImGee UX & Modern Cockpit Suite").x : 315.0f;
+    const float min_offset = ImGui::GetStyle().WindowPadding.x + title_w + ImGui::GetStyle().ItemSpacing.x;
     const float target_offset = ImGui::GetWindowWidth() - zoom_suite_w - ImGui::GetStyle().WindowPadding.x;
     ImGui::SameLine(ImMax(min_offset, target_offset));
 
