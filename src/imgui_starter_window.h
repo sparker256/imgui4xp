@@ -104,6 +104,18 @@ private:
     int         _incRepeatCount = 0;
     float       _sliderStartZoom = 1.0f;
     std::vector<ImGui::MarkdownTableState> pendingTableStates;
+
+    struct WindowRectSnapshot {
+        int  l = 0;
+        int  t = 0;
+        int  r = 0;
+        int  b = 0;
+        bool valid = false;
+    };
+    WindowRectSnapshot _baselineRect;
+    WindowRectSnapshot _priorZoomRect;
+
+    void RestoreWindowRect(const WindowRectSnapshot& rect);
 };
 
 // Backwards-compatible alias for showcase window

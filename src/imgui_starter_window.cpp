@@ -1414,9 +1414,43 @@ ImGeeShowcaseWidget::ImGeeShowcaseWidget(int width, int height,
                          "}\n"
                          "```";
     }
+    // Latch initial window geometry as 100% baseline snapshot
+    GetCurrentWindowGeometry(_baselineRect.l, _baselineRect.t, _baselineRect.r, _baselineRect.b);
+    _baselineRect.valid = true;
 }
 
 ImGeeShowcaseWidget::~ImGeeShowcaseWidget() = default;
+
+void ImGeeShowcaseWidget::RestoreWindowRect(const WindowRectSnapshot& rect)
+{
+    if (!rect.valid || !GetWindowId()) return;
+
+    if (IsInVR()) {
+        int w = std::abs(rect.r - rect.l);
+        int h = std::abs(rect.t - rect.b);
+        if (w > 0 && h > 0) {
+            w = ImClamp(w, 520, 2560);
+            h = ImClamp(h, 420, 1440);
+            SetWindowGeometryVR(w, h);
+        }
+        return;
+    }
+
+    if (IsPoppedOut()) {
+        SetWindowGeometryOS(rect.l, rect.t, rect.r, rect.b);
+        return;
+    }
+
+    // Standard in-simulator 2D window:
+    int l = rect.l;
+    int t = rect.t;
+    int r = rect.r;
+    int b = rect.b;
+
+    ClampGeometryToScreen(l, t, r, b, 520, 420, 2560, 1440, GetEffectiveTopMargin());
+
+    SetWindowGeometry(l, t, r, b);
+}
 
 void ShowImGeeShowcaseWindow()
 {
@@ -1476,7 +1510,11 @@ void ImGeeShowcaseWidget::buildInterface()
             float old_z = _fontAdjust;
             _fontAdjust = ImMax(0.50f, _fontAdjust - 0.05f);
             if (std::abs(_fontAdjust - old_z) > 0.001f) {
-                ScaleWindowGeometry(old_z, _fontAdjust);
+                if (std::abs(_fontAdjust - 1.0f) < 0.001f && _baselineRect.valid) {
+                    RestoreWindowRect(_baselineRect);
+                } else {
+                    ScaleWindowGeometry(old_z, _fontAdjust);
+                }
             }
         }
     }
@@ -1496,7 +1534,11 @@ void ImGeeShowcaseWidget::buildInterface()
     }
     if (ImGui::IsItemDeactivatedAfterEdit()) {
         if (std::abs(_fontAdjust - _sliderStartZoom) > 0.001f) {
-            ScaleWindowGeometry(_sliderStartZoom, _fontAdjust);
+            if (std::abs(_fontAdjust - 1.0f) < 0.001f && _baselineRect.valid) {
+                RestoreWindowRect(_baselineRect);
+            } else {
+                ScaleWindowGeometry(_sliderStartZoom, _fontAdjust);
+            }
             _sliderStartZoom = _fontAdjust;
         }
     }
@@ -1504,7 +1546,11 @@ void ImGeeShowcaseWidget::buildInterface()
     float wheel_old = _fontAdjust;
     if (ImGui::AdjustItemOnMouseWheel(&_fontAdjust, 0.50f, 2.00f, 0.02f)) {
         if (std::abs(_fontAdjust - wheel_old) > 0.001f) {
-            ScaleWindowGeometry(wheel_old, _fontAdjust);
+            if (std::abs(_fontAdjust - 1.0f) < 0.001f && _baselineRect.valid) {
+                RestoreWindowRect(_baselineRect);
+            } else {
+                ScaleWindowGeometry(wheel_old, _fontAdjust);
+            }
         }
     }
     ImGui::TimedTooltip::MD::Text("Interactive UI Zoom: roll mouse wheel (2%%) or drag thumb.\n\n*Window resizes proportionally to match.*");
@@ -1532,7 +1578,11 @@ void ImGeeShowcaseWidget::buildInterface()
             float old_z = _fontAdjust;
             _fontAdjust = ImMin(2.00f, _fontAdjust + 0.05f);
             if (std::abs(_fontAdjust - old_z) > 0.001f) {
-                ScaleWindowGeometry(old_z, _fontAdjust);
+                if (std::abs(_fontAdjust - 1.0f) < 0.001f && _baselineRect.valid) {
+                    RestoreWindowRect(_baselineRect);
+                } else {
+                    ScaleWindowGeometry(old_z, _fontAdjust);
+                }
             }
         }
     }
@@ -1540,19 +1590,31 @@ void ImGeeShowcaseWidget::buildInterface()
 
     ImGui::SameLine(0.0f, 3.0f);
 
-    // Vector Reset button with 1-click A/B toggle memory to prior zoom
+    // Vector Reset button with 1-click A/B toggle memory to prior zoom and geometry
     bool is_modified = std::abs(_fontAdjust - 1.0f) > 0.001f;
     bool can_restore = !is_modified && std::abs(_lastZoom - 1.0f) > 0.001f;
     if (ImGui::ResetButton("##zoom_reset", is_modified, 0.0f, false, nullptr, can_restore)) {
         float old_z = _fontAdjust;
         if (is_modified) {
+            // State A -> Reset to 100% baseline:
+            // Snapshot active zoomed geometry so 1-click toggle can restore it with 100% fidelity
+            GetCurrentWindowGeometry(_priorZoomRect.l, _priorZoomRect.t, _priorZoomRect.r, _priorZoomRect.b);
+            _priorZoomRect.valid = true;
             _lastZoom = _fontAdjust;
             _fontAdjust = 1.0f;
+            if (_baselineRect.valid) {
+                RestoreWindowRect(_baselineRect);
+            } else {
+                ScaleWindowGeometry(old_z, 1.0f);
+            }
         } else if (can_restore) {
+            // State B -> 1-click Toggle back to prior zoom:
             _fontAdjust = _lastZoom;
-        }
-        if (std::abs(_fontAdjust - old_z) > 0.001f) {
-            ScaleWindowGeometry(old_z, _fontAdjust);
+            if (_priorZoomRect.valid) {
+                RestoreWindowRect(_priorZoomRect);
+            } else {
+                ScaleWindowGeometry(1.0f, _fontAdjust);
+            }
         }
     }
     if (is_modified) {
@@ -2260,5 +2322,11 @@ void ImGeeShowcaseWidget::buildInterface()
     ImGui::Separator();
     if (ImGui::Button("Close")) {
         SetVisible(false);
+    }
+
+    // Continuously preserve user's customized 100% baseline window layout (position & dimensions)
+    if (std::abs(_fontAdjust - 1.0f) < 0.001f) {
+        GetCurrentWindowGeometry(_baselineRect.l, _baselineRect.t, _baselineRect.r, _baselineRect.b);
+        _baselineRect.valid = true;
     }
 }
