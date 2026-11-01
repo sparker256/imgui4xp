@@ -74,7 +74,27 @@ IMGUI_API bool ButtonTooltip(const char* label,
     return b;
 }
 
+/// @brief 1-Click Toolbar Button that bypasses ActiveId blocking (Lance's Pattern)
+/// @param label Text on Button
+/// @param tip Optional Markdown tooltip text
+/// @param size Button size (0 for auto)
+IMGUI_API bool ToolbarButton(const char* label,
+                             const char* tip = nullptr,
+                             const ImVec2& size = ImVec2(0, 0))
+{
+    bool clicked = ImGui::Button(label, size);
+    bool hovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+    if (!clicked && hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+        clicked = true;
+    }
+    if (tip && hovered) {
+        ImGui::TimedTooltip::TextMDProxy(ImGui::GetItemID(), hovered, "%s", tip);
+    }
+    return clicked;
 }
+
+}
+using ImGui::ToolbarButton;
 
 //
 // MARK: Global data and functions
@@ -1497,6 +1517,10 @@ void ImGeeShowcaseWidget::buildInterface()
     ImGui::PushButtonRepeat(true);
     bool dec_clicked = ImGui::Button("-##zoom_dec", ImVec2(22.0f, 0.0f));
     ImGui::PopButtonRepeat();
+    bool dec_hovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+    if (!dec_clicked && dec_hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+        dec_clicked = true;
+    }
 
     if (dec_clicked) {
         bool is_initial = ImGui::IsItemActivated() || ImGui::IsMouseClicked(0);
@@ -1522,7 +1546,9 @@ void ImGeeShowcaseWidget::buildInterface()
             }
         }
     }
-    ImGui::TimedTooltip::MD::Text("Zoom Out (-5%%)\n\n*Click or hold down to step smoothly*");
+    if (dec_hovered) {
+        ImGui::TimedTooltip::TextMDProxy(ImGui::GetItemID(), dec_hovered, "Zoom Out (-5%%)\n\n*Click or hold down to step smoothly*");
+    }
 
     ImGui::SameLine(0.0f, 3.0f);
 
@@ -1565,6 +1591,10 @@ void ImGeeShowcaseWidget::buildInterface()
     ImGui::PushButtonRepeat(true);
     bool inc_clicked = ImGui::Button("+##zoom_inc", ImVec2(22.0f, 0.0f));
     ImGui::PopButtonRepeat();
+    bool inc_hovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+    if (!inc_clicked && inc_hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+        inc_clicked = true;
+    }
 
     if (inc_clicked) {
         bool is_initial = ImGui::IsItemActivated() || ImGui::IsMouseClicked(0);
@@ -1590,14 +1620,21 @@ void ImGeeShowcaseWidget::buildInterface()
             }
         }
     }
-    ImGui::TimedTooltip::MD::Text("Zoom In (+5%%)\n\n*Click or hold down to step smoothly*");
+    if (inc_hovered) {
+        ImGui::TimedTooltip::TextMDProxy(ImGui::GetItemID(), inc_hovered, "Zoom In (+5%%)\n\n*Click or hold down to step smoothly*");
+    }
 
     ImGui::SameLine(0.0f, 3.0f);
 
     // Vector Reset button with 1-click A/B toggle memory to prior zoom and geometry
     bool is_modified = std::abs(_fontAdjust - 1.0f) > 0.001f;
     bool can_restore = !is_modified && std::abs(_lastZoom - 1.0f) > 0.001f;
-    if (ImGui::ResetButton("##zoom_reset", is_modified, 0.0f, false, nullptr, can_restore)) {
+    bool rst_clicked = ImGui::ResetButton("##zoom_reset", is_modified, 0.0f, false, nullptr, can_restore);
+    bool rst_hovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+    if (!rst_clicked && rst_hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+        rst_clicked = true;
+    }
+    if (rst_clicked) {
         float old_z = _fontAdjust;
         if (is_modified) {
             // State A -> Reset to 100% baseline:
@@ -1621,29 +1658,37 @@ void ImGeeShowcaseWidget::buildInterface()
             }
         }
     }
-    if (is_modified) {
-        ImGui::TimedTooltip::MD::Text("Reset zoom from **%d%%** back to **100%% baseline**.", (int)std::round(_fontAdjust * 100.0f));
-    } else if (can_restore) {
-        ImGui::TimedTooltip::MD::Text("1-click toggle back to prior **%d%% zoom**.", (int)std::round(_lastZoom * 100.0f));
-    } else {
-        ImGui::TimedTooltip::MD::Text("Zoom is at **100%% baseline**.");
+    if (rst_hovered) {
+        if (is_modified) {
+            ImGui::TimedTooltip::TextMDProxy(ImGui::GetItemID(), rst_hovered, "Reset zoom from **%d%%** back to **100%% baseline**.", (int)std::round(_fontAdjust * 100.0f));
+        } else if (can_restore) {
+            ImGui::TimedTooltip::TextMDProxy(ImGui::GetItemID(), rst_hovered, "1-click toggle back to prior **%d%% zoom**.", (int)std::round(_lastZoom * 100.0f));
+        } else {
+            ImGui::TimedTooltip::TextMDProxy(ImGui::GetItemID(), rst_hovered, "Zoom is at **100%% baseline**.");
+        }
     }
 
     // Proportional Window Scaling: Fit window dimensions to baseline at current zoom level
     ImGui::SameLine(0.0f, 3.0f);
-    if (ImGui::Button("Fit##fit_window", ImVec2(32.0f, 0.0f))) {
+    if (ToolbarButton("Fit##fit_window", nullptr, ImVec2(32.0f, 0.0f))) {
         ResizeToScale(_fontAdjust);
     }
-    ImGui::TimedTooltip::MD::Text("**Fit Window to Baseline**\n\nResets window to default 680x580 baseline proportions scaled to current zoom (%d%%) anchored to top-left.", (int)std::round(_fontAdjust * 100.0f));
+    bool fit_hovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+    if (fit_hovered) {
+        ImGui::TimedTooltip::TextMDProxy(ImGui::GetItemID(), fit_hovered, "**Fit Window to Baseline**\n\nResets window to default 680x580 baseline proportions scaled to current zoom (%d%%) anchored to top-left.", (int)std::round(_fontAdjust * 100.0f));
+    }
     // Cursor Handling Toggle Button (separated by 8px gap)
     ImGui::SameLine(0.0f, 8.0f);
     bool imgui_cursors = GetImgCursorHandling();
-    if (ImGui::Button(imgui_cursors ? ICON_FA_MOUSE_POINTER "##cursor_toggle" : ICON_FA_MOUSE "##cursor_toggle", ImVec2(24.0f, 0.0f))) {
+    if (ToolbarButton(imgui_cursors ? ICON_FA_MOUSE_POINTER "##cursor_toggle" : ICON_FA_MOUSE "##cursor_toggle", nullptr, ImVec2(24.0f, 0.0f))) {
         SetImgCursorHandling(!imgui_cursors);
     }
-    ImGui::TimedTooltip::MD::Text(imgui_cursors
-        ? "**ImGui Dynamic Cursors:** <pill color=#2ecc71>ACTIVE</pill>\n\nClick to switch to standard X-Plane hardware cursor."
-        : "**ImGui Dynamic Cursors:** <pill color=#7f8c8d>DISABLED</pill>\n\nClick to enable ImGui contextual mouse cursors (hand, resize, text).");
+    bool cur_hovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+    if (cur_hovered) {
+        ImGui::TimedTooltip::TextMDProxy(ImGui::GetItemID(), cur_hovered, imgui_cursors
+            ? "**ImGui Dynamic Cursors:** <pill color=#2ecc71>ACTIVE</pill>\n\nClick to switch to standard X-Plane hardware cursor."
+            : "**ImGui Dynamic Cursors:** <pill color=#7f8c8d>DISABLED</pill>\n\nClick to enable ImGui contextual mouse cursors (hand, resize, text).");
+    }
 
     ImGui::TextDisabled("Dedicated reference showcase for avionics controls, dials, and CommonMark.");
     ImGui::Spacing();
@@ -1992,89 +2037,76 @@ void ImGeeShowcaseWidget::buildInterface()
                 cached_sel_end = -1;
             };
 
-            // 1-Click Formatting Toolbar with Smart Selection Wrapping:
-            if (ImGui::Button("H1")) {
+            // 1-Click Formatting Toolbar with Smart Selection Wrapping (Lance's Pattern):
+            if (ToolbarButton("H1", "Prepend `# ` heading to current line or selection")) {
                 wrap_or_insert("# ", "", "Heading 1", true);
             }
-            ImGui::TimedTooltip::MD::Text("Prepend `# ` heading to current line or selection");
 
             ImGui::SameLine();
-            if (ImGui::Button("H2")) {
+            if (ToolbarButton("H2", "Prepend `## ` heading to current line or selection")) {
                 wrap_or_insert("## ", "", "Heading 2", true);
             }
-            ImGui::TimedTooltip::MD::Text("Prepend `## ` heading to current line or selection");
 
             ImGui::SameLine();
-            if (ImGui::Button(" B ")) {
+            if (ToolbarButton(" B ", "Wrap selection in `**bold**` markup")) {
                 wrap_or_insert("**", "**", "bold text", false);
             }
-            ImGui::TimedTooltip::MD::Text("Wrap selection in `**bold**` markup");
 
             ImGui::SameLine();
-            if (ImGui::Button(" I ")) {
+            if (ToolbarButton(" I ", "Wrap selection in `*italic*` markup")) {
                 wrap_or_insert("*", "*", "italic text", false);
             }
-            ImGui::TimedTooltip::MD::Text("Wrap selection in `*italic*` markup");
 
             ImGui::SameLine();
-            if (ImGui::Button(" U ")) {
+            if (ToolbarButton(" U ", "Wrap selection in `<u>underline</u>` tags")) {
                 wrap_or_insert("<u>", "</u>", "underlined text", false);
             }
-            ImGui::TimedTooltip::MD::Text("Wrap selection in `<u>underline</u>` tags");
 
             ImGui::SameLine();
-            if (ImGui::Button("* List")) {
+            if (ToolbarButton("* List", "Prepend bullet `* ` to current line or selection")) {
                 wrap_or_insert("* ", "", "Item description", true);
             }
-            ImGui::TimedTooltip::MD::Text("Prepend bullet `* ` to current line or selection");
 
             ImGui::SameLine();
-            if (ImGui::Button("Pill")) {
+            if (ToolbarButton("Pill", "Wrap selection in `<pill color=...>` status capsule")) {
                 wrap_or_insert("<pill color=#2ecc71>", "</pill>", "ONLINE", false);
             }
-            ImGui::TimedTooltip::MD::Text("Wrap selection in `<pill color=...>` status capsule");
 
             ImGui::SameLine();
-            if (ImGui::Button("Badge")) {
+            if (ToolbarButton("Badge", "Wrap selection in `<badge>` release chip")) {
                 wrap_or_insert("<badge>", "</badge>", "v2.3.0", false);
             }
-            ImGui::TimedTooltip::MD::Text("Wrap selection in `<badge>` release chip");
 
             ImGui::SameLine();
-            if (ImGui::Button("Shield...")) {
+            if (ToolbarButton("Shield...", "Open **Shields.io & Badge Generator** to create custom badges & status pills")) {
                 showShieldModal = true;
             }
-            ImGui::TimedTooltip::MD::Text("Open **Shields.io & Badge Generator** to create custom badges & status pills");
 
             ImGui::SameLine();
-            if (ImGui::Button("Key")) {
+            if (ToolbarButton("Key", "Wrap selection in `<kbd>` keycap")) {
                 wrap_or_insert("<kbd>", "</kbd>", "Alt", false);
             }
-            ImGui::TimedTooltip::MD::Text("Wrap selection in `<kbd>` keycap");
 
             ImGui::SameLine();
-            if (ImGui::Button("Code")) {
+            if (ToolbarButton("Code", "Wrap selection in syntax-highlighted code block with [Copy] button")) {
                 wrap_or_insert("\n```cpp\n", "\n```\n", "void FlightPlan() {\n}\n", false);
             }
-            ImGui::TimedTooltip::MD::Text("Wrap selection in syntax-highlighted code block with [Copy] button");
 
             ImGui::SameLine();
-            if (ImGui::Button("---")) {
+            if (ToolbarButton("---", "Insert CommonMark 4.1 thematic break divider (---)")) {
                 wrap_or_insert("\n---\n", "", "", false);
             }
-            ImGui::TimedTooltip::MD::Text("Insert CommonMark 4.1 thematic break divider (---)");
 
             ImGui::SameLine();
             ImGui::TextDisabled("|");
 
             ImGui::SameLine();
-            if (ImGui::Button("Clear")) {
+            if (ToolbarButton("Clear", "Clears the scratchpad editor buffer")) {
                 scratchpadText.clear();
             }
-            ImGui::TimedTooltip::MD::Text("Clears the scratchpad editor buffer");
 
             ImGui::SameLine();
-            if (ImGui::Button("Reset Sample")) {
+            if (ToolbarButton("Reset Sample", "Restores the flight briefing sample")) {
                 scratchpadText = "### Live Flight Briefing\n"
                                  "* Status: <pill color=#2ecc71>CLEARED</pill>\n"
                                  "* Departure: **KSEA** Rwy 16L\n"
@@ -2107,26 +2139,23 @@ void ImGeeShowcaseWidget::buildInterface()
             ImGui::TimedTooltip::MD::Text(std::string("**Active Note Selector** (`FilePickerCombo`)\n\nScan and switch notes in `") + notes_dir + "` using native C++11 filesystem scanning.");
 
             ImGui::SameLine();
-            if (ImGui::Button("Save")) {
+            if (ToolbarButton("Save", "**Save Note**\n\nPersist buffer directly to active note on disk.")) {
                 if (!currentNoteFilename.empty() && currentNoteFilename != "(Untitled)") {
                     SaveNote(std::string(notes_dir) + "/" + currentNoteFilename);
                 } else {
                     showSaveDialog = true;
                 }
             }
-            ImGui::TimedTooltip::MD::Text("**Save Note**\n\nPersist buffer directly to active note on disk.");
 
             ImGui::SameLine();
-            if (ImGui::Button("Open...")) {
+            if (ToolbarButton("Open...", "**Open Note Dialog** (`OpenFileDialog`)\n\nBrowse X-Plane directories in an in-cockpit modal with live search & file sizes.")) {
                 showOpenDialog = true;
             }
-            ImGui::TimedTooltip::MD::Text("**Open Note Dialog** (`OpenFileDialog`)\n\nBrowse X-Plane directories in an in-cockpit modal with live search & file sizes.");
 
             ImGui::SameLine();
-            if (ImGui::Button("Save As...")) {
+            if (ToolbarButton("Save As...", "**Save Note As Dialog** (`SaveFileDialog`)\n\nSave note under a new filename with built-in overwrite protection.")) {
                 showSaveDialog = true;
             }
-            ImGui::TimedTooltip::MD::Text("**Save Note As Dialog** (`SaveFileDialog`)\n\nSave note under a new filename with built-in overwrite protection.");
 
             ImGui::SameLine();
             if (ImGui::Button("+ New")) {
