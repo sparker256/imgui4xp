@@ -1393,7 +1393,7 @@ ImGeeShowcaseWidget::ImGeeShowcaseWidget(int width, int height,
     ImgWindow(WindowGeometry::Centered(width, height), decoration, layer, true /* cursors */)
 {
     SetWindowTitle("ImGee Cockpit Showcase");
-    SetWindowResizingLimits(565, 220, 2560, 1440);
+    SetWindowResizingLimits(565, 340, 2560, 1440);
     // Pre-load default note from disk if available
     std::string default_note = "./Resources/plugins/imgui4xp/notes/flight_briefing.md";
     if (!LoadTextFile(default_note, scratchpadText)) {
@@ -1430,7 +1430,7 @@ void ImGeeShowcaseWidget::RestoreWindowRect(const WindowRectSnapshot& rect)
         int h = std::abs(rect.t - rect.b);
         if (w > 0 && h > 0) {
             w = ImClamp(w, 565, 2560);
-            h = ImClamp(h, 220, 1440);
+            h = ImClamp(h, 340, 1440);
             SetWindowGeometryVR(w, h);
         }
         return;
@@ -1447,7 +1447,7 @@ void ImGeeShowcaseWidget::RestoreWindowRect(const WindowRectSnapshot& rect)
     int r = rect.r;
     int b = rect.b;
 
-    ClampGeometryToScreen(l, t, r, b, 565, 220, 2560, 1440, GetEffectiveTopMargin());
+    ClampGeometryToScreen(l, t, r, b, 565, 340, 2560, 1440, GetEffectiveTopMargin());
 
     SetWindowGeometry(l, t, r, b);
 }
