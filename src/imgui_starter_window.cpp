@@ -1620,7 +1620,7 @@ void ImGeeShowcaseWidget::buildInterface()
     if (is_modified) {
         ImGui::TimedTooltip::MD::Text("Reset zoom back to **100%% baseline**.");
     } else if (can_restore) {
-        ImGui::TimedTooltip::MD::Text("1-click toggle back to prior **%.0f%% zoom**.", _lastZoom * 100.0f);
+        ImGui::TimedTooltip::MD::Text("1-click toggle back to prior **%d%% zoom**.", (int)std::round(_lastZoom * 100.0f));
     } else {
         ImGui::TimedTooltip::MD::Text("Zoom is at **100%% baseline**.");
     }
@@ -1630,7 +1630,7 @@ void ImGeeShowcaseWidget::buildInterface()
     if (ImGui::Button("Fit##fit_window", ImVec2(32.0f, 0.0f))) {
         ResizeToScale(_fontAdjust);
     }
-    ImGui::TimedTooltip::MD::Text("**Fit Window to Baseline**\n\nResets window to default 680x580 baseline proportions scaled to current zoom (%.0f%%) anchored to top-left.", _fontAdjust * 100.0f);
+    ImGui::TimedTooltip::MD::Text("**Fit Window to Baseline**\n\nResets window to default 680x580 baseline proportions scaled to current zoom (%d%%) anchored to top-left.", (int)std::round(_fontAdjust * 100.0f));
     // Cursor Handling Toggle Button (separated by 8px gap)
     ImGui::SameLine(0.0f, 8.0f);
     bool imgui_cursors = GetImgCursorHandling();
