@@ -12,6 +12,7 @@
 #define SRC_IMGUIWIDGET_H_
 
 #include "../src/ImgWindow/ImgWindow.h"
+#include "contrib.h"
 #include <vector>
 
 // Configure one-time setup like fonts
@@ -28,6 +29,90 @@ inline ImFont* Font6 = nullptr;
 inline ImFont* Font7 = nullptr;
 inline ImFont* Font8 = nullptr;
 inline ImFont* Font9 = nullptr;
+inline ImFont* FontBold = nullptr;
+inline ImFont* FontMono = nullptr;
+
+// Dedicated fixed-size, non-scrollable window showcasing ImGee / contrib UX suite
+class ImGeeShowcaseWidget: public ImgWindow {
+public:
+    ImGeeShowcaseWidget(int width = 680, int height = 580,
+                        XPLMWindowDecoration decoration = xplm_WindowDecorationRoundRectangle,
+                        XPLMWindowLayer layer = xplm_WindowLayerFloatingWindows);
+    ~ImGeeShowcaseWidget() override;
+
+protected:
+    ImGuiWindowFlags_ beforeBegin() override {
+        return ImGuiWindowFlags_None;
+    }
+
+    // Dynamic UI Zoom multiplier (Responsive UI Scaling Math)
+    float GetExtensionScaleFactor() const override { return _fontAdjust; }
+
+    void buildInterface() override;
+
+private:
+    // Tab 1 state: Knobs, Sliders & Procedural Dials
+    float       headingBug      = 180.0f;
+    float       altitudeTarget  = 5500.0f;
+    float       verticalSpeed   = 0.0f;
+    float       throttlePct     = 0.65f;
+    int         navSourceIdx    = 0;
+    float       fuelRemaining   = 0.74f;
+    float       holdTimerSec    = 42.0f;
+    const float holdTimerMaxSec = 60.0f;
+    char        transponderCode[5] = "4721";
+
+    // Tab 2 state: Switches & Toggles
+    bool        avionicsMaster  = true;
+    bool        flightDirector  = true;
+    bool        pitotHeat       = false;
+    bool        yawDamper       = false;
+
+    // Tab 3 state: Typography & Markdown
+    std::string pilotCallsign   = "N172SP";
+
+    // Tab 4 state: Live Scratchpad & Toolbar Demo
+    std::string scratchpadText;
+    bool        has_active_selection = false;
+    int         cached_sel_start     = -1;
+    int         cached_sel_end       = -1;
+    int         cached_cur_pos       = -1;
+    bool        syncScroll           = false;
+
+    // File Dialog & Picker State (imgui_file_dialog.h integration)
+    std::string currentNoteFilename  = "flight_briefing.md";
+    std::string noteStatusMsg;
+    float       noteStatusTimer      = 0.0f;
+    bool        showOpenDialog       = false;
+    bool        showSaveDialog       = false;
+    std::string dialogFilePath;
+
+    // Shields.io & Badge Generator Modal State
+    bool        showShieldModal      = false;
+    char        shieldLabel[64]      = "X-Plane";
+    char        shieldMessage[64]    = "12.00+";
+    int         shieldColorIdx       = 0; // 0=blue, 1=green, 2=orange, 3=red, 4=purple
+    int         shieldStyleIdx       = 0; // 0=Shields.io Image, 1=Native ImGee Badge, 2=Native ImGee Pill
+
+    void LoadNote(const std::string& path);
+    void SaveNote(const std::string& path);
+
+    // Window-level UI zoom factor (Responsive UI Scaling Math)
+    float       _fontAdjust     = 1.0f;
+    float       _lastZoom       = 1.0f;
+    int         _decRepeatCount = 0;
+    int         _incRepeatCount = 0;
+    float       _sliderStartZoom = 1.0f;
+    std::vector<ImGui::MarkdownTableState> pendingTableStates;
+};
+
+// Backwards-compatible alias for showcase window
+typedef ImGeeShowcaseWidget ContribShowcaseWidget;
+
+// Opens or focuses the dedicated ImGee Showcase Window
+void ShowImGeeShowcaseWindow();
+inline void ShowContribShowcaseWindow() { ShowImGeeShowcaseWindow(); }
+inline std::shared_ptr<ImGeeShowcaseWidget> s_pShowcaseWidget = nullptr;
 
 // Our own class defining our own UI
 class ImguiWidget: public ImgWindow {

@@ -7521,8 +7521,8 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
         // e.g. linking a tool window in a standalone viewport to a document window, regardless of their Begin() stack parenting. (#6798)
         window->ParentWindowForFocusRoute = (flags & ImGuiWindowFlags_ChildWindow) ? parent_window_in_stack : NULL;
 
-        // Inherent SetWindowFontScale() from parent until we fix this system...
-        window->FontWindowScaleParents = parent_window ? parent_window->FontWindowScaleParents * parent_window->FontWindowScale : 1.0f;
+        // Inherent SetWindowFontScale() from parent for child windows until we fix this system...
+        window->FontWindowScaleParents = (parent_window && (flags & ImGuiWindowFlags_ChildWindow)) ? parent_window->FontWindowScaleParents * parent_window->FontWindowScale : 1.0f;
     }
 
     // Add to focus scope stack
@@ -9124,7 +9124,7 @@ void ImGui::UpdateCurrentFontSize(float restore_font_size_after_scaling)
 
         // Window scale (mostly obsolete now)
         if (window != NULL)
-            final_size *= window->FontWindowScale;
+            final_size *= window->FontWindowScale * window->FontWindowScaleParents;
 
         // Legacy scale factors
 #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS

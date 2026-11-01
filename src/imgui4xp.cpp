@@ -27,8 +27,6 @@ bool vr_is_enabled = false;
 
 // the ImGui windows we are going to create
 // managed in the form of smart pointers.
-typedef std::shared_ptr<ImgWindow> ImgWindowSPtrTy;
-typedef std::vector<ImgWindowSPtrTy> ImgWindowSPtrVecTy;
 ImgWindowSPtrVecTy gWndList;
 
 /// Calculate window's standard coordinates
@@ -89,6 +87,11 @@ void CBMenu (void* /*inMenuRef*/, void* inItemRef)
         AddWindow(xplm_WindowDecorationSelfDecoratedResizable,
                   xplm_WindowLayerFloatingWindows);
     }
+    // Open ImGee Cockpit Showcase window?
+    else if (inItemRef == (void*)4)
+    {
+        ShowImGeeShowcaseWindow();
+    }
 }
 
 
@@ -108,6 +111,7 @@ PLUGIN_API int XPluginStart(char * outName, char * outSig, char * outDesc) {
     XPLMAppendMenuItem(hMenu, "Collate All Windows", (void*)1, 0);
     XPLMAppendMenuItem(hMenu, "Add Window (solid)", (void*)2, 0);
     XPLMAppendMenuItem(hMenu, "Add Window (transparent)", (void*)3, 0);
+    XPLMAppendMenuItem(hMenu, "ImGee Cockpit Showcase", (void*)4, 0);
 
     // Initialize random number generator
     std::srand((unsigned)std::time(nullptr));
@@ -136,6 +140,17 @@ PLUGIN_API int XPluginEnable(void) {
     
     // Create a first window
     AddWindow();
+
+    // Pre-create showcase window in hidden state so it's ready on-demand without mid-frame allocations
+    if (!s_pShowcaseWidget) {
+        ImGuiContext* prevContext = ImGui::GetCurrentContext();
+        s_pShowcaseWidget = std::make_shared<ImGeeShowcaseWidget>(680, 580);
+        s_pShowcaseWidget->SetVisible(false);
+        gWndList.push_back(s_pShowcaseWidget);
+        if (prevContext) {
+            ImGui::SetCurrentContext(prevContext);
+        }
+    }
 
     return 1;
 }

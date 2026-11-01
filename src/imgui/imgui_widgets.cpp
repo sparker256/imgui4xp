@@ -4757,7 +4757,10 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
         PushStyleVar(ImGuiStyleVar_ChildRounding, style.FrameRounding);
         PushStyleVar(ImGuiStyleVar_ChildBorderSize, style.FrameBorderSize);
         PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0)); // Ensure no clip rect so mouse hover can reach FramePadding edges
-        bool child_visible = BeginChildEx(label, id, frame_bb.GetSize(), ImGuiChildFlags_Borders, ImGuiWindowFlags_NoMove);
+        ImGuiWindowFlags child_flags_extra = ImGuiWindowFlags_NoMove;
+        if (!(flags & ImGuiInputTextFlags_WordWrap) && !(flags & ImGuiInputTextFlags_NoHorizontalScroll))
+            child_flags_extra |= ImGuiWindowFlags_HorizontalScrollbar;
+        bool child_visible = BeginChildEx(label, id, frame_bb.GetSize(), ImGuiChildFlags_Borders, child_flags_extra);
         g.NavActivateId = backup_activate_id;
         PopStyleVar(3);
         PopStyleColor();
@@ -4817,8 +4820,9 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
     const bool input_requested_by_reactivate = (g.InputTextReactivateId == id); // for io.ConfigInputTextEnterKeepActive
     const bool input_requested_by_user = (user_clicked) || (g.ActiveId == 0 && (flags & ImGuiInputTextFlags_TempInput));
     const ImGuiID scrollbar_id = (is_multiline && state != NULL) ? GetWindowScrollbarID(draw_window, ImGuiAxis_Y) : 0;
-    const bool user_scroll_finish = is_multiline && state != NULL && g.ActiveId == 0 && g.ActiveIdPreviousFrame == scrollbar_id;
-    const bool user_scroll_active = is_multiline && state != NULL && g.ActiveId == scrollbar_id;
+    const ImGuiID scrollbar_x_id = (is_multiline && state != NULL) ? GetWindowScrollbarID(draw_window, ImGuiAxis_X) : 0;
+    const bool user_scroll_finish = is_multiline && state != NULL && g.ActiveId == 0 && (g.ActiveIdPreviousFrame == scrollbar_id || g.ActiveIdPreviousFrame == scrollbar_x_id);
+    const bool user_scroll_active = is_multiline && state != NULL && (g.ActiveId == scrollbar_id || g.ActiveId == scrollbar_x_id);
     bool clear_active_id = false;
     bool select_all = false;
 
@@ -4936,7 +4940,10 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
 
         // Expose scroll in a manner that is agnostic to us using a child window
         if (is_multiline && state != NULL)
+        {
             state->Scroll.y = draw_window->Scroll.y;
+            state->Scroll.x = draw_window->Scroll.x;
+        }
 
         // Read-only mode always ever read from source buffer. Refresh TextLen when active.
         if (is_readonly && state != NULL)
@@ -5504,7 +5511,8 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
         // If scrolling is expected to change build full index.
         // FIXME-OPT: Could append to index when new value of line_visible_n1 becomes bigger, see second call to CalcClipRectVisibleItemsY() below.
         bool will_scroll_y = state && ((state->CursorFollow && render_cursor) || (state->CursorCenterY && (render_cursor || render_selection)));
-        line_count = InputTextLineIndexBuild(flags, line_index, buf_display, buf_display_end, wrap_width, will_scroll_y ? INT_MAX : line_visible_n1 + 1, buf_display_end ? NULL : &buf_display_end);
+        bool will_need_full_index = will_scroll_y || (!(flags & ImGuiInputTextFlags_WordWrap) && !(flags & ImGuiInputTextFlags_NoHorizontalScroll));
+        line_count = InputTextLineIndexBuild(flags, line_index, buf_display, buf_display_end, wrap_width, will_need_full_index ? INT_MAX : line_visible_n1 + 1, buf_display_end ? NULL : &buf_display_end);
     }
     line_index->EndOffset = (int)(buf_display_end - buf_display);
     line_visible_n1 = ImMin(line_visible_n1, line_count);
@@ -5515,7 +5523,9 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
 
     // Calculate blinking cursor position
     const ImVec2 cursor_offset = render_cursor && state ? InputTextLineIndexGetPosOffset(g, state, line_index, buf_display, buf_display_end, state->Stb->cursor) : ImVec2(0.0f, 0.0f);
-    ImVec2 draw_scroll;
+    ImVec2 draw_scroll(0.0f, 0.0f);
+    if (!is_multiline && state != NULL)
+        draw_scroll.x = state->Scroll.x;
 
     // Render text. We currently only render selection when the widget is active or while scrolling.
     const ImU32 text_col = GetColorU32(is_displaying_hint ? ImGuiCol_TextDisabled : ImGuiCol_Text);
@@ -5540,14 +5550,29 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
             {
                 const float scroll_increment_x = inner_size.x * 0.25f;
                 const float visible_width = inner_size.x - style.FramePadding.x;
-                if (cursor_offset.x < state->Scroll.x)
-                    state->Scroll.x = IM_TRUNC(ImMax(0.0f, cursor_offset.x - scroll_increment_x));
-                else if (cursor_offset.x - visible_width >= state->Scroll.x)
-                    state->Scroll.x = IM_TRUNC(cursor_offset.x - visible_width + scroll_increment_x);
+                if (is_multiline)
+                {
+                    float prev_scroll_x = draw_window->Scroll.x;
+                    if (cursor_offset.x < draw_window->Scroll.x)
+                        draw_window->Scroll.x = IM_TRUNC(ImMax(0.0f, cursor_offset.x - scroll_increment_x));
+                    else if (cursor_offset.x - visible_width >= draw_window->Scroll.x)
+                        draw_window->Scroll.x = IM_TRUNC(cursor_offset.x - visible_width + scroll_increment_x);
+                    draw_pos.x += (prev_scroll_x - draw_window->Scroll.x);
+                    state->Scroll.x = draw_window->Scroll.x;
+                }
+                else
+                {
+                    if (cursor_offset.x < state->Scroll.x)
+                        state->Scroll.x = IM_TRUNC(ImMax(0.0f, cursor_offset.x - scroll_increment_x));
+                    else if (cursor_offset.x - visible_width >= state->Scroll.x)
+                        state->Scroll.x = IM_TRUNC(cursor_offset.x - visible_width + scroll_increment_x);
+                }
             }
             else
             {
                 state->Scroll.x = 0.0f;
+                if (is_multiline)
+                    draw_window->Scroll.x = 0.0f;
             }
 
             // Vertical scroll
@@ -5579,7 +5604,7 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
         }
 
         // Draw selection
-        draw_scroll.x = state->Scroll.x;
+        draw_scroll.x = is_multiline ? 0.0f : state->Scroll.x;
         if (render_selection)
         {
             const ImU32 bg_color = GetColorU32(ImGuiCol_TextSelectedBg, render_cursor ? 1.0f : 0.6f); // FIXME: current code flow mandate that render_cursor is always true here, we are leaving the transparent one for tests.
@@ -5663,7 +5688,20 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
     if (is_multiline)
     {
         // For focus requests to work on our multiline we need to ensure our child ItemAdd() call specifies the ImGuiItemFlags_Inputable (see #4761, #7870)...
-        Dummy(ImVec2(0.0f, text_size_y + style.FramePadding.y));
+        float max_line_width = 0.0f;
+        if (!(flags & ImGuiInputTextFlags_WordWrap) && !(flags & ImGuiInputTextFlags_NoHorizontalScroll))
+        {
+            for (int i = 0; i < line_count; i++)
+            {
+                const char* l_start = line_index->get_line_begin(buf_display, i);
+                const char* l_end = line_index->get_line_end(buf_display, i);
+                float lw = g.Font->CalcTextSizeA(g.FontSize, FLT_MAX, -1.0f, l_start, l_end).x;
+                if (lw > max_line_width)
+                    max_line_width = lw;
+            }
+        }
+        float content_x = (max_line_width > 0.0f) ? (max_line_width + style.FramePadding.x * 2.0f + 20.0f) : 0.0f;
+        Dummy(ImVec2(content_x, text_size_y + style.FramePadding.y));
         g.NextItemData.ItemFlags |= (ImGuiItemFlags)ImGuiItemFlags_Inputable | ImGuiItemFlags_NoTabStop;
         EndChild();
         item_data_backup.StatusFlags |= (g.LastItemData.StatusFlags & ImGuiItemStatusFlags_HoveredWindow);
@@ -5671,7 +5709,7 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
         // ...and then we need to undo the group overriding last item data, which gets a bit messy as EndGroup() tries to forward scrollbar being active...
         // FIXME: This quite messy/tricky, should attempt to get rid of the child window.
         EndGroup();
-        if (g.LastItemData.ID == 0 || g.LastItemData.ID != GetWindowScrollbarID(draw_window, ImGuiAxis_Y))
+        if (g.LastItemData.ID == 0 || (g.LastItemData.ID != GetWindowScrollbarID(draw_window, ImGuiAxis_Y) && g.LastItemData.ID != GetWindowScrollbarID(draw_window, ImGuiAxis_X)))
         {
             g.LastItemData.ID = id;
             g.LastItemData.ItemFlags = item_data_backup.ItemFlags;

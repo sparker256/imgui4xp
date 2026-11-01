@@ -1317,6 +1317,76 @@ float ImguiWidget::cbFlightLoop(float, float, int, void* inRefcon)
 
 // MARK: - ImGeeShowcaseWidget Implementation
 
+// Static File Helpers for Live Scratchpad
+static bool LoadTextFile(const std::string& filepath, std::string& out_text) {
+    FILE* f = fopen(filepath.c_str(), "rb");
+    if (!f) return false;
+    fseek(f, 0, SEEK_END);
+    long sz = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    if (sz < 0) { fclose(f); return false; }
+    out_text.resize(sz);
+    if (sz > 0) {
+        size_t read_bytes = fread(&out_text[0], 1, sz, f);
+        out_text.resize(read_bytes);
+    }
+    fclose(f);
+    return true;
+}
+
+static bool SaveTextFile(const std::string& filepath, const std::string& text) {
+    FILE* f = fopen(filepath.c_str(), "wb");
+    if (!f) return false;
+    if (!text.empty()) {
+        fwrite(text.data(), 1, text.size(), f);
+    }
+    fclose(f);
+    return true;
+}
+
+static std::string FormatShieldsIoUrl(const std::string& label, const std::string& message, const std::string& color) {
+    auto sanitize = [](const std::string& s) {
+        std::string res;
+        for (char c : s) {
+            if (c == '-') res += "--";
+            else if (c == '_') res += "__";
+            else if (c == ' ') res += "_";
+            else res += c;
+        }
+        return res;
+    };
+    std::string l = sanitize(label);
+    std::string m = sanitize(message);
+    if (l.empty()) {
+        return "https://img.shields.io/badge/" + m + "-" + color;
+    }
+    return "https://img.shields.io/badge/" + l + "-" + m + "-" + color;
+}
+
+void ImGeeShowcaseWidget::LoadNote(const std::string& path) {
+    if (LoadTextFile(path, scratchpadText)) {
+        size_t slash = path.find_last_of("/\\");
+        currentNoteFilename = (slash != std::string::npos) ? path.substr(slash + 1) : path;
+        noteStatusMsg = "Loaded " + currentNoteFilename;
+        noteStatusTimer = 3.0f;
+    } else {
+        noteStatusMsg = "Failed to load note";
+        noteStatusTimer = 3.0f;
+    }
+}
+
+void ImGeeShowcaseWidget::SaveNote(const std::string& path) {
+    if (SaveTextFile(path, scratchpadText)) {
+        size_t slash = path.find_last_of("/\\");
+        currentNoteFilename = (slash != std::string::npos) ? path.substr(slash + 1) : path;
+        noteStatusMsg = "Saved " + currentNoteFilename;
+        noteStatusTimer = 3.0f;
+    } else {
+        noteStatusMsg = "Failed to save note";
+        noteStatusTimer = 3.0f;
+    }
+}
+
 ImGeeShowcaseWidget::ImGeeShowcaseWidget(int width, int height,
                                          XPLMWindowDecoration decoration,
                                          XPLMWindowLayer layer) :
@@ -1324,22 +1394,26 @@ ImGeeShowcaseWidget::ImGeeShowcaseWidget(int width, int height,
 {
     SetWindowTitle("ImGee Cockpit Showcase");
     SetWindowResizingLimits(520, 420, 2560, 1440);
-    scratchpadText = "### Live Flight Briefing\n"
-                     "* Status: <pill color=#2ecc71>CLEARED</pill>\n"
-                     "* Departure: **KSEA** Rwy 16L\n"
-                     "* Route: `SEA8 JAWBN Q29`\n"
-                     "---\n"
-                     "| Waypoint | Target Alt | Fuel | ETA |\n"
-                     "| :--- | :---: | ---: | ---: |\n"
-                     "| **SEA8** | 3,000 ft | 98% | 18:05z |\n"
-                     "| **JAWBN** | 12,000 ft | 92% | 18:18z |\n"
-                     "| **Q29** | FL240 | 85% | 18:34z |\n"
-                     "---\n"
-                     "```cpp\n"
-                     "void ExecuteClimb() {\n"
-                     "    Autopilot::SetTargetAlt(14000);\n"
-                     "}\n"
-                     "```";
+    // Pre-load default note from disk if available
+    std::string default_note = "./Resources/plugins/imgui4xp/notes/flight_briefing.md";
+    if (!LoadTextFile(default_note, scratchpadText)) {
+        scratchpadText = "### Live Flight Briefing\n"
+                         "* Status: <pill color=#2ecc71>CLEARED</pill>\n"
+                         "* Departure: **KSEA** Rwy 16L\n"
+                         "* Route: `SEA8 JAWBN Q29`\n"
+                         "---\n"
+                         "| Waypoint | Target Alt | Fuel | ETA |\n"
+                         "| :--- | :---: | ---: | ---: |\n"
+                         "| **SEA8** | 3,000 ft | 98% | 18:05z |\n"
+                         "| **JAWBN** | 12,000 ft | 92% | 18:18z |\n"
+                         "| **Q29** | FL240 | 85% | 18:34z |\n"
+                         "---\n"
+                         "```cpp\n"
+                         "void ExecuteClimb() {\n"
+                         "    Autopilot::SetTargetAlt(14000);\n"
+                         "}\n"
+                         "```";
+    }
 }
 
 ImGeeShowcaseWidget::~ImGeeShowcaseWidget() = default;
@@ -1360,14 +1434,23 @@ void ShowImGeeShowcaseWindow()
 
 void ImGeeShowcaseWidget::buildInterface()
 {
+    // Update transient notification timer
+    float dt = ImGui::GetIO().DeltaTime;
+    if (noteStatusTimer > 0.0f) {
+        noteStatusTimer -= dt;
+        if (noteStatusTimer <= 0.0f) {
+            noteStatusMsg.clear();
+        }
+    }
+
     // 1. Container / Window Chrome: Baseline 1.0x scale (rock-solid, non-twitching controls)
     ImGui::SetWindowFontScale(1.0f);
 
     // Title on left
     ImGui::TextMD("# ImGee UX & Modern Cockpit Suite");
 
-    // Steppers + Slider (1.67x wider) + ResetButton + CursorToggle suite (fixed width in chrome)
-    const float zoom_suite_w = 260.0f;
+    // Steppers + Slider + Reset + Fit + Cursor suite (fixed width in chrome)
+    const float zoom_suite_w = 296.0f;
     const float min_offset = ImGui::GetCursorPosX() + ImGui::GetStyle().ItemSpacing.x;
     const float target_offset = ImGui::GetWindowWidth() - zoom_suite_w - ImGui::GetStyle().WindowPadding.x;
     ImGui::SameLine(ImMax(min_offset, target_offset));
@@ -1390,7 +1473,11 @@ void ImGeeShowcaseWidget::buildInterface()
             }
         }
         if (allow_step) {
+            float old_z = _fontAdjust;
             _fontAdjust = ImMax(0.50f, _fontAdjust - 0.05f);
+            if (std::abs(_fontAdjust - old_z) > 0.001f) {
+                ScaleWindowGeometry(old_z, _fontAdjust);
+            }
         }
     }
     ImGui::TimedTooltip::MD::Text("Zoom Out (-5%%)\n\n*Click or hold down to step smoothly*");
@@ -1403,11 +1490,23 @@ void ImGeeShowcaseWidget::buildInterface()
     if (ImGui::SliderFloat("##zoom_slider", &pct, 50.0f, 200.0f, "Zoom %.0f%%")) {
         _fontAdjust = pct / 100.0f;
     }
-    // Sensitive mouse wheel (2% per click on macOS instead of chunky 5%+)
-    if (ImGui::AdjustItemOnMouseWheel(&_fontAdjust, 0.50f, 2.00f, 0.02f)) {
-        // wheel adjusted
+    if (ImGui::IsItemActivated()) {
+        _sliderStartZoom = _fontAdjust;
     }
-    ImGui::TimedTooltip::MD::Text("Interactive UI Zoom: roll mouse wheel (2%%) or drag thumb.");
+    if (ImGui::IsItemDeactivatedAfterEdit()) {
+        if (std::abs(_fontAdjust - _sliderStartZoom) > 0.001f) {
+            ScaleWindowGeometry(_sliderStartZoom, _fontAdjust);
+            _sliderStartZoom = _fontAdjust;
+        }
+    }
+    // Sensitive mouse wheel (2% per click on macOS instead of chunky 5%+)
+    float wheel_old = _fontAdjust;
+    if (ImGui::AdjustItemOnMouseWheel(&_fontAdjust, 0.50f, 2.00f, 0.02f)) {
+        if (std::abs(_fontAdjust - wheel_old) > 0.001f) {
+            ScaleWindowGeometry(wheel_old, _fontAdjust);
+        }
+    }
+    ImGui::TimedTooltip::MD::Text("Interactive UI Zoom: roll mouse wheel (2%%) or drag thumb.\n\n*Window resizes proportionally to match.*");
 
     ImGui::SameLine(0.0f, 3.0f);
 
@@ -1429,7 +1528,11 @@ void ImGeeShowcaseWidget::buildInterface()
             }
         }
         if (allow_step) {
+            float old_z = _fontAdjust;
             _fontAdjust = ImMin(2.00f, _fontAdjust + 0.05f);
+            if (std::abs(_fontAdjust - old_z) > 0.001f) {
+                ScaleWindowGeometry(old_z, _fontAdjust);
+            }
         }
     }
     ImGui::TimedTooltip::MD::Text("Zoom In (+5%%)\n\n*Click or hold down to step smoothly*");
@@ -1440,11 +1543,15 @@ void ImGeeShowcaseWidget::buildInterface()
     bool is_modified = std::abs(_fontAdjust - 1.0f) > 0.001f;
     bool can_restore = !is_modified && std::abs(_lastZoom - 1.0f) > 0.001f;
     if (ImGui::ResetButton("##zoom_reset", is_modified, 0.0f, false, nullptr, can_restore)) {
+        float old_z = _fontAdjust;
         if (is_modified) {
             _lastZoom = _fontAdjust;
             _fontAdjust = 1.0f;
         } else if (can_restore) {
             _fontAdjust = _lastZoom;
+        }
+        if (std::abs(_fontAdjust - old_z) > 0.001f) {
+            ScaleWindowGeometry(old_z, _fontAdjust);
         }
     }
     if (is_modified) {
@@ -1455,6 +1562,12 @@ void ImGeeShowcaseWidget::buildInterface()
         ImGui::TimedTooltip::MD::Text("Zoom is at **100%% baseline**.");
     }
 
+    // Proportional Window Scaling: Fit window dimensions to baseline at current zoom level
+    ImGui::SameLine(0.0f, 3.0f);
+    if (ImGui::Button("Fit##fit_window", ImVec2(32.0f, 0.0f))) {
+        ResizeToScale(_fontAdjust);
+    }
+    ImGui::TimedTooltip::MD::Text("**Fit Window to Baseline**\n\nResets window to default 680x580 baseline proportions scaled to current zoom (%.0f%%) anchored to top-left.", _fontAdjust * 100.0f);
     // Cursor Handling Toggle Button (separated by 8px gap)
     ImGui::SameLine(0.0f, 8.0f);
     bool imgui_cursors = GetImgCursorHandling();
@@ -1465,7 +1578,7 @@ void ImGeeShowcaseWidget::buildInterface()
         ? "**ImGui Dynamic Cursors:** <pill color=#2ecc71>ACTIVE</pill>\n\nClick to switch to standard X-Plane hardware cursor."
         : "**ImGui Dynamic Cursors:** <pill color=#7f8c8d>DISABLED</pill>\n\nClick to enable ImGui contextual mouse cursors (hand, resize, text).");
 
-    ImGui::TextDisabled("Dedicated, non-scrollable reference showcase for avionics controls, dials, and CommonMark.");
+    ImGui::TextDisabled("Dedicated reference showcase for avionics controls, dials, and CommonMark.");
     ImGui::Spacing();
 
     // 2. Inner Content Canvas: Apply dynamic _fontAdjust to all tabs and interactive controls
@@ -1861,6 +1974,12 @@ void ImGeeShowcaseWidget::buildInterface()
             ImGui::TimedTooltip::MD::Text("Wrap selection in `<badge>` release chip");
 
             ImGui::SameLine();
+            if (ImGui::Button("Shield...")) {
+                showShieldModal = true;
+            }
+            ImGui::TimedTooltip::MD::Text("Open **Shields.io & Badge Generator** to create custom badges & status pills");
+
+            ImGui::SameLine();
             if (ImGui::Button("Key")) {
                 wrap_or_insert("<kbd>", "</kbd>", "Alt", false);
             }
@@ -1899,6 +2018,7 @@ void ImGeeShowcaseWidget::buildInterface()
                                  "| **SEA8** | 3,000 ft | 98% | 18:05z |\n"
                                  "| **JAWBN** | 12,000 ft | 92% | 18:18z |\n"
                                  "| **Q29** | FL240 | 85% | 18:34z |\n"
+                                 "<!-- table-preset: width=420 sort=\"Waypoint\" asc -->\n"
                                  "---\n"
                                  "```cpp\n"
                                  "void ExecuteClimb() {\n"
@@ -1908,33 +2028,224 @@ void ImGeeShowcaseWidget::buildInterface()
             }
             ImGui::TimedTooltip::MD::Text("Restores the flight briefing sample");
 
+            // --- File Persistence Toolbar (imgui_file_dialog.h integration) ---
+            ImGui::Spacing();
+            const char* notes_dir = "./Resources/plugins/imgui4xp/notes";
+            ImGui::TextUnformatted("Note:");
+            ImGui::SameLine();
+            ImGui::SetNextItemWidth(160.0f);
+            if (ImGui::FilePickerCombo("##note_picker", &currentNoteFilename, notes_dir, ".md;.txt;.markdown")) {
+                LoadNote(std::string(notes_dir) + "/" + currentNoteFilename);
+            }
+            ImGui::TimedTooltip::MD::Text(std::string("**Active Note Selector** (`FilePickerCombo`)\n\nScan and switch notes in `") + notes_dir + "` using native C++11 filesystem scanning.");
+
+            ImGui::SameLine();
+            if (ImGui::Button("Save")) {
+                if (!currentNoteFilename.empty() && currentNoteFilename != "(Untitled)") {
+                    SaveNote(std::string(notes_dir) + "/" + currentNoteFilename);
+                } else {
+                    showSaveDialog = true;
+                }
+            }
+            ImGui::TimedTooltip::MD::Text("**Save Note**\n\nPersist buffer directly to active note on disk.");
+
+            ImGui::SameLine();
+            if (ImGui::Button("Open...")) {
+                showOpenDialog = true;
+            }
+            ImGui::TimedTooltip::MD::Text("**Open Note Dialog** (`OpenFileDialog`)\n\nBrowse X-Plane directories in an in-cockpit modal with live search & file sizes.");
+
+            ImGui::SameLine();
+            if (ImGui::Button("Save As...")) {
+                showSaveDialog = true;
+            }
+            ImGui::TimedTooltip::MD::Text("**Save Note As Dialog** (`SaveFileDialog`)\n\nSave note under a new filename with built-in overwrite protection.");
+
+            ImGui::SameLine();
+            if (ImGui::Button("+ New")) {
+                scratchpadText.clear();
+                currentNoteFilename = "(Untitled)";
+                noteStatusMsg = "New note created";
+                noteStatusTimer = 3.0f;
+            }
+            ImGui::TimedTooltip::MD::Text("Start a blank new note buffer");
+
+            if (!noteStatusMsg.empty() && noteStatusTimer > 0.0f) {
+                ImGui::SameLine();
+                std::string pill_str = "<pill color=#2ecc71>" + noteStatusMsg + "</pill>";
+                ImGui::TextMD(pill_str);
+            }
+
             ImGui::Spacing();
 
             // Side-by-side split panels:
             float avail_w = ImGui::GetContentRegionAvail().x;
             float pane_w = ImMax(100.0f, (avail_w - ImGui::GetStyle().ItemSpacing.x) * 0.5f);
             float avail_h = ImGui::GetContentRegionAvail().y;
-            float pane_h = ImMax(200.0f, avail_h - 10.0f);
+            // Reserve space for TabBar bottom margin, Separator, and Close button footer (rendered at 1.0x unscaled chrome scale)
+            float unscaled_frame_h = ImGui::GetStyle().FontSizeBase + ImGui::GetStyle().FramePadding.y * 2.0f;
+            float footer_reserve = unscaled_frame_h + ImGui::GetStyle().ItemSpacing.y * 3.0f + 12.0f;
+            float pane_h = ImMax(120.0f, avail_h - footer_reserve);
 
-            // Left Pane: Raw Editor (with soft word-wrap and tab input!)
-            ImGui::BeginChild("ScratchpadInputPane", ImVec2(pane_w, pane_h), true);
+            // Left Pane: Raw Editor (with soft word-wrap toggle and tab input!)
+            ImGui::BeginChild("ScratchpadInputPane", ImVec2(pane_w, pane_h), ImGuiChildFlags_Borders, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
             ImGui::TextDisabled("Raw Input (Markdown):");
-            ImGui::InputTextMultiline("##editor", &scratchpadText, ImVec2(-FLT_MIN, pane_h - 35.0f),
-                                      ImGuiInputTextFlags_WordWrap | ImGuiInputTextFlags_AllowTabInput);
+
+            // Right-aligned Word Wrap toggle (disabled by default for code/tables horizontal scroll)
+            float wrap_w = ImGui::GetFrameHeight() + ImGui::GetStyle().ItemInnerSpacing.x + ImGui::CalcTextSize("Word Wrap").x;
+            float min_wrap_x = ImGui::GetCursorPosX() + ImGui::GetStyle().ItemSpacing.x;
+            float target_wrap_x = ImGui::GetWindowWidth() - wrap_w - ImGui::GetStyle().WindowPadding.x;
+            ImGui::SameLine(ImMax(min_wrap_x, target_wrap_x));
+            static bool editorWordWrap = false;
+            ImGui::Checkbox("Word Wrap##editor_wrap", &editorWordWrap);
+            ImGui::TimedTooltip::MD::Text("**Word Wrap**\n\nToggle soft word-wrapping in raw editor. When unchecked, long lines and tables scroll horizontally.");
+
+            ImGui::Separator();
+
+            ImGuiInputTextFlags editor_flags = ImGuiInputTextFlags_AllowTabInput;
+            if (editorWordWrap)
+                editor_flags |= ImGuiInputTextFlags_WordWrap;
+
+            ImGui::InputTextMultiline("##editor", &scratchpadText, ImVec2(-FLT_MIN, -FLT_MIN), editor_flags);
+            ImGuiWindow* input_child_win = ImGui::GetCurrentWindow();
+            ImGuiWindow* editor_win = input_child_win->DC.ChildWindows.empty() ? nullptr : input_child_win->DC.ChildWindows.back();
             ImGui::EndChild();
 
             ImGui::SameLine();
 
-            // Right Pane: Live Rendered Output (with auto soft-wrapping!)
-            ImGui::BeginChild("ScratchpadPreviewPane", ImVec2(pane_w, pane_h), true);
+            // Right Pane: Live Rendered Output (with auto soft-wrapping & horizontal scrolling!)
+            ImGui::BeginChild("ScratchpadPreviewPane", ImVec2(pane_w, pane_h), ImGuiChildFlags_Borders, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
             ImGui::TextDisabled("Live Rendered Output:");
+
+            // Right-aligned Sync Scroll toggle (disabled by default)
+            float sync_w = ImGui::GetFrameHeight() + ImGui::GetStyle().ItemInnerSpacing.x + ImGui::CalcTextSize("Sync Scroll").x;
+            float min_sync_x = ImGui::GetCursorPosX() + ImGui::GetStyle().ItemSpacing.x;
+            float target_sync_x = ImGui::GetWindowWidth() - sync_w - ImGui::GetStyle().WindowPadding.x;
+            ImGui::SameLine(ImMax(min_sync_x, target_sync_x));
+            ImGui::Checkbox("Sync Scroll", &syncScroll);
+            ImGui::TimedTooltip::MD::Text("**Synchronized Scrolling** (Experimental)\n\nProportionally syncs scroll positions between raw editor and rendered markdown.");
+
             ImGui::Separator();
-            if (scratchpadText.empty()) {
-                ImGui::TextDisabled("(Editor buffer is empty. Type on the left or click Reset Sample...)");
-            } else {
-                ImGui::TextWrappedMD(scratchpadText.c_str());
+            ImGuiWindow* preview_win = nullptr;
+            if (ImGui::BeginChild("ScratchpadPreviewScroll", ImVec2(-FLT_MIN, -FLT_MIN), ImGuiChildFlags_None, ImGuiWindowFlags_HorizontalScrollbar)) {
+                preview_win = ImGui::GetCurrentWindow();
+                if (scratchpadText.empty()) {
+                    ImGui::TextDisabled("(Editor buffer is empty. Type on the left or click Reset Sample...)");
+                } else {
+                    ImGui::MarkdownConfig scratchpadConfig = *ImGui::GetDefaultMarkdownConfig();
+                    scratchpadConfig.userData = this;
+                    scratchpadConfig.tableStateCallback = [](const ImGui::MarkdownTableState& state, void* userData) {
+                        if (!userData || !state.isCommitted) return;
+                        auto* widget = static_cast<ImGeeShowcaseWidget*>(userData);
+                        widget->pendingTableStates.push_back(state);
+                    };
+                    ImGui::TextWrappedMD(scratchpadText.c_str(), &scratchpadConfig);
+
+                    if (!pendingTableStates.empty()) {
+                        for (const auto& st : pendingTableStates) {
+                            scratchpadText = ImGui::ApplyTableStateToMarkdown(scratchpadText, st);
+                        }
+                        pendingTableStates.clear();
+                    }
+                }
             }
             ImGui::EndChild();
+            ImGui::EndChild();
+
+            // Two-way synchronized scrolling arbitration
+            if (syncScroll && editor_win && preview_win) {
+                bool editor_hovered = ImGui::IsMouseHoveringRect(editor_win->Rect().Min, editor_win->Rect().Max);
+                bool preview_hovered = ImGui::IsMouseHoveringRect(preview_win->Rect().Min, preview_win->Rect().Max);
+                ImGuiID sb_editor = ImGui::GetWindowScrollbarID(editor_win, ImGuiAxis_Y);
+                ImGuiID sb_preview = ImGui::GetWindowScrollbarID(preview_win, ImGuiAxis_Y);
+
+                bool editor_interacting = (GImGui->ActiveId == sb_editor) || (editor_hovered && ImGui::GetIO().MouseWheel != 0.0f) || (GImGui->ActiveId == editor_win->ID);
+                bool preview_interacting = (GImGui->ActiveId == sb_preview) || (preview_hovered && ImGui::GetIO().MouseWheel != 0.0f);
+
+                if (editor_interacting && !preview_interacting) {
+                    if (editor_win->ScrollMax.y > 0.0f && preview_win->ScrollMax.y > 0.0f) {
+                        float r = ImClamp(editor_win->Scroll.y / editor_win->ScrollMax.y, 0.0f, 1.0f);
+                        float target_y = r * preview_win->ScrollMax.y;
+                        ImGui::SetScrollY(preview_win, target_y);
+                        preview_win->Scroll.y = target_y;
+                    }
+                } else if (preview_interacting && !editor_interacting) {
+                    if (preview_win->ScrollMax.y > 0.0f && editor_win->ScrollMax.y > 0.0f) {
+                        float r = ImClamp(preview_win->Scroll.y / preview_win->ScrollMax.y, 0.0f, 1.0f);
+                        float target_y = r * editor_win->ScrollMax.y;
+                        ImGui::SetScrollY(editor_win, target_y);
+                        editor_win->Scroll.y = target_y;
+                    }
+                }
+            }
+
+            // --- In-cockpit OpenFileDialog modal ---
+            if (showOpenDialog) {
+                if (ImGui::OpenFileDialog("Open Markdown Note", &showOpenDialog, &dialogFilePath, notes_dir, ".md;.txt;.markdown")) {
+                    LoadNote(dialogFilePath);
+                }
+            }
+
+            // --- In-cockpit SaveFileDialog modal (with Confirm Overwrite protection) ---
+            if (showSaveDialog) {
+                std::string default_name = (currentNoteFilename.empty() || currentNoteFilename == "(Untitled)") ? "flight_notes.md" : currentNoteFilename;
+                if (ImGui::SaveFileDialog("Save Markdown Note As", &showSaveDialog, &dialogFilePath, notes_dir, default_name.c_str(), ".md;.txt;.markdown")) {
+                    SaveNote(dialogFilePath);
+                }
+            }
+
+            // --- Shields.io & Custom Badge Generator Modal ---
+            if (showShieldModal) {
+                ImGui::OpenPopup("Shield / Badge Generator");
+            }
+            if (ImGui::BeginPopupModal("Shield / Badge Generator", &showShieldModal, ImGuiWindowFlags_AlwaysAutoResize)) {
+                ImGui::Spacing();
+                ImGui::TextMD("#### Generate Custom Badge or Shields.io Image");
+                ImGui::TextDisabled("Configure label, message, and color to generate badges:");
+                ImGui::Spacing();
+
+                ImGui::InputText("Label##shield_lbl", shieldLabel, sizeof(shieldLabel));
+                ImGui::InputText("Message##shield_msg", shieldMessage, sizeof(shieldMessage));
+
+                const char* color_names[] = { "Blue (#3498db)", "Green (#2ecc71)", "Orange (#e67e22)", "Red (#e74c3c)", "Purple (#9b59b6)" };
+                const char* color_hex[]   = { "3498db", "2ecc71", "e67e22", "e74c3c", "9b59b6" };
+                const char* shield_colors[] = { "blue", "success", "orange", "red", "purple" };
+                ImGui::Combo("Color##shield_col", &shieldColorIdx, color_names, IM_ARRAYSIZE(color_names));
+
+                const char* style_names[] = { "Shields.io Online Image (![...](...))", "Native ImGee Vector Badge (<badge>)", "Native ImGee Status Pill (<pill>)" };
+                ImGui::Combo("Format##shield_fmt", &shieldStyleIdx, style_names, IM_ARRAYSIZE(style_names));
+
+                ImGui::Spacing();
+                ImGui::TextDisabled("Preview Output:");
+                std::string generated_text;
+                if (shieldStyleIdx == 0) {
+                    std::string url = FormatShieldsIoUrl(shieldLabel, shieldMessage, shield_colors[shieldColorIdx]);
+                    generated_text = "![" + std::string(shieldLabel) + " - " + std::string(shieldMessage) + "](" + url + ")";
+                } else if (shieldStyleIdx == 1) {
+                    std::string lbl(shieldLabel);
+                    std::string body = lbl.empty() ? std::string(shieldMessage) : (lbl + ": " + std::string(shieldMessage));
+                    generated_text = "<badge color=#" + std::string(color_hex[shieldColorIdx]) + ">" + body + "</badge>";
+                } else {
+                    generated_text = "<pill color=#" + std::string(color_hex[shieldColorIdx]) + ">" + std::string(shieldMessage) + "</pill>";
+                }
+                ImGui::TextWrapped("%s", generated_text.c_str());
+
+                ImGui::Spacing();
+                ImGui::Separator();
+                ImGui::Spacing();
+
+                if (ImGui::Button("Insert into Note", ImVec2(140.0f, 0.0f))) {
+                    wrap_or_insert(generated_text, "", "", false);
+                    showShieldModal = false;
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Cancel", ImVec2(90.0f, 0.0f)) || ImGui::IsKeyPressed(ImGuiKey_Escape)) {
+                    showShieldModal = false;
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndPopup();
+            }
 
             ImGui::EndTabItem();
         }

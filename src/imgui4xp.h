@@ -47,6 +47,11 @@
 /// Is VR currently enabled?
 extern bool vr_is_enabled;
 
+// Window list
+typedef std::shared_ptr<ImgWindow> ImgWindowSPtrTy;
+typedef std::vector<ImgWindowSPtrTy> ImgWindowSPtrVecTy;
+extern ImgWindowSPtrVecTy gWndList;
+
 /// Calculate window's standard coordinates
 void CalcWinCoords (int& left, int& top, int& right, int& bottom);
 
