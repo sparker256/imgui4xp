@@ -1485,13 +1485,14 @@ void ImGeeShowcaseWidget::buildInterface()
     ImGui::SameLine(0.0f, 3.0f);
 
     // Track slider: Range 50% to 200%, 1.67x wider (150px) for spacious text and thumb breathing room
+    float pre_slider_zoom = _fontAdjust;
     float pct = _fontAdjust * 100.0f;
     ImGui::SetNextItemWidth(150.0f);
     if (ImGui::SliderFloat("##zoom_slider", &pct, 50.0f, 200.0f, "Zoom %.0f%%")) {
         _fontAdjust = pct / 100.0f;
     }
     if (ImGui::IsItemActivated()) {
-        _sliderStartZoom = _fontAdjust;
+        _sliderStartZoom = pre_slider_zoom;
     }
     if (ImGui::IsItemDeactivatedAfterEdit()) {
         if (std::abs(_fontAdjust - _sliderStartZoom) > 0.001f) {
