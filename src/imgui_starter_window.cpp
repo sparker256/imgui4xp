@@ -1393,7 +1393,7 @@ ImGeeShowcaseWidget::ImGeeShowcaseWidget(int width, int height,
     ImgWindow(WindowGeometry::Centered(width, height), decoration, layer, true /* cursors */)
 {
     SetWindowTitle("ImGee Cockpit Showcase");
-    SetWindowResizingLimits(520, 420, 2560, 1440);
+    SetWindowResizingLimits(665, 420, 2560, 1440);
     // Pre-load default note from disk if available
     std::string default_note = "./Resources/plugins/imgui4xp/notes/flight_briefing.md";
     if (!LoadTextFile(default_note, scratchpadText)) {
@@ -1429,7 +1429,7 @@ void ImGeeShowcaseWidget::RestoreWindowRect(const WindowRectSnapshot& rect)
         int w = std::abs(rect.r - rect.l);
         int h = std::abs(rect.t - rect.b);
         if (w > 0 && h > 0) {
-            w = ImClamp(w, 520, 2560);
+            w = ImClamp(w, 665, 2560);
             h = ImClamp(h, 420, 1440);
             SetWindowGeometryVR(w, h);
         }
@@ -1447,7 +1447,7 @@ void ImGeeShowcaseWidget::RestoreWindowRect(const WindowRectSnapshot& rect)
     int r = rect.r;
     int b = rect.b;
 
-    ClampGeometryToScreen(l, t, r, b, 520, 420, 2560, 1440, GetEffectiveTopMargin());
+    ClampGeometryToScreen(l, t, r, b, 665, 420, 2560, 1440, GetEffectiveTopMargin());
 
     SetWindowGeometry(l, t, r, b);
 }
@@ -1485,7 +1485,7 @@ void ImGeeShowcaseWidget::buildInterface()
 
     // Steppers + Slider + Reset + Fit + Cursor suite (fixed width in chrome)
     const float zoom_suite_w = 296.0f;
-    const float min_offset = ImGui::GetCursorPosX() + ImGui::GetStyle().ItemSpacing.x;
+    const float min_offset = (ImGui::GetItemRectMax().x - ImGui::GetWindowPos().x) + ImGui::GetStyle().ItemSpacing.x;
     const float target_offset = ImGui::GetWindowWidth() - zoom_suite_w - ImGui::GetStyle().WindowPadding.x;
     ImGui::SameLine(ImMax(min_offset, target_offset));
 
