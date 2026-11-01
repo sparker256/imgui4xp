@@ -1393,7 +1393,7 @@ ImGeeShowcaseWidget::ImGeeShowcaseWidget(int width, int height,
     ImgWindow(WindowGeometry::Centered(width, height), decoration, layer, true /* cursors */)
 {
     SetWindowTitle("ImGee Cockpit Showcase");
-    SetWindowResizingLimits(665, 420, 2560, 1440);
+    SetWindowResizingLimits(565, 420, 2560, 1440);
     // Pre-load default note from disk if available
     std::string default_note = "./Resources/plugins/imgui4xp/notes/flight_briefing.md";
     if (!LoadTextFile(default_note, scratchpadText)) {
@@ -1429,7 +1429,7 @@ void ImGeeShowcaseWidget::RestoreWindowRect(const WindowRectSnapshot& rect)
         int w = std::abs(rect.r - rect.l);
         int h = std::abs(rect.t - rect.b);
         if (w > 0 && h > 0) {
-            w = ImClamp(w, 665, 2560);
+            w = ImClamp(w, 565, 2560);
             h = ImClamp(h, 420, 1440);
             SetWindowGeometryVR(w, h);
         }
@@ -1447,7 +1447,7 @@ void ImGeeShowcaseWidget::RestoreWindowRect(const WindowRectSnapshot& rect)
     int r = rect.r;
     int b = rect.b;
 
-    ClampGeometryToScreen(l, t, r, b, 665, 420, 2560, 1440, GetEffectiveTopMargin());
+    ClampGeometryToScreen(l, t, r, b, 565, 420, 2560, 1440, GetEffectiveTopMargin());
 
     SetWindowGeometry(l, t, r, b);
 }
@@ -1483,10 +1483,13 @@ void ImGeeShowcaseWidget::buildInterface()
     // Title on left
     ImGui::TextMD("# ImGee UX & Modern Cockpit Suite");
 
-    // Steppers + Slider + Reset + Fit + Cursor suite (fixed width in chrome)
-    const float zoom_suite_w = 296.0f;
+    // Steppers + Slider + Reset + Fit + Cursor suite (responsive width in chrome)
     const float title_w = Font9 ? Font9->CalcTextSizeA(Font9->LegacySize, FLT_MAX, -1.0f, "ImGee UX & Modern Cockpit Suite").x : 315.0f;
     const float min_offset = ImGui::GetStyle().WindowPadding.x + title_w + ImGui::GetStyle().ItemSpacing.x;
+    const float fixed_controls_w = 139.0f;
+    const float avail_for_suite = ImMax(fixed_controls_w + 90.0f, ImGui::GetWindowWidth() - min_offset - ImGui::GetStyle().WindowPadding.x);
+    const float slider_w = ImClamp(avail_for_suite - fixed_controls_w, 90.0f, 150.0f);
+    const float zoom_suite_w = fixed_controls_w + slider_w;
     const float target_offset = ImGui::GetWindowWidth() - zoom_suite_w - ImGui::GetStyle().WindowPadding.x;
     ImGui::SameLine(ImMax(min_offset, target_offset));
 
@@ -1526,7 +1529,7 @@ void ImGeeShowcaseWidget::buildInterface()
     // Track slider: Range 50% to 200%, 1.67x wider (150px) for spacious text and thumb breathing room
     float pre_slider_zoom = _fontAdjust;
     float pct = _fontAdjust * 100.0f;
-    ImGui::SetNextItemWidth(150.0f);
+    ImGui::SetNextItemWidth(slider_w);
     if (ImGui::SliderFloat("##zoom_slider", &pct, 50.0f, 200.0f, "Zoom %.0f%%")) {
         _fontAdjust = pct / 100.0f;
     }
