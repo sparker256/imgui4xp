@@ -1618,7 +1618,7 @@ void ImGeeShowcaseWidget::buildInterface()
         }
     }
     if (is_modified) {
-        ImGui::TimedTooltip::MD::Text("Reset zoom back to **100%% baseline**.");
+        ImGui::TimedTooltip::MD::Text("Reset zoom from **%d%%** back to **100%% baseline**.", (int)std::round(_fontAdjust * 100.0f));
     } else if (can_restore) {
         ImGui::TimedTooltip::MD::Text("1-click toggle back to prior **%d%% zoom**.", (int)std::round(_lastZoom * 100.0f));
     } else {
