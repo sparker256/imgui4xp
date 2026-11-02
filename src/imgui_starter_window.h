@@ -31,6 +31,8 @@ inline ImFont* Font8 = nullptr;
 inline ImFont* Font9 = nullptr;
 inline ImFont* FontBold = nullptr;
 inline ImFont* FontItalic = nullptr;
+inline ImFont* FontItalicH1 = nullptr;
+inline ImFont* FontItalicH2 = nullptr;
 inline ImFont* FontMono = nullptr;
 
 // Dedicated fixed-size, non-scrollable window showcasing ImGee / contrib UX suite
@@ -78,7 +80,7 @@ private:
     int         cached_sel_start     = -1;
     int         cached_sel_end       = -1;
     int         cached_cur_pos       = -1;
-    bool        syncScroll           = false;
+    bool        syncScroll           = true;
 
     // File Dialog & Picker State (imgui_file_dialog.h integration)
     std::string currentNoteFilename  = "flight_briefing.md";

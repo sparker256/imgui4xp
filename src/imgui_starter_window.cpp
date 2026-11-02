@@ -298,10 +298,18 @@ void configureImgWindow()
   }
   FontBold = Font8;
 
-  // 3. Italic Font - Roboto-Italic 14
+  // 3. Italic Font - Roboto-Italic 14, 15 (H2/H3), 20 (H1)
   FontItalic = ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/plugins/imgui4xp/fonts/Roboto-Italic.ttf", 14);
   if (!FontItalic) {
       FontItalic = ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Roboto-Italic.ttf", 14);
+  }
+  FontItalicH1 = ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/plugins/imgui4xp/fonts/Roboto-Italic.ttf", 20);
+  if (!FontItalicH1) {
+      FontItalicH1 = ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Roboto-Italic.ttf", 20);
+  }
+  FontItalicH2 = ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/plugins/imgui4xp/fonts/Roboto-Italic.ttf", 15);
+  if (!FontItalicH2) {
+      FontItalicH2 = ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Roboto-Italic.ttf", 15);
   }
 
   // 4. Monospace Font - Prefer RobotoMono-Regular, fallback to B612Mono / Menlo / DejaVuSansMono
@@ -339,6 +347,10 @@ void configureImgWindow()
   s_MarkdownConfig.h1Font = Font9;      // Roboto-Bold 20
   s_MarkdownConfig.h2Font = Font8;      // Roboto-Bold 15
   s_MarkdownConfig.h3Font = Font8;      // Roboto-Bold 15
+  s_MarkdownConfig.h1ItalicFont = FontItalicH1; // Roboto-Italic 20
+  s_MarkdownConfig.h2ItalicFont = FontItalicH2; // Roboto-Italic 15
+  s_MarkdownConfig.h3ItalicFont = FontItalicH2; // Roboto-Italic 15
+  s_MarkdownConfig.headingItalicFont = FontItalicH2; // Fallback heading italic
   s_MarkdownConfig.boldFont = FontBold; // Roboto-Bold 15
   s_MarkdownConfig.italicFont = FontItalic; // Roboto-Italic 14
   s_MarkdownConfig.regularFont = Font7; // Roboto-Regular 14
@@ -2294,7 +2306,7 @@ void ImGeeShowcaseWidget::buildInterface()
             float min_wrap_x = ImGui::GetCursorPosX() + ImGui::GetStyle().ItemSpacing.x;
             float target_wrap_x = ImGui::GetWindowWidth() - wrap_w - ImGui::GetStyle().WindowPadding.x;
             ImGui::SameLine(ImMax(min_wrap_x, target_wrap_x));
-            static bool editorWordWrap = false;
+            static bool editorWordWrap = true;
             ToolbarCheckbox("Word Wrap##editor_wrap", &editorWordWrap, "**Word Wrap**\n\nToggle soft word-wrapping in raw editor. When unchecked, long lines and tables scroll horizontally.");
 
             ImGui::Separator();
