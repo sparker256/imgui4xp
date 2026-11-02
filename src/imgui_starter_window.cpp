@@ -2397,16 +2397,44 @@ void ImGeeShowcaseWidget::buildInterface()
                 bool editor_driving = sb_editor_active || editor_scrolling_wheel || (editor_focused && !preview_driving);
 
                 if (editor_driving && !preview_driving) {
-                    if (editor_win->ScrollMax.y > 0.0f && preview_win->ScrollMax.y > 0.0f) {
-                        float r = ImClamp(editor_win->Scroll.y / editor_win->ScrollMax.y, 0.0f, 1.0f);
-                        float target_y = r * preview_win->ScrollMax.y;
+                    if (preview_win->ScrollMax.y > 0.0f) {
+                        float target_y = 0.0f;
+                        // Pin to bottom if editor is at/near bottom, or user is typing near the end of the note
+                        bool at_bottom = (editor_win->ScrollMax.y > 0.0f && editor_win->Scroll.y >= editor_win->ScrollMax.y - 12.0f);
+                        if (!at_bottom && editor_focused && cached_cur_pos >= 0 && !scratchpadText.empty()) {
+                            size_t last_nl = scratchpadText.rfind('\n');
+                            if (last_nl == std::string::npos || cached_cur_pos >= (int)last_nl) {
+                                at_bottom = true;
+                            }
+                        }
+
+                        if (at_bottom) {
+                            target_y = preview_win->ScrollMax.y;
+                        } else if (editor_win->ScrollMax.y > 0.0f && editor_win->Scroll.y <= 4.0f) {
+                            target_y = 0.0f;
+                        } else {
+                            float r = 0.0f;
+                            if (editor_win->ScrollMax.y > 0.0f) {
+                                r = editor_win->Scroll.y / editor_win->ScrollMax.y;
+                            } else if (!scratchpadText.empty() && cached_cur_pos > 0) {
+                                r = (float)cached_cur_pos / (float)scratchpadText.length();
+                            }
+                            target_y = ImClamp(r, 0.0f, 1.0f) * preview_win->ScrollMax.y;
+                        }
                         ImGui::SetScrollY(preview_win, target_y);
                         preview_win->Scroll.y = target_y;
                     }
                 } else if (preview_driving) {
-                    if (preview_win->ScrollMax.y > 0.0f && editor_win->ScrollMax.y > 0.0f) {
-                        float r = ImClamp(preview_win->Scroll.y / preview_win->ScrollMax.y, 0.0f, 1.0f);
-                        float target_y = r * editor_win->ScrollMax.y;
+                    if (editor_win->ScrollMax.y > 0.0f && preview_win->ScrollMax.y > 0.0f) {
+                        float target_y = 0.0f;
+                        if (preview_win->Scroll.y >= preview_win->ScrollMax.y - 4.0f) {
+                            target_y = editor_win->ScrollMax.y;
+                        } else if (preview_win->Scroll.y <= 4.0f) {
+                            target_y = 0.0f;
+                        } else {
+                            float r = ImClamp(preview_win->Scroll.y / preview_win->ScrollMax.y, 0.0f, 1.0f);
+                            target_y = r * editor_win->ScrollMax.y;
+                        }
                         ImGui::SetScrollY(editor_win, target_y);
                         editor_win->Scroll.y = target_y;
                     }
