@@ -4,20 +4,35 @@ This note demonstrates local disk image loading alongside asynchronous online re
 
 ---
 
-### 1. Local Disk Image (Tier 1 stb_image Loader)
-![X-Plane Cockpit Reference](Resources/plugins/imgui4xp/imgui_demo.jpg)
+### 1. Local Disk Image with Pandoc Sizing & Borders
+* **Default Auto-Constraint (max-width: 100%):**
+![Full Panel Auto-Fit](Resources/plugins/imgui4xp/imgui_demo.jpg)
+
+* **Proportional 50% Panel Width with Avionics Blue Border (`=50% border=#3498db`):**
+![Cockpit Half Width](<Resources/plugins/imgui4xp/imgui_demo.jpg =50% border=#3498db>)
+
+* **Explicit Sizing with Gold Border (`=220x120 border=gold`):**
+![Cockpit 220px](<Resources/plugins/imgui4xp/imgui_demo.jpg =220x120 border=gold>)
+
+* **HTML `<img />` Tag (`width="220" border="#2ecc71"`):**
+<img src="Resources/plugins/imgui4xp/imgui_demo.jpg" width="220" border="#2ecc71" />
 
 ---
 
-### 2. Online Remote Images & Shields (Tier 3 Async HTTP Download & GPU Upload)
+### 2. Online Remote Badges with Size Modifiers & Borders
+* **Auto-sized Shields.io Badges:**
 ![X-Plane](https://img.shields.io/badge/X--Plane-12.00+-blue.png)
 ![imgui4xp](https://img.shields.io/badge/imgui4xp-v1.14-success.png)
 ![ImgWindow](https://img.shields.io/badge/ImgWindow-v2.3.0-orange.png)
 ![Build](https://img.shields.io/badge/Build-Passing-brightgreen.png)
 
-*Remote Web Images (PNG & JPEG Multi-Format Test):*
-![Remote JPEG Photo](https://httpbin.org/image/jpeg)
-![Remote PNG Icon](https://httpbin.org/image/png)
+* **Pandoc Angle-Bracket Modifiers (`=160x border=#e74c3c`):**
+![X-Plane Red Border](<https://img.shields.io/badge/X--Plane-12.00+-blue.png =160x border=#e74c3c>)
+![Build Green Border](<https://img.shields.io/badge/Build-Passing-brightgreen.png =140x border=#2ecc71>)
+
+* **HTML `<img />` Remote Badges:**
+<img src="https://img.shields.io/badge/Vulkan-Metal-brightgreen.png" width="160" height="28" border="#25d366" />
+<img src="https://img.shields.io/badge/Cockpit-Glass%20Suite-blue.png" width="180" height="28" border="#3498db" />
 
 ---
 
