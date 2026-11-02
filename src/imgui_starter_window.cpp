@@ -2178,14 +2178,28 @@ void ImGeeShowcaseWidget::buildInterface()
 
             ImGui::Spacing();
 
-            // Side-by-side split panels with interactive draggable splitter:
+            // Side-by-side split panels with 0-padded interactive draggable splitter:
             float avail_w = ImGui::GetContentRegionAvail().x;
             static float s_scratchpadSplitRatio = 0.50f;
-            const float splitter_w = 6.0f;
-            const float total_spacing = ImGui::GetStyle().ItemSpacing.x * 2.0f + splitter_w;
-            const float total_pane_w = ImMax(200.0f, avail_w - total_spacing);
-            float pane_left_w = ImClamp(total_pane_w * s_scratchpadSplitRatio, 80.0f, total_pane_w - 80.0f);
-            float pane_right_w = ImMax(80.0f, total_pane_w - pane_left_w);
+            const float splitter_w = ImGui::GetStyle().ItemSpacing.x; // Exact standard item spacing gap (0 extra padding)
+            const float total_pane_w = ImMax(200.0f, avail_w - splitter_w);
+
+            // Compute minimum required widths based on pane header controls (so title & checkbox never overstrike)
+            const float left_title_w = ImGui::CalcTextSize("Raw Input (Markdown):").x;
+            const float left_wrap_w = ImGui::GetFrameHeight() + ImGui::GetStyle().ItemInnerSpacing.x + ImGui::CalcTextSize("Word Wrap").x;
+            const float min_left_w = left_title_w + ImGui::GetStyle().ItemSpacing.x + left_wrap_w + ImGui::GetStyle().WindowPadding.x * 2.0f + 6.0f;
+
+            const float right_title_w = ImGui::CalcTextSize("Live Rendered Output:").x;
+            const float right_sync_w = ImGui::GetFrameHeight() + ImGui::GetStyle().ItemInnerSpacing.x + ImGui::CalcTextSize("Sync Scroll").x;
+            const float min_right_w = right_title_w + ImGui::GetStyle().ItemSpacing.x + right_sync_w + ImGui::GetStyle().WindowPadding.x * 2.0f + 6.0f;
+
+            float pane_left_w = total_pane_w * s_scratchpadSplitRatio;
+            if (total_pane_w >= (min_left_w + min_right_w)) {
+                pane_left_w = ImClamp(pane_left_w, min_left_w, total_pane_w - min_right_w);
+            } else {
+                pane_left_w = total_pane_w * 0.50f;
+            }
+            float pane_right_w = total_pane_w - pane_left_w;
 
             float avail_h = ImGui::GetContentRegionAvail().y;
             // Reserve space for TabBar bottom margin, Separator, and Close button footer (rendered at 1.0x unscaled chrome scale)
@@ -2217,8 +2231,8 @@ void ImGeeShowcaseWidget::buildInterface()
             ImGuiWindow* editor_win = input_child_win->DC.ChildWindows.empty() ? nullptr : input_child_win->DC.ChildWindows.back();
             ImGui::EndChild();
 
-            // Interactive Splitter Grip between Left & Right Panes
-            ImGui::SameLine(0.0f, ImGui::GetStyle().ItemSpacing.x);
+            // Interactive Splitter Grip between Left & Right Panes (flush 0-padded against child borders)
+            ImGui::SameLine(0.0f, 0.0f);
             ImGui::InvisibleButton("##scratchpad_splitter", ImVec2(splitter_w, pane_h));
             bool splitter_hovered = ImGui::IsItemHovered();
             bool splitter_active = ImGui::IsItemActive();
@@ -2228,13 +2242,13 @@ void ImGeeShowcaseWidget::buildInterface()
             if (splitter_active) {
                 float delta_x = ImGui::GetIO().MouseDelta.x;
                 if (delta_x != 0.0f && total_pane_w > 0.0f) {
-                    s_scratchpadSplitRatio = ImClamp(s_scratchpadSplitRatio + delta_x / total_pane_w, 0.15f, 0.85f);
+                    s_scratchpadSplitRatio = ImClamp(s_scratchpadSplitRatio + delta_x / total_pane_w, 0.05f, 0.95f);
                 }
             }
             if (splitter_hovered && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
                 s_scratchpadSplitRatio = 0.50f; // 1-click restore balanced 50/50 split
             }
-            // Draw subtle splitter grip line
+            // Draw subtle splitter grip line centered in the standard item spacing gap
             ImVec2 split_p0 = ImGui::GetItemRectMin();
             ImVec2 split_p1 = ImGui::GetItemRectMax();
             float split_mid_x = (split_p0.x + split_p1.x) * 0.5f;
@@ -2243,7 +2257,7 @@ void ImGeeShowcaseWidget::buildInterface()
                                                 : ImGui::GetColorU32(ImGuiCol_Separator, 0.4f));
             ImGui::GetWindowDrawList()->AddLine(ImVec2(split_mid_x, split_p0.y + 4.0f), ImVec2(split_mid_x, split_p1.y - 4.0f), split_col, 1.5f);
 
-            ImGui::SameLine(0.0f, ImGui::GetStyle().ItemSpacing.x);
+            ImGui::SameLine(0.0f, 0.0f);
 
             // Right Pane: Live Rendered Output (with auto soft-wrapping & horizontal scrolling!)
             ImGui::BeginChild("ScratchpadPreviewPane", ImVec2(pane_right_w, pane_h), ImGuiChildFlags_Borders, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
