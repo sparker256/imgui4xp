@@ -2187,7 +2187,7 @@ void ImGeeShowcaseWidget::buildInterface()
             ImGui::AlignTextToFramePadding();
             ImGui::TextUnformatted("Note:");
             ImGui::SameLine();
-            ImGui::SetNextItemWidth(160.0f);
+            ImGui::SetNextItemWidth(185.0f);
             if (ImGui::FilePickerCombo("##note_picker", &currentNoteFilename, notes_dir, ".md;.txt;.markdown")) {
                 LoadNote(std::string(notes_dir) + "/" + currentNoteFilename);
             }
