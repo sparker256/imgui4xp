@@ -30,6 +30,7 @@ inline ImFont* Font7 = nullptr;
 inline ImFont* Font8 = nullptr;
 inline ImFont* Font9 = nullptr;
 inline ImFont* FontBold = nullptr;
+inline ImFont* FontItalic = nullptr;
 inline ImFont* FontMono = nullptr;
 
 // Dedicated fixed-size, non-scrollable window showcasing ImGee / contrib UX suite

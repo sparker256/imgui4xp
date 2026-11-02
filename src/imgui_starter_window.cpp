@@ -298,7 +298,13 @@ void configureImgWindow()
   }
   FontBold = Font8;
 
-  // 3. Monospace Font - Prefer RobotoMono-Regular, fallback to B612Mono / Menlo / DejaVuSansMono
+  // 3. Italic Font - Roboto-Italic 14
+  FontItalic = ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/plugins/imgui4xp/fonts/Roboto-Italic.ttf", 14);
+  if (!FontItalic) {
+      FontItalic = ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Roboto-Italic.ttf", 14);
+  }
+
+  // 4. Monospace Font - Prefer RobotoMono-Regular, fallback to B612Mono / Menlo / DejaVuSansMono
   FontMono = ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/plugins/imgui4xp/fonts/RobotoMono-Regular.ttf", 14);
   if (!FontMono) {
       FontMono = ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/RobotoMono-Regular.ttf", 14);
@@ -334,6 +340,7 @@ void configureImgWindow()
   s_MarkdownConfig.h2Font = Font8;      // Roboto-Bold 15
   s_MarkdownConfig.h3Font = Font8;      // Roboto-Bold 15
   s_MarkdownConfig.boldFont = FontBold; // Roboto-Bold 15
+  s_MarkdownConfig.italicFont = FontItalic; // Roboto-Italic 14
   s_MarkdownConfig.regularFont = Font7; // Roboto-Regular 14
   s_MarkdownConfig.monoFont = FontMono; // RobotoMono 14
   s_MarkdownConfig.headingFormats[0] = { Font9, true };
