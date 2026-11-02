@@ -2134,6 +2134,7 @@ void ImGeeShowcaseWidget::buildInterface()
             // --- File Persistence Toolbar (imgui_file_dialog.h integration) ---
             ImGui::Spacing();
             const char* notes_dir = "./Resources/plugins/imgui4xp/notes";
+            ImGui::AlignTextToFramePadding();
             ImGui::TextUnformatted("Note:");
             ImGui::SameLine();
             ImGui::SetNextItemWidth(160.0f);
@@ -2209,6 +2210,7 @@ void ImGeeShowcaseWidget::buildInterface()
 
             // Left Pane: Raw Editor (with soft word-wrap toggle and tab input!)
             ImGui::BeginChild("ScratchpadInputPane", ImVec2(pane_left_w, pane_h), ImGuiChildFlags_Borders, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+            ImGui::AlignTextToFramePadding();
             ImGui::TextDisabled("Raw Input (Markdown):");
 
             // Right-aligned Word Wrap toggle (disabled by default for code/tables horizontal scroll)
@@ -2261,6 +2263,7 @@ void ImGeeShowcaseWidget::buildInterface()
 
             // Right Pane: Live Rendered Output (with auto soft-wrapping & horizontal scrolling!)
             ImGui::BeginChild("ScratchpadPreviewPane", ImVec2(pane_right_w, pane_h), ImGuiChildFlags_Borders, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+            ImGui::AlignTextToFramePadding();
             ImGui::TextDisabled("Live Rendered Output:");
 
             // Right-aligned Sync Scroll toggle (disabled by default)
