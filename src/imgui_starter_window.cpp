@@ -1508,10 +1508,13 @@ void ImGeeShowcaseWidget::buildInterface()
     const float title_w = Font9 ? Font9->CalcTextSizeA(Font9->LegacySize, FLT_MAX, -1.0f, "ImGee UX & Modern Cockpit Suite").x : 315.0f;
     const float min_offset = ImGui::GetStyle().WindowPadding.x + title_w + ImGui::GetStyle().ItemSpacing.x;
     const float fixed_controls_w = 139.0f;
-    const float avail_for_suite = ImMax(fixed_controls_w + 90.0f, ImGui::GetWindowWidth() - min_offset - ImGui::GetStyle().WindowPadding.x);
+    ImGuiWindow* cur_win = ImGui::GetCurrentWindow();
+    const float scrollbar_pad = (cur_win && cur_win->ScrollbarY) ? cur_win->ScrollbarSizes.x : 0.0f;
+    const float right_margin = ImGui::GetStyle().WindowPadding.x + scrollbar_pad;
+    const float avail_for_suite = ImMax(fixed_controls_w + 90.0f, ImGui::GetWindowWidth() - min_offset - right_margin);
     const float slider_w = ImClamp(avail_for_suite - fixed_controls_w, 90.0f, 150.0f);
     const float zoom_suite_w = fixed_controls_w + slider_w;
-    const float target_offset = ImGui::GetWindowWidth() - zoom_suite_w - ImGui::GetStyle().WindowPadding.x;
+    const float target_offset = ImGui::GetWindowWidth() - zoom_suite_w - right_margin;
     ImGui::SameLine(ImMax(min_offset, target_offset));
 
     // [-] Stepper: repeating button with (n % 4 == 0) gating (hold to step smoothly)
@@ -2175,9 +2178,15 @@ void ImGeeShowcaseWidget::buildInterface()
 
             ImGui::Spacing();
 
-            // Side-by-side split panels:
+            // Side-by-side split panels with interactive draggable splitter:
             float avail_w = ImGui::GetContentRegionAvail().x;
-            float pane_w = ImMax(100.0f, (avail_w - ImGui::GetStyle().ItemSpacing.x) * 0.5f);
+            static float s_scratchpadSplitRatio = 0.50f;
+            const float splitter_w = 6.0f;
+            const float total_spacing = ImGui::GetStyle().ItemSpacing.x * 2.0f + splitter_w;
+            const float total_pane_w = ImMax(200.0f, avail_w - total_spacing);
+            float pane_left_w = ImClamp(total_pane_w * s_scratchpadSplitRatio, 80.0f, total_pane_w - 80.0f);
+            float pane_right_w = ImMax(80.0f, total_pane_w - pane_left_w);
+
             float avail_h = ImGui::GetContentRegionAvail().y;
             // Reserve space for TabBar bottom margin, Separator, and Close button footer (rendered at 1.0x unscaled chrome scale)
             float unscaled_frame_h = ImGui::GetStyle().FontSizeBase + ImGui::GetStyle().FramePadding.y * 2.0f;
@@ -2185,7 +2194,7 @@ void ImGeeShowcaseWidget::buildInterface()
             float pane_h = ImMax(120.0f, avail_h - footer_reserve);
 
             // Left Pane: Raw Editor (with soft word-wrap toggle and tab input!)
-            ImGui::BeginChild("ScratchpadInputPane", ImVec2(pane_w, pane_h), ImGuiChildFlags_Borders, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+            ImGui::BeginChild("ScratchpadInputPane", ImVec2(pane_left_w, pane_h), ImGuiChildFlags_Borders, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
             ImGui::TextDisabled("Raw Input (Markdown):");
 
             // Right-aligned Word Wrap toggle (disabled by default for code/tables horizontal scroll)
@@ -2208,10 +2217,36 @@ void ImGeeShowcaseWidget::buildInterface()
             ImGuiWindow* editor_win = input_child_win->DC.ChildWindows.empty() ? nullptr : input_child_win->DC.ChildWindows.back();
             ImGui::EndChild();
 
-            ImGui::SameLine();
+            // Interactive Splitter Grip between Left & Right Panes
+            ImGui::SameLine(0.0f, ImGui::GetStyle().ItemSpacing.x);
+            ImGui::InvisibleButton("##scratchpad_splitter", ImVec2(splitter_w, pane_h));
+            bool splitter_hovered = ImGui::IsItemHovered();
+            bool splitter_active = ImGui::IsItemActive();
+            if (splitter_hovered || splitter_active) {
+                ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
+            }
+            if (splitter_active) {
+                float delta_x = ImGui::GetIO().MouseDelta.x;
+                if (delta_x != 0.0f && total_pane_w > 0.0f) {
+                    s_scratchpadSplitRatio = ImClamp(s_scratchpadSplitRatio + delta_x / total_pane_w, 0.15f, 0.85f);
+                }
+            }
+            if (splitter_hovered && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+                s_scratchpadSplitRatio = 0.50f; // 1-click restore balanced 50/50 split
+            }
+            // Draw subtle splitter grip line
+            ImVec2 split_p0 = ImGui::GetItemRectMin();
+            ImVec2 split_p1 = ImGui::GetItemRectMax();
+            float split_mid_x = (split_p0.x + split_p1.x) * 0.5f;
+            ImU32 split_col = splitter_active ? ImGui::GetColorU32(ImGuiCol_SeparatorActive)
+                            : (splitter_hovered ? ImGui::GetColorU32(ImGuiCol_SeparatorHovered)
+                                                : ImGui::GetColorU32(ImGuiCol_Separator, 0.4f));
+            ImGui::GetWindowDrawList()->AddLine(ImVec2(split_mid_x, split_p0.y + 4.0f), ImVec2(split_mid_x, split_p1.y - 4.0f), split_col, 1.5f);
+
+            ImGui::SameLine(0.0f, ImGui::GetStyle().ItemSpacing.x);
 
             // Right Pane: Live Rendered Output (with auto soft-wrapping & horizontal scrolling!)
-            ImGui::BeginChild("ScratchpadPreviewPane", ImVec2(pane_w, pane_h), ImGuiChildFlags_Borders, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+            ImGui::BeginChild("ScratchpadPreviewPane", ImVec2(pane_right_w, pane_h), ImGuiChildFlags_Borders, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
             ImGui::TextDisabled("Live Rendered Output:");
 
             // Right-aligned Sync Scroll toggle (disabled by default)
@@ -2249,8 +2284,18 @@ void ImGeeShowcaseWidget::buildInterface()
             ImGui::EndChild();
             ImGui::EndChild();
 
+            static bool s_lastSyncScroll = false;
+            bool sync_just_enabled = (!s_lastSyncScroll && syncScroll);
+            s_lastSyncScroll = syncScroll;
+
             // Two-way synchronized scrolling arbitration
             if (syncScroll && editor_win && preview_win) {
+                if (sync_just_enabled && editor_win->ScrollMax.y > 0.0f && preview_win->ScrollMax.y > 0.0f) {
+                    float r = ImClamp(editor_win->Scroll.y / editor_win->ScrollMax.y, 0.0f, 1.0f);
+                    float target_y = r * preview_win->ScrollMax.y;
+                    ImGui::SetScrollY(preview_win, target_y);
+                    preview_win->Scroll.y = target_y;
+                }
                 bool editor_hovered = ImGui::IsMouseHoveringRect(editor_win->Rect().Min, editor_win->Rect().Max);
                 bool preview_hovered = ImGui::IsMouseHoveringRect(preview_win->Rect().Min, preview_win->Rect().Max);
                 ImGuiID sb_editor = ImGui::GetWindowScrollbarID(editor_win, ImGuiAxis_Y);
