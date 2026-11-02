@@ -93,8 +93,26 @@ IMGUI_API bool ToolbarButton(const char* label,
     return clicked;
 }
 
+/// Lance's 1-Click Active-ID Toolbar Checkbox:
+/// Allows checkboxes to toggle on the first click even when InputTextMultiline holds g.ActiveId,
+/// eliminating the two-click penalty and preserving active text selection.
+IMGUI_API bool ToolbarCheckbox(const char* label, bool* v, const char* tip = nullptr)
+{
+    bool changed = ImGui::Checkbox(label, v);
+    bool hovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+    if (!changed && hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+        *v = !(*v);
+        changed = true;
+    }
+    if (tip && hovered) {
+        ImGui::TimedTooltip::TextMDProxy(ImGui::GetItemID(), hovered, "%s", tip);
+    }
+    return changed;
+}
+
 }
 using ImGui::ToolbarButton;
+using ImGui::ToolbarCheckbox;
 
 //
 // MARK: Global data and functions
@@ -2163,13 +2181,12 @@ void ImGeeShowcaseWidget::buildInterface()
             }
 
             ImGui::SameLine();
-            if (ImGui::Button("+ New")) {
+            if (ToolbarButton("+ New", "Start a blank new note buffer")) {
                 scratchpadText.clear();
                 currentNoteFilename = "(Untitled)";
                 noteStatusMsg = "New note created";
                 noteStatusTimer = 3.0f;
             }
-            ImGui::TimedTooltip::MD::Text("Start a blank new note buffer");
 
             if (!noteStatusMsg.empty() && noteStatusTimer > 0.0f) {
                 ImGui::SameLine();
@@ -2182,7 +2199,7 @@ void ImGeeShowcaseWidget::buildInterface()
             // Side-by-side split panels with 0-padded interactive draggable splitter:
             float avail_w = ImGui::GetContentRegionAvail().x;
             static float s_scratchpadSplitRatio = 0.50f;
-            const float splitter_w = ImGui::GetStyle().ItemSpacing.x; // Exact standard item spacing gap (0 extra padding)
+            const float splitter_w = ImGui::GetStyle().ItemSpacing.x + 1.0f; // +1 boxel to perfectly balance pixel symmetry
             const float total_pane_w = ImMax(200.0f, avail_w - splitter_w);
 
             // Compute minimum required widths based on pane header controls (so title & checkbox never overstrike)
@@ -2219,8 +2236,7 @@ void ImGeeShowcaseWidget::buildInterface()
             float target_wrap_x = ImGui::GetWindowWidth() - wrap_w - ImGui::GetStyle().WindowPadding.x;
             ImGui::SameLine(ImMax(min_wrap_x, target_wrap_x));
             static bool editorWordWrap = false;
-            ImGui::Checkbox("Word Wrap##editor_wrap", &editorWordWrap);
-            ImGui::TimedTooltip::MD::Text("**Word Wrap**\n\nToggle soft word-wrapping in raw editor. When unchecked, long lines and tables scroll horizontally.");
+            ToolbarCheckbox("Word Wrap##editor_wrap", &editorWordWrap, "**Word Wrap**\n\nToggle soft word-wrapping in raw editor. When unchecked, long lines and tables scroll horizontally.");
 
             ImGui::Separator();
 
@@ -2250,14 +2266,14 @@ void ImGeeShowcaseWidget::buildInterface()
             if (splitter_hovered && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
                 s_scratchpadSplitRatio = 0.50f; // 1-click restore balanced 50/50 split
             }
-            // Draw subtle splitter grip line centered in the standard item spacing gap
+            // Draw subtle splitter grip line centered in the standard item spacing gap (+1 boxel balanced)
             ImVec2 split_p0 = ImGui::GetItemRectMin();
             ImVec2 split_p1 = ImGui::GetItemRectMax();
-            float split_mid_x = (split_p0.x + split_p1.x) * 0.5f;
+            float split_mid_x = std::floor(split_p0.x + splitter_w * 0.5f) + 0.5f;
             ImU32 split_col = splitter_active ? ImGui::GetColorU32(ImGuiCol_SeparatorActive)
                             : (splitter_hovered ? ImGui::GetColorU32(ImGuiCol_SeparatorHovered)
                                                 : ImGui::GetColorU32(ImGuiCol_Separator, 0.4f));
-            ImGui::GetWindowDrawList()->AddLine(ImVec2(split_mid_x, split_p0.y + 4.0f), ImVec2(split_mid_x, split_p1.y - 4.0f), split_col, 1.5f);
+            ImGui::GetWindowDrawList()->AddLine(ImVec2(split_mid_x, split_p0.y + 4.0f), ImVec2(split_mid_x, split_p1.y - 4.0f), split_col, 1.0f);
 
             ImGui::SameLine(0.0f, 0.0f);
 
@@ -2271,8 +2287,7 @@ void ImGeeShowcaseWidget::buildInterface()
             float min_sync_x = ImGui::GetCursorPosX() + ImGui::GetStyle().ItemSpacing.x;
             float target_sync_x = ImGui::GetWindowWidth() - sync_w - ImGui::GetStyle().WindowPadding.x;
             ImGui::SameLine(ImMax(min_sync_x, target_sync_x));
-            ImGui::Checkbox("Sync Scroll", &syncScroll);
-            ImGui::TimedTooltip::MD::Text("**Synchronized Scrolling** (Experimental)\n\nProportionally syncs scroll positions between raw editor and rendered markdown.");
+            ToolbarCheckbox("Sync Scroll", &syncScroll, "**Synchronized Scrolling** (Experimental)\n\nProportionally syncs scroll positions between raw editor and rendered markdown.");
 
             ImGui::Separator();
             ImGuiWindow* preview_win = nullptr;
