@@ -1451,7 +1451,7 @@ ImGeeShowcaseWidget::ImGeeShowcaseWidget(int width, int height,
 {
     SetWindowTitle("ImGee Cockpit Showcase");
     SetWindowResizingLimits(565, 330, 2560, 1440);
-    SetUnscaledChrome(0, 80);
+    SetUnscaledChrome(0, 68);
     // Pre-load default note from disk if available
     std::string default_note = "./Resources/plugins/imgui4xp/notes/flight_briefing.md";
     if (!LoadTextFile(default_note, scratchpadText)) {
@@ -1514,7 +1514,7 @@ void ShowImGeeShowcaseWindow()
 {
     ImGuiContext* prevContext = ImGui::GetCurrentContext();
     if (!s_pShowcaseWidget) {
-        s_pShowcaseWidget = std::make_shared<ImGeeShowcaseWidget>(680, 580);
+        s_pShowcaseWidget = std::make_shared<ImGeeShowcaseWidget>(680, 568);
         gWndList.push_back(s_pShowcaseWidget);
     }
     s_pShowcaseWidget->SetVisible(true);
@@ -1716,7 +1716,7 @@ void ImGeeShowcaseWidget::buildInterface()
     }
     bool fit_hovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
     if (fit_hovered) {
-        ImGui::TimedTooltip::TextMDProxy(ImGui::GetItemID(), fit_hovered, "**Fit Window to Baseline**\n\nResets window to default 680x580 baseline proportions scaled to current zoom (%d%%) anchored to top-left.", (int)std::round(_fontAdjust * 100.0f));
+        ImGui::TimedTooltip::TextMDProxy(ImGui::GetItemID(), fit_hovered, "**Fit Window to Baseline**\n\nResets window to default 680x568 baseline proportions scaled to current zoom (%d%%) anchored to top-left.", (int)std::round(_fontAdjust * 100.0f));
     }
     // Cursor Handling Toggle Button (separated by 8px gap)
     ImGui::SameLine(0.0f, 8.0f);
@@ -2263,9 +2263,9 @@ void ImGeeShowcaseWidget::buildInterface()
             float pane_right_w = total_pane_w - pane_left_w;
 
             float avail_h = ImGui::GetContentRegionAvail().y;
-            // Reserve space for TabBar bottom margin, Separator, and Close button footer (rendered at 1.0x unscaled chrome scale)
+            // Reserve space for Close button footer (rendered at 1.0x unscaled chrome scale, flush against child borders)
             float unscaled_frame_h = ImGui::GetStyle().FontSizeBase + ImGui::GetStyle().FramePadding.y * 2.0f;
-            float footer_reserve = unscaled_frame_h + ImGui::GetStyle().ItemSpacing.y * 3.0f + 12.0f;
+            float footer_reserve = unscaled_frame_h + ImGui::GetStyle().ItemSpacing.y;
             float pane_h = ImMax(120.0f, avail_h - footer_reserve);
 
             // Seamless 1-click active retention for right-side Sync Scroll checkbox:
@@ -2387,17 +2387,23 @@ void ImGeeShowcaseWidget::buildInterface()
                 ImGuiID sb_editor = ImGui::GetWindowScrollbarID(editor_win, ImGuiAxis_Y);
                 ImGuiID sb_preview = ImGui::GetWindowScrollbarID(preview_win, ImGuiAxis_Y);
 
-                bool editor_interacting = (GImGui->ActiveId == sb_editor) || (editor_hovered && ImGui::GetIO().MouseWheel != 0.0f) || (GImGui->ActiveId == editor_win->ID);
-                bool preview_interacting = (GImGui->ActiveId == sb_preview) || (preview_hovered && ImGui::GetIO().MouseWheel != 0.0f);
+                bool editor_focused = (g.InputTextState.ID != 0 && (g.ActiveId == s_scratchpadEditorId || g.InputTextState.ID == s_scratchpadEditorId));
+                bool editor_scrolling_wheel = (editor_hovered && ImGui::GetIO().MouseWheel != 0.0f);
+                bool preview_scrolling_wheel = (preview_hovered && ImGui::GetIO().MouseWheel != 0.0f);
+                bool sb_editor_active = (g.ActiveId == sb_editor);
+                bool sb_preview_active = (g.ActiveId == sb_preview);
 
-                if (editor_interacting && !preview_interacting) {
+                bool preview_driving = sb_preview_active || preview_scrolling_wheel;
+                bool editor_driving = sb_editor_active || editor_scrolling_wheel || (editor_focused && !preview_driving);
+
+                if (editor_driving && !preview_driving) {
                     if (editor_win->ScrollMax.y > 0.0f && preview_win->ScrollMax.y > 0.0f) {
                         float r = ImClamp(editor_win->Scroll.y / editor_win->ScrollMax.y, 0.0f, 1.0f);
                         float target_y = r * preview_win->ScrollMax.y;
                         ImGui::SetScrollY(preview_win, target_y);
                         preview_win->Scroll.y = target_y;
                     }
-                } else if (preview_interacting && !editor_interacting) {
+                } else if (preview_driving) {
                     if (preview_win->ScrollMax.y > 0.0f && editor_win->ScrollMax.y > 0.0f) {
                         float r = ImClamp(preview_win->Scroll.y / preview_win->ScrollMax.y, 0.0f, 1.0f);
                         float target_y = r * editor_win->ScrollMax.y;
@@ -2483,8 +2489,6 @@ void ImGeeShowcaseWidget::buildInterface()
 
     // 3. Restore window chrome scale for footer
     ImGui::SetWindowFontScale(1.0f);
-    ImGui::Spacing();
-    ImGui::Separator();
     if (ImGui::Button("Close")) {
         SetVisible(false);
     }

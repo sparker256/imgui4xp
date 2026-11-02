@@ -35,7 +35,7 @@ inline ImFont* FontMono = nullptr;
 // Dedicated fixed-size, non-scrollable window showcasing ImGee / contrib UX suite
 class ImGeeShowcaseWidget: public ImgWindow {
 public:
-    ImGeeShowcaseWidget(int width = 680, int height = 580,
+    ImGeeShowcaseWidget(int width = 680, int height = 568,
                         XPLMWindowDecoration decoration = xplm_WindowDecorationRoundRectangle,
                         XPLMWindowLayer layer = xplm_WindowLayerFloatingWindows);
     ~ImGeeShowcaseWidget() override;
