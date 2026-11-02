@@ -95,15 +95,21 @@ IMGUI_API bool ToolbarButton(const char* label,
 
 /// Lance's 1-Click Active-ID Toolbar Checkbox:
 /// Allows checkboxes to toggle on the first click even when InputTextMultiline holds g.ActiveId,
-/// eliminating the two-click penalty and preserving active text selection.
+/// eliminating the two-click penalty, preventing double-toggle flickering, and preserving active text selection.
 IMGUI_API bool ToolbarCheckbox(const char* label, bool* v, const char* tip = nullptr)
 {
+    ImGuiContext& g = *GImGui;
+    bool active_id_blocked = (g.ActiveId != 0 && g.InputTextState.ID != 0 && g.ActiveId == g.InputTextState.ID);
+
     bool changed = ImGui::Checkbox(label, v);
     bool hovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
-    if (!changed && hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+
+    if (!changed && active_id_blocked && hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
         *v = !(*v);
         changed = true;
+        ImGui::ClearActiveID();
     }
+
     if (tip && hovered) {
         ImGui::TimedTooltip::TextMDProxy(ImGui::GetItemID(), hovered, "%s", tip);
     }
@@ -2059,6 +2065,25 @@ void ImGeeShowcaseWidget::buildInterface()
                 cached_sel_end = -1;
             };
 
+            static ImGuiID s_scratchpadEditorId = 0;
+            auto reactivate_editor_if_needed = [&]() {
+                ImGuiID editor_id = (g.InputTextState.ID != 0) ? g.InputTextState.ID : (g.InputTextDeactivatedState.ID != 0 ? g.InputTextDeactivatedState.ID : s_scratchpadEditorId);
+                if (editor_id == 0) {
+                    editor_id = ImGui::GetID("##editor");
+                }
+                if (editor_id != 0 && (cached_cur_pos >= 0 || has_active_selection)) {
+                    int r_start = (has_active_selection && cached_sel_start >= 0) ? cached_sel_start : cached_cur_pos;
+                    int r_end   = (has_active_selection && cached_sel_end >= 0) ? cached_sel_end : cached_cur_pos;
+                    if (r_start < 0) r_start = 0;
+                    if (r_end < 0) r_end = 0;
+                    g.InputTextState.ReloadSelectionStart = r_start;
+                    g.InputTextState.ReloadSelectionEnd = r_end;
+                    g.InputTextState.WantReloadUserBuf = true;
+                    g.InputTextReactivateId = editor_id;
+                    g.InputTextDeactivatedState.ID = 0;
+                }
+            };
+
             // 1-Click Formatting Toolbar with Smart Selection Wrapping (Lance's Pattern):
             if (ToolbarButton("H1", "Prepend `# ` heading to current line or selection")) {
                 wrap_or_insert("# ", "", "Heading 1", true);
@@ -2125,6 +2150,10 @@ void ImGeeShowcaseWidget::buildInterface()
             ImGui::SameLine();
             if (ToolbarButton("Clear", "Clears the scratchpad editor buffer")) {
                 scratchpadText.clear();
+                cached_cur_pos = 0;
+                has_active_selection = false;
+                cached_sel_start = cached_sel_end = -1;
+                reactivate_editor_if_needed();
             }
 
             ImGui::SameLine();
@@ -2186,6 +2215,10 @@ void ImGeeShowcaseWidget::buildInterface()
                 currentNoteFilename = "(Untitled)";
                 noteStatusMsg = "New note created";
                 noteStatusTimer = 3.0f;
+                cached_cur_pos = 0;
+                has_active_selection = false;
+                cached_sel_start = cached_sel_end = -1;
+                reactivate_editor_if_needed();
             }
 
             if (!noteStatusMsg.empty() && noteStatusTimer > 0.0f) {
@@ -2199,7 +2232,7 @@ void ImGeeShowcaseWidget::buildInterface()
             // Side-by-side split panels with 0-padded interactive draggable splitter:
             float avail_w = ImGui::GetContentRegionAvail().x;
             static float s_scratchpadSplitRatio = 0.50f;
-            const float splitter_w = ImGui::GetStyle().ItemSpacing.x + 1.0f; // +1 boxel to perfectly balance pixel symmetry
+            const float splitter_w = ImGui::GetStyle().ItemSpacing.x + 2.0f; // +2 boxels for exact pixel symmetry between child borders
             const float total_pane_w = ImMax(200.0f, avail_w - splitter_w);
 
             // Compute minimum required widths based on pane header controls (so title & checkbox never overstrike)
@@ -2236,7 +2269,9 @@ void ImGeeShowcaseWidget::buildInterface()
             float target_wrap_x = ImGui::GetWindowWidth() - wrap_w - ImGui::GetStyle().WindowPadding.x;
             ImGui::SameLine(ImMax(min_wrap_x, target_wrap_x));
             static bool editorWordWrap = false;
-            ToolbarCheckbox("Word Wrap##editor_wrap", &editorWordWrap, "**Word Wrap**\n\nToggle soft word-wrapping in raw editor. When unchecked, long lines and tables scroll horizontally.");
+            if (ToolbarCheckbox("Word Wrap##editor_wrap", &editorWordWrap, "**Word Wrap**\n\nToggle soft word-wrapping in raw editor. When unchecked, long lines and tables scroll horizontally.")) {
+                reactivate_editor_if_needed();
+            }
 
             ImGui::Separator();
 
@@ -2244,6 +2279,7 @@ void ImGeeShowcaseWidget::buildInterface()
             if (editorWordWrap)
                 editor_flags |= ImGuiInputTextFlags_WordWrap;
 
+            s_scratchpadEditorId = ImGui::GetID("##editor");
             ImGui::InputTextMultiline("##editor", &scratchpadText, ImVec2(-FLT_MIN, -FLT_MIN), editor_flags);
             ImGuiWindow* input_child_win = ImGui::GetCurrentWindow();
             ImGuiWindow* editor_win = input_child_win->DC.ChildWindows.empty() ? nullptr : input_child_win->DC.ChildWindows.back();
@@ -2269,7 +2305,7 @@ void ImGeeShowcaseWidget::buildInterface()
             // Draw subtle splitter grip line centered in the standard item spacing gap (+1 boxel balanced)
             ImVec2 split_p0 = ImGui::GetItemRectMin();
             ImVec2 split_p1 = ImGui::GetItemRectMax();
-            float split_mid_x = std::floor(split_p0.x + splitter_w * 0.5f) + 0.5f;
+            float split_mid_x = (split_p0.x + split_p1.x) * 0.5f;
             ImU32 split_col = splitter_active ? ImGui::GetColorU32(ImGuiCol_SeparatorActive)
                             : (splitter_hovered ? ImGui::GetColorU32(ImGuiCol_SeparatorHovered)
                                                 : ImGui::GetColorU32(ImGuiCol_Separator, 0.4f));
@@ -2287,7 +2323,9 @@ void ImGeeShowcaseWidget::buildInterface()
             float min_sync_x = ImGui::GetCursorPosX() + ImGui::GetStyle().ItemSpacing.x;
             float target_sync_x = ImGui::GetWindowWidth() - sync_w - ImGui::GetStyle().WindowPadding.x;
             ImGui::SameLine(ImMax(min_sync_x, target_sync_x));
-            ToolbarCheckbox("Sync Scroll", &syncScroll, "**Synchronized Scrolling** (Experimental)\n\nProportionally syncs scroll positions between raw editor and rendered markdown.");
+            if (ToolbarCheckbox("Sync Scroll", &syncScroll, "**Synchronized Scrolling** (Experimental)\n\nProportionally syncs scroll positions between raw editor and rendered markdown.")) {
+                reactivate_editor_if_needed();
+            }
 
             ImGui::Separator();
             ImGuiWindow* preview_win = nullptr;
