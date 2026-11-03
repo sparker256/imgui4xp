@@ -1845,6 +1845,17 @@ void ImGeeShowcaseWidget::buildInterface()
             ImGui::TimedTooltip::MD::Text("Roll mouse wheel directly over combo to cycle nav sources without opening dropdown.");
 
             ImGui::Spacing();
+            static int s_CamMode = 1;
+            static const char* const camItems[] = { "Circle View", "Spot View", "Tower View", "Cockpit View" };
+            static const char* const camTips[]  = { "Follow aircraft dynamically", "Fixed distance chase view", "Airport control tower view", "Pilot eye 3D cockpit" };
+            ImGui::TextUnformatted("Camera Mode:");
+            ImGui::SameLine();
+            if (ImGui::SelectPulldown("##CamMode", &s_CamMode, camItems, 4, camTips)) {
+                // Camera mode selection changed
+            }
+            ImGui::TimedTooltip::MD::Text("**SelectPulldown**: Closed mouse-wheel passes through (scrolls parent);\nOpen mouse-wheel cycles options dynamically.");
+
+            ImGui::Spacing();
             ImGui::Separator();
             ImGui::TextMD("#### Procedural Indicators & Copy Button (Phase 7)");
             ImGui::TextMD("Zero-texture vector instruments, timers, and 1-click clipboard integration:");
@@ -1988,18 +1999,29 @@ void ImGeeShowcaseWidget::buildInterface()
             ImGui::TextMD("Render memory-buffered textures (e.g. static PNG byte arrays) with zero disk/network I/O:");
             ImGui::Spacing();
 
-            // Option A: Inline StyledText with automatic aspect ratio
-            ImGui::StyledText("Transponder: <img name=avionics_beacon width=16 height=16 /> <b color=#2ecc71>ACTIVE</b> (Option A: StyledText)");
+            // Option A: Inline StyledText with automatic aspect ratio & icons
+            ImGui::StyledText("Option A (StyledText): Transponder: <img name=avionics_beacon width=16 height=16 /> <b color=#2ecc71>ACTIVE</b>");
+            ImGui::StyledText("Icon Capsule: <pill icon=avionics_beacon color=#2ecc71>ACTIVE</pill>   <badge icon=avionics_beacon>v1.14</badge>");
+            ImGui::StyledText("Unary Annunciator: <pill icon=avionics_beacon color=#e74c3c /> (Alert)   <badge icon=avionics_beacon /> (Standby)");
 
-            // Option B: Markdown image link
-            ImGui::TextMD("![Beacon](<avionics_beacon =20x20>) Status: **ONLINE** (Option B: Markdown `![Beacon](avionics_beacon)`)");
+            ImGui::Spacing();
+            // Option B: Markdown image link & tags
+            ImGui::TextMD("Option B (Markdown): ![Beacon](<avionics_beacon =20x20>) Status: **ONLINE**");
+            ImGui::TextMD("Markdown Tags: <pill icon=avionics_beacon color=#2ecc71>ONLINE</pill>   <badge icon=avionics_beacon>Release</badge>   Unary: <pill icon=avionics_beacon color=#f39c12 />");
 
-            // Option C: Direct C++ call
-            ImGui::Text("Direct C++ ImGui::ImageNamed():");
+            ImGui::Spacing();
+            // Option C: Direct C++ helpers
+            ImGui::Text("Option C (Direct C++):");
             ImGui::SameLine();
             ImGui::ImageNamed("avionics_beacon", ImVec2(20, 0));
             ImGui::SameLine();
-            ImGui::Text("(Option C: 20px wide, height auto-computed)");
+            ImGui::PillNamed("avionics_beacon", "ACTIVE", 0xFF2ECC71);
+            ImGui::SameLine();
+            ImGui::BadgeNamed("avionics_beacon", "v1.14");
+            ImGui::SameLine();
+            ImGui::PillNamed("avionics_beacon", 0xFFE74C3C);
+            ImGui::SameLine();
+            ImGui::BadgeNamed("avionics_beacon", 0xFF34495E);
 
             ImGui::Spacing();
             ImGui::Separator();
@@ -2599,6 +2621,29 @@ void ImGeeShowcaseWidget::buildInterface()
     ImGui::SetWindowFontScale(1.0f);
     if (ImGui::Button("Close")) {
         SetVisible(false);
+    }
+
+    ImGui::SameLine();
+    if (ImGui::Button("Quick Status ▲")) {
+        ImGui::OpenPopupAtItem("##QuickStatusPopup", ImGui::ImGuiPopupAnchor_AboveItem, ImGui::ImGuiPopupAlign_Left);
+    }
+    ImGui::TimedTooltip::MD::Text("**Anchored Popup (AboveItem)**:\nClick to toggle status popup blossoming upward above button.\nMuscle-memory safe: click button again while open to close.");
+
+    if (ImGui::BeginAnchoredPopup("##QuickStatusPopup")) {
+        ImGui::TextMD("### Cockpit Quick Status");
+        ImGui::Separator();
+        ImGui::StyledText("Transponder: <pill icon=avionics_beacon color=#2ecc71>4721 ACTIVE</pill>");
+        ImGui::StyledText("GPS Nav: <pill icon=avionics_beacon color=#3498db>LOCKED</pill>   Pitot: <pill icon=avionics_beacon color=#e67e22 />");
+        ImGui::Spacing();
+        static int s_PopupCamMode = 0;
+        static const char* const popupCamItems[] = { "Cockpit 3D", "Chase 30m", "Tower View" };
+        ImGui::TextUnformatted("View:");
+        ImGui::SameLine();
+        ImGui::SelectPulldown("##PopupCamMode", &s_PopupCamMode, popupCamItems, 3, nullptr, 130.0f);
+        ImGui::Spacing();
+        float last_h = ImGui::GetLastPopupHeight("##QuickStatusPopup");
+        ImGui::TextDisabled("Measured Popup Height: %.1f px", last_h);
+        ImGui::EndPopup();
     }
 
     // Continuously preserve user's customized 100% baseline window layout (position & dimensions)

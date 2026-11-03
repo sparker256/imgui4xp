@@ -53,6 +53,11 @@ This note demonstrates local disk image loading alongside asynchronous online re
 * **HTML `<img />` Tag (`<img src="avionics_beacon" width="32" height="32" border="#2ecc71" />`):**
 <img src="avionics_beacon" width="32" height="32" border="#2ecc71" />
 
+* **Native Icon Capsules & Annunciators:**
+  * Status Pill with Icon: <pill icon=avionics_beacon color=#2ecc71>ACTIVE</pill>
+  * Release Badge with Icon: <badge icon=avionics_beacon>v1.14</badge>
+  * Unary Annunciator Capsules: <pill icon=avionics_beacon color=#e74c3c /> (Warning)   <pill icon=avionics_beacon color=#f39c12 /> (Caution)   <badge icon=avionics_beacon /> (Standby)
+
 ---
 
 ### Comparison Matrix
