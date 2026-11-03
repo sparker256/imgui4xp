@@ -43,6 +43,18 @@ This note demonstrates local disk image loading alongside asynchronous online re
 
 ---
 
+### 4. In-Memory Named Images (`ImgWindow::RegisterMemoryImage`)
+* **Standard CommonMark Link (`![Beacon](avionics_beacon)`):**
+![Beacon](avionics_beacon)
+
+* **Explicit Sizing with Emerald Border (`<avionics_beacon =32x32 border=#2ecc71>`):**
+![Beacon](<avionics_beacon =32x32 border=#2ecc71>)
+
+* **HTML `<img />` Tag (`<img src="avionics_beacon" width="32" height="32" border="#2ecc71" />`):**
+<img src="avionics_beacon" width="32" height="32" border="#2ecc71" />
+
+---
+
 ### Comparison Matrix
 | Format | Texture Required | Network Required | Crisp at High DPI |
 | :--- | :---: | :---: | :---: |

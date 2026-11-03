@@ -165,6 +165,32 @@ int         g_dragVal2  = 0;
 
 
 // Trying to find a way to get a image to be displayed
+// Statically embedded 1x1 RGBA pixel test array (user test pattern):
+static const unsigned char s_AvionicsPixelPng[] = {
+    0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
+    0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+    0x08, 0x06, 0x00, 0x00, 0x00, 0x1f, 0x15, 0xc4, 0x89, 0x00, 0x00, 0x00,
+    0x0a, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9c, 0x63, 0x00, 0x01, 0x00, 0x00,
+    0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4, 0x00, 0x00, 0x00, 0x00, 0x49,
+    0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82
+};
+
+// Statically embedded 16x16 avionics radio beacon icon (emerald radar pulse rings):
+static const unsigned char s_AvionicsIconPng[] = {
+    0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
+    0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x10,
+    0x08, 0x06, 0x00, 0x00, 0x00, 0x1f, 0xf3, 0xff, 0x61, 0x00, 0x00, 0x00,
+    0x4f, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9c, 0x63, 0x60, 0xa0, 0x36, 0xd0,
+    0x3b, 0x53, 0x98, 0x82, 0x0f, 0x13, 0xa5, 0x99, 0x2c, 0x79, 0x64, 0x09,
+    0x20, 0xfb, 0x0e, 0x36, 0x8c, 0x4d, 0x2d, 0x86, 0xc9, 0xe8, 0x8a, 0xd1,
+    0x0d, 0xc5, 0xea, 0x12, 0x42, 0x9a, 0x71, 0x19, 0x82, 0xd5, 0x00, 0x24,
+    0xb1, 0xff, 0xc8, 0x18, 0xd9, 0x90, 0xe1, 0x6e, 0x00, 0xd9, 0x81, 0x48,
+    0x51, 0x34, 0xa2, 0x9b, 0x48, 0x72, 0x42, 0xc2, 0xe6, 0x12, 0x72, 0xe4,
+    0x51, 0x14, 0x91, 0x95, 0x99, 0xc8, 0x01, 0x00, 0x3a, 0x65, 0xcf, 0x6d,
+    0xc5, 0x47, 0x7e, 0x46, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44,
+    0xae, 0x42, 0x60, 0x82
+};
+
 const std::string IMAGE_NAME = "./Resources/plugins/imgui4xp/imgui_demo.jpg";
 
 // Font size, also roughly defines height of one line
@@ -373,6 +399,20 @@ void configureImgWindow()
         }
     };
     ImGui::SetDefaultMarkdownConfig(&s_MarkdownConfig);
+
+    // 5. Semantic Font Role Registry mappings for StyledText & Typography
+    ImGui::SetFontRole(ImGui::ImFontRole::Regular, Font7);
+    ImGui::SetFontRole(ImGui::ImFontRole::Bold, FontBold);
+    ImGui::SetFontRole(ImGui::ImFontRole::Italic, FontItalic);
+    ImGui::SetFontRole(ImGui::ImFontRole::Monospace, FontMono);
+    ImGui::SetFontRole(ImGui::ImFontRole::Heading1, Font9);
+    ImGui::SetFontRole(ImGui::ImFontRole::Heading2, Font8);
+    ImGui::SetFontRole(ImGui::ImFontRole::Heading3, Font8);
+    ImGui::SetFontRole(ImGui::ImFontRole::Title, Font8);
+
+    // 6. Register In-Memory Images (mirroring into Markdown & StyledText registries)
+    ImgWindow::RegisterMemoryImage("avionics_beacon", s_AvionicsIconPng, sizeof(s_AvionicsIconPng));
+    ImgWindow::RegisterMemoryImage("avionics_pixel", s_AvionicsPixelPng, sizeof(s_AvionicsPixelPng));
 }
 
 // Undo what we did in configureImgWindow()
@@ -384,6 +424,11 @@ void cleanupAfterImgWindow()
         ImgWindow::DeleteTexture(ImguiWidget::image_id);
         ImguiWidget::image_id = (ImTextureID)0;
     }
+
+    // Unregister in-memory test textures & clear semantic font roles
+    ImgWindow::UnregisterMemoryImage("avionics_beacon");
+    ImgWindow::UnregisterMemoryImage("avionics_pixel");
+    ImGui::ClearFontRoles();
 
 #if defined(IMGUI_VERSION_NUM) && (IMGUI_VERSION_NUM >= 19200) /* only on v1.92+ */
     // Immediately sever ImGui's internal reference first to prevent dangling pointer / Use-After-Free races
@@ -1939,6 +1984,25 @@ void ImGeeShowcaseWidget::buildInterface()
 
             ImGui::Spacing();
             ImGui::Separator();
+            ImGui::TextMD("#### In-Memory Image Service (C++, Markdown & StyledText)");
+            ImGui::TextMD("Render memory-buffered textures (e.g. static PNG byte arrays) with zero disk/network I/O:");
+            ImGui::Spacing();
+
+            // Option A: Inline StyledText with automatic aspect ratio
+            ImGui::StyledText("Transponder: <img name=avionics_beacon width=16 height=16 /> <b color=#2ecc71>ACTIVE</b> (Option A: StyledText)");
+
+            // Option B: Markdown image link
+            ImGui::TextMD("![Beacon](<avionics_beacon =20x20>) Status: **ONLINE** (Option B: Markdown `![Beacon](avionics_beacon)`)");
+
+            // Option C: Direct C++ call
+            ImGui::Text("Direct C++ ImGui::ImageNamed():");
+            ImGui::SameLine();
+            ImGui::ImageNamed("avionics_beacon", ImVec2(20, 0));
+            ImGui::SameLine();
+            ImGui::Text("(Option C: 20px wide, height auto-computed)");
+
+            ImGui::Spacing();
+            ImGui::Separator();
             ImGui::TextMD("#### Clickable Links (Hand Cursor & TimedTooltips)");
             if (ImGui::ButtonLink("Official ImgWindow Docs")) {
                 if (ImGui::GetPlatformIO().Platform_OpenInShellFn) {
@@ -2157,6 +2221,11 @@ void ImGeeShowcaseWidget::buildInterface()
             ImGui::SameLine();
             if (ToolbarButton("---", "Insert CommonMark 4.1 thematic break divider (---)")) {
                 wrap_or_insert("\n---\n", "", "", false);
+            }
+
+            ImGui::SameLine();
+            if (ToolbarButton("Icon", "Insert in-memory registered beacon icon `![Beacon](avionics_beacon)`")) {
+                wrap_or_insert("![Beacon](avionics_beacon)", "", "", false);
             }
 
             ImGui::SameLine();
