@@ -299,7 +299,8 @@ void configureImgWindow()
                   ICON_FA_EXTERNAL_LINK_SQUARE_ALT
                   ICON_FA_WINDOW_MAXIMIZE ICON_FA_WINDOW_MINIMIZE
                   ICON_FA_WINDOW_RESTORE ICON_FA_WINDOW_CLOSE
-                  ICON_FA_MOUSE_POINTER ICON_FA_MOUSE ICON_FA_HAND_POINTER);
+                  ICON_FA_MOUSE_POINTER ICON_FA_MOUSE ICON_FA_HAND_POINTER
+                  ICON_FA_CHEVRON_DOWN ICON_FA_CHEVRON_UP);
   builder.BuildRanges(&icon_ranges);
   ImgWindow::sFontAtlas->AddFontFromMemoryCompressedTTF(fa_solid_900_compressed_data,
                                                         fa_solid_900_compressed_size,
@@ -2645,6 +2646,14 @@ void ImGeeShowcaseWidget::buildInterface()
         ImGui::TextDisabled("Measured Popup Height: %.1f px", last_h);
         ImGui::EndPopup();
     }
+
+    ImGui::SameLine();
+    static int s_DockCamMode = 0;
+    static const char* const dockCamItems[] = { "Cockpit 3D", "Chase 30m", "Tower View" };
+    if (ImGui::SelectPulldown("##DockCamMode", &s_DockCamMode, dockCamItems, 3, nullptr, 130.0f, ImGui::ImGuiPopupAnchor_AboveItem)) {
+        // Selection changed
+    }
+    ImGui::TimedTooltip::MD::Text("**Upward Blossoming Pulldown** (`ImGuiPopupAnchor_AboveItem`):\nPops up above status bar with inverted procedural vector caret.");
 
     // Continuously preserve user's customized 100% baseline window layout (position & dimensions)
     if (std::abs(_fontAdjust - 1.0f) < 0.001f) {
