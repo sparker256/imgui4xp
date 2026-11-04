@@ -129,9 +129,73 @@ IMGUI_API bool ToolbarCheckbox(const char* label, bool* v, const char* tip = nul
     return changed;
 }
 
+/// Lance's 1-Click Active-ID Toolbar ToggleButton:
+/// Allows animated ToggleButton controls to toggle on the first click even when InputTextMultiline
+/// holds g.ActiveId, eliminating the two-click penalty, preserving active text selection,
+/// and supporting mouse-wheel cycling and TimedTooltip markdown tooltips.
+IMGUI_API bool ToolbarToggleButton(const char* label, bool* v, const char* off_tooltip, const char* on_tooltip)
+{
+    ImGuiContext& g = *GImGui;
+    ImGuiWindow* window = ImGui::GetCurrentWindow();
+    ImGuiID id = window->GetID(label);
+
+    bool editor_was_active = (g.ActiveId != 0 && g.InputTextState.ID != 0 && g.ActiveId == g.InputTextState.ID);
+    bool editor_just_deactivated = (g.ActiveId == 0 && (g.InputTextDeactivatedState.ID != 0 || g.DeactivatedItemData.ID != 0));
+    bool active_id_blocked = (g.ActiveId != 0 && g.ActiveId != id);
+
+    bool changed = ImGui::ToggleButton(label, v, off_tooltip, on_tooltip);
+    bool hovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+
+    if (!changed && (active_id_blocked || editor_just_deactivated) && hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+        *v = !(*v);
+        changed = true;
+        if (editor_was_active) {
+            g.InputTextReactivateId = g.ActiveId;
+        } else if (editor_just_deactivated) {
+            ImGuiID reactivate_id = (g.InputTextDeactivatedState.ID != 0) ? g.InputTextDeactivatedState.ID : g.DeactivatedItemData.ID;
+            g.InputTextReactivateId = reactivate_id;
+            if (g.ActiveId == id) {
+                ImGui::ClearActiveID();
+            }
+        }
+    } else if (editor_was_active && hovered) {
+        ImGuiIO& io = ImGui::GetIO();
+        float wheel = io.MouseWheel != 0.0f ? io.MouseWheel : io.MouseWheelH;
+        if (wheel != 0.0f) {
+            if (wheel > 0.0f && !(*v)) {
+                *v = true;
+                changed = true;
+            } else if (wheel < 0.0f && *v) {
+                *v = false;
+                changed = true;
+            }
+            io.MouseWheel = 0.0f;
+            io.MouseWheelH = 0.0f;
+        }
+    }
+
+    return changed;
+}
+
+IMGUI_API bool ToolbarToggleButton(const char* label, bool* v, const char* tip = nullptr)
+{
+    return ToolbarToggleButton(label, v, tip, tip);
+}
+
+inline float CalcToggleButtonWidth(const char* label_text) {
+    float font_size = ImGui::GetFontSize();
+    float height = std::floor(font_size * 0.78f + 0.5f);
+    float width = std::floor(height * 1.90f + 0.5f);
+    const char* id_pos = std::strstr(label_text, "##");
+    ImVec2 text_size = id_pos ? ImGui::CalcTextSize(label_text, id_pos) : ImGui::CalcTextSize(label_text);
+    return width + ImGui::GetStyle().ItemInnerSpacing.x + text_size.x;
+}
+
 }
 using ImGui::ToolbarButton;
 using ImGui::ToolbarCheckbox;
+using ImGui::ToolbarToggleButton;
+using ImGui::CalcToggleButtonWidth;
 
 //
 // MARK: Global data and functions
@@ -2360,13 +2424,13 @@ void ImGeeShowcaseWidget::buildInterface()
             const float splitter_w = ImGui::GetStyle().ItemSpacing.x; // Exact standard item spacing gap (0 extra padding)
             const float total_pane_w = ImMax(200.0f, avail_w - splitter_w);
 
-            // Compute minimum required widths based on pane header controls (so title & checkbox never overstrike)
+            // Compute minimum required widths based on pane header controls (so title & toggle never overstrike)
             const float left_title_w = ImGui::CalcTextSize("Raw Input (Markdown):").x;
-            const float left_wrap_w = ImGui::GetFrameHeight() + ImGui::GetStyle().ItemInnerSpacing.x + ImGui::CalcTextSize("Word Wrap").x;
+            const float left_wrap_w = CalcToggleButtonWidth("Word Wrap");
             const float min_left_w = left_title_w + ImGui::GetStyle().ItemSpacing.x + left_wrap_w + ImGui::GetStyle().WindowPadding.x * 2.0f + 6.0f;
 
             const float right_title_w = ImGui::CalcTextSize("Live Rendered Output:").x;
-            const float right_sync_w = ImGui::GetFrameHeight() + ImGui::GetStyle().ItemInnerSpacing.x + ImGui::CalcTextSize("Sync Scroll").x;
+            const float right_sync_w = CalcToggleButtonWidth("Sync Scroll");
             const float min_right_w = right_title_w + ImGui::GetStyle().ItemSpacing.x + right_sync_w + ImGui::GetStyle().WindowPadding.x * 2.0f + 6.0f;
 
             float pane_left_w = total_pane_w * s_scratchpadSplitRatio;
@@ -2383,10 +2447,11 @@ void ImGeeShowcaseWidget::buildInterface()
             float footer_reserve = unscaled_frame_h + ImGui::GetStyle().ItemSpacing.y;
             float pane_h = ImMax(120.0f, avail_h - footer_reserve);
 
-            // Seamless 1-click active retention for right-side Sync Scroll checkbox:
+            // Seamless 1-click active retention for Word Wrap & Sync Scroll toggles:
+            static ImRect s_wordWrapRect(0, 0, 0, 0);
             static ImRect s_syncScrollRect(0, 0, 0, 0);
             ImGuiIO& io = ImGui::GetIO();
-            if (io.MouseClicked[0] && s_syncScrollRect.Contains(io.MousePos)) {
+            if (io.MouseClicked[0] && (s_wordWrapRect.Contains(io.MousePos) || s_syncScrollRect.Contains(io.MousePos))) {
                 if (g.InputTextState.ID != 0 && g.ActiveId == g.InputTextState.ID) {
                     g.InputTextReactivateId = g.ActiveId;
                 }
@@ -2398,12 +2463,13 @@ void ImGeeShowcaseWidget::buildInterface()
             ImGui::TextDisabled("Raw Input (Markdown):");
 
             // Right-aligned Word Wrap toggle (disabled by default for code/tables horizontal scroll)
-            float wrap_w = ImGui::GetFrameHeight() + ImGui::GetStyle().ItemInnerSpacing.x + ImGui::CalcTextSize("Word Wrap").x;
+            float wrap_w = CalcToggleButtonWidth("Word Wrap");
             float min_wrap_x = ImGui::GetCursorPosX() + ImGui::GetStyle().ItemSpacing.x;
             float target_wrap_x = ImGui::GetWindowWidth() - wrap_w - ImGui::GetStyle().WindowPadding.x;
             ImGui::SameLine(ImMax(min_wrap_x, target_wrap_x));
             static bool editorWordWrap = true;
-            ToolbarCheckbox("Word Wrap##editor_wrap", &editorWordWrap, "**Word Wrap**\n\nToggle soft word-wrapping in raw editor. When unchecked, long lines and tables scroll horizontally.");
+            ToolbarToggleButton("Word Wrap##editor_wrap", &editorWordWrap, "**Word Wrap**\n\nToggle soft word-wrapping in raw editor. When unchecked, long lines and tables scroll horizontally.");
+            s_wordWrapRect = ImRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
 
             ImGui::Separator();
 
@@ -2451,11 +2517,11 @@ void ImGeeShowcaseWidget::buildInterface()
             ImGui::TextDisabled("Live Rendered Output:");
 
             // Right-aligned Sync Scroll toggle (disabled by default)
-            float sync_w = ImGui::GetFrameHeight() + ImGui::GetStyle().ItemInnerSpacing.x + ImGui::CalcTextSize("Sync Scroll").x;
+            float sync_w = CalcToggleButtonWidth("Sync Scroll");
             float min_sync_x = ImGui::GetCursorPosX() + ImGui::GetStyle().ItemSpacing.x;
             float target_sync_x = ImGui::GetWindowWidth() - sync_w - ImGui::GetStyle().WindowPadding.x;
             ImGui::SameLine(ImMax(min_sync_x, target_sync_x));
-            ToolbarCheckbox("Sync Scroll", &syncScroll, "**Synchronized Scrolling** (Experimental)\n\nProportionally syncs scroll positions between raw editor and rendered markdown.");
+            ToolbarToggleButton("Sync Scroll", &syncScroll, "**Synchronized Scrolling** (Experimental)\n\nProportionally syncs scroll positions between raw editor and rendered markdown.");
             s_syncScrollRect = ImRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
 
             ImGui::Separator();
