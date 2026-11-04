@@ -22,3 +22,4 @@
 * Pitot Heat: <pill color=#e67e22>ON</pill>
 * Transponder: <pill color=#2ecc71>ALT (Mode C)</pill>
 * Release Version: <badge>v1.14</badge>
+* Typography: <tiny color=#888888>Tiny 10px</tiny> <small color=#27ae60>Small 12px</small> <regular>Regular 14px</regular> <large color=#e67e22>Large 16px</large> <huge color=#e74c3c>Huge 20px</huge>

@@ -57,6 +57,7 @@ This note demonstrates local disk image loading alongside asynchronous online re
   * Status Pill with Icon: <pill icon=avionics_beacon color=#2ecc71>ACTIVE</pill>
   * Release Badge with Icon: <badge icon=avionics_beacon>v1.14</badge>
   * Unary Annunciator Capsules: <pill icon=avionics_beacon color=#e74c3c /> (Warning)   <pill icon=avionics_beacon color=#f39c12 /> (Caution)   <badge icon=avionics_beacon /> (Standby)
+  * Sized Typography Tags: <tiny color=#888888>10px Tiny</tiny>   <small color=#3498db>12px Small</small>   <regular>14px Regular</regular>   <large color=#e67e22>16px Large</large>   <huge color=#2ecc71>20px Huge</huge>
 
 ---
 

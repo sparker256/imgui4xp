@@ -34,6 +34,8 @@ inline ImFont* FontItalic = nullptr;
 inline ImFont* FontItalicH1 = nullptr;
 inline ImFont* FontItalicH2 = nullptr;
 inline ImFont* FontMono = nullptr;
+inline ImFont* FontSmall = nullptr;
+inline ImFont* FontTiny = nullptr;
 
 // Dedicated fixed-size, non-scrollable window showcasing ImGee / contrib UX suite
 class ImGeeShowcaseWidget: public ImgWindow {

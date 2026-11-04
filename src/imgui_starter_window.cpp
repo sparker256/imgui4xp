@@ -433,6 +433,16 @@ void configureImgWindow()
   Font3 = ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/plugins/imgui4xp/fonts/RobotoMono-Regular.ttf", 20);
   if (!Font3) Font3 = Font9;
 
+  // Load dedicated typography fonts for Small (12px) and Tiny (10px)
+  FontSmall = ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/plugins/imgui4xp/fonts/Roboto-Regular.ttf", 12);
+  if (!FontSmall) {
+      FontSmall = ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Roboto-Regular.ttf", 12);
+  }
+  FontTiny = ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/plugins/imgui4xp/fonts/Roboto-Regular.ttf", 10);
+  if (!FontTiny) {
+      FontTiny = ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Roboto-Regular.ttf", 10);
+  }
+
   // Configure default Markdown font associations & link callback
   static ImGui::MarkdownConfig s_MarkdownConfig;
   s_MarkdownConfig.h1Font = Font9;      // Roboto-Bold 20
@@ -468,12 +478,15 @@ void configureImgWindow()
     // 5. Semantic Font Role Registry mappings for StyledText & Typography
     ImGui::SetFontRole(ImGui::ImFontRole::Regular, Font7);
     ImGui::SetFontRole(ImGui::ImFontRole::Bold, FontBold);
+    ImGui::SetFontRole(ImGui::ImFontRole::BoldLarge, Font9);
     ImGui::SetFontRole(ImGui::ImFontRole::Italic, FontItalic);
     ImGui::SetFontRole(ImGui::ImFontRole::Monospace, FontMono);
     ImGui::SetFontRole(ImGui::ImFontRole::Heading1, Font9);
     ImGui::SetFontRole(ImGui::ImFontRole::Heading2, Font8);
     ImGui::SetFontRole(ImGui::ImFontRole::Heading3, Font8);
     ImGui::SetFontRole(ImGui::ImFontRole::Title, Font8);
+    if (FontSmall) ImGui::SetFontRole(ImGui::ImFontRole::Small, FontSmall);
+    if (FontTiny)  ImGui::SetFontRole(ImGui::ImFontRole::Tiny, FontTiny);
 
     // 6. Register In-Memory Images (mirroring into Markdown & StyledText registries)
     ImgWindow::RegisterMemoryImage("avionics_beacon", s_AvionicsIconPng, sizeof(s_AvionicsIconPng));
@@ -751,6 +764,21 @@ void ImguiWidget::buildInterface() {
         ImGui::TextMD("Status pills: <pill color=#2ecc71>ONLINE</pill>  <pill color=#e74c3c>FAIL</pill>  <pill color=#f39c12>ARMED</pill>");
         ImGui::TextMD("Keybinding badges: <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>F12</kbd>");
         ImGui::TextMD("<highlight>Highlight tags replace manual PushStyleColor / PopStyleColor boilerplate!</highlight>");
+
+        ImGui::Separator();
+        ImGui::TextMD("### Inline Sized Text & Semantic Helpers (New in Phase 3)");
+        ImGui::StyledText("StyledText: <tiny color=#888>Tiny 10px</tiny> | <small color=#3498db>Small 12px</small> | <regular>Regular 14px</regular> | <big color=#f39c12>Big 16px</big> | <huge color=#2ecc71>Huge 20px</huge>");
+        ImGui::TextMD("Markdown: <tiny color=#888>Tiny Tag</tiny> | <small color=#3498db>Small Tag</small> | <regular>Regular</regular> | <large color=#e67e22>Large Tag</large> | <huge color=#e74c3c>Huge Tag</huge>");
+        ImGui::AlignTextToFramePadding();
+        ImGui::Text("C++ Helpers:");
+        ImGui::SameLine();
+        ImGui::TinyText("<tiny> 10px");
+        ImGui::SameLine();
+        ImGui::SmallText("<small> 12px");
+        ImGui::SameLine();
+        ImGui::TitleText("<title> 16px");
+        ImGui::SameLine();
+        ImGui::MonoText("<mono> 14px");
         ImGui::TreePop();
     }
 
@@ -1588,6 +1616,7 @@ ImGeeShowcaseWidget::ImGeeShowcaseWidget(int width, int height,
                          "* Status: <pill color=#2ecc71>CLEARED</pill>\n"
                          "* Departure: **KSEA** Rwy 16L\n"
                          "* Route: `SEA8 JAWBN Q29`\n"
+                         "* Clearance: <big color=#3498db>FL180</big> <tiny color=#888888>SUB-BUS 2A</tiny> <small color=#27ae60>14.2V</small> <huge color=#e74c3c>ALERT</huge>\n"
                          "---\n"
                          "| Waypoint | Target Alt | Fuel | ETA |\n"
                          "| :--- | :---: | ---: | ---: |\n"
@@ -2094,6 +2123,30 @@ void ImGeeShowcaseWidget::buildInterface()
 
             ImGui::Spacing();
             ImGui::Separator();
+            ImGui::TextMD("#### Typography & Inline Sized Text (StyledText, Markdown & Semantic C++)");
+            ImGui::TextMD("Dynamic font roles, inline text size tags (`<tiny>`, `<small>`, `<regular>`, `<big>`, `<huge>`), and direct C++ helpers:");
+            ImGui::Spacing();
+
+            // 1. Inline Sized Text Tags in StyledText
+            ImGui::StyledText("StyledText Sizes: <tiny color=#888888>Tiny (10px)</tiny>  <small color=#3498db>Small (12px)</small>  <regular>Regular (14px)</regular>  <big color=#f39c12>Big (16px)</big>  <huge color=#2ecc71>Huge (20px)</huge>");
+
+            // 2. Inline Sized Text Tags in Markdown
+            ImGui::TextMD("Markdown Sizes: <tiny color=#888888>Tiny Tag</tiny>  <small color=#3498db>Small Tag</small>  <regular>Regular Body</regular>  <large color=#e67e22>Large Tag</large>  <huge color=#e74c3c>Huge Tag</huge>");
+
+            // 3. Direct Semantic C++ Helpers
+            ImGui::AlignTextToFramePadding();
+            ImGui::Text("Semantic C++ Helpers:");
+            ImGui::SameLine();
+            ImGui::TinyText("<tiny> 10px");
+            ImGui::SameLine();
+            ImGui::SmallText("<small> 12px");
+            ImGui::SameLine();
+            ImGui::TitleText("<title> 16px");
+            ImGui::SameLine();
+            ImGui::MonoText("<mono> 14px");
+
+            ImGui::Spacing();
+            ImGui::Separator();
             ImGui::TextMD("#### Clickable Links (Hand Cursor & TimedTooltips)");
             if (ImGui::ButtonLink("Official ImgWindow Docs")) {
                 if (ImGui::GetPlatformIO().Platform_OpenInShellFn) {
@@ -2344,6 +2397,7 @@ void ImGeeShowcaseWidget::buildInterface()
                                  "* Status: <pill color=#2ecc71>CLEARED</pill>\n"
                                  "* Departure: **KSEA** Rwy 16L\n"
                                  "* Route: `SEA8 JAWBN Q29`\n"
+                                 "* Clearance: <big color=#3498db>FL180</big> <tiny color=#888888>SUB-BUS 2A</tiny> <small color=#27ae60>14.2V</small> <huge color=#e74c3c>ALERT</huge>\n"
                                  "---\n"
                                  "| Waypoint | Target Alt | Fuel | ETA |\n"
                                  "| :--- | :---: | ---: | ---: |\n"
