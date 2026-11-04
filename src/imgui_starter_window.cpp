@@ -2011,6 +2011,10 @@ void ImGeeShowcaseWidget::buildInterface()
             ImGui::TextMD("Markdown Tags: <pill icon=avionics_beacon color=#2ecc71>ONLINE</pill>   <badge icon=avionics_beacon>Release</badge>   Unary: <pill icon=avionics_beacon color=#f39c12 />");
 
             ImGui::Spacing();
+            ImGui::TextMD("Vector Icons & Unicode: <icon caret-up /> <icon caret-down /> <icon undo /> <icon redo /> <icon check /> <icon gear color=#f39c12 /> :plane: :star: (Unicode rescue: ↺ ↻ ⚙ ✓)");
+            ImGui::StyledText("StyledText Icons: <icon caret-up /> Up   <icon caret-down /> Down   <icon success check /> Passed   <icon danger cross /> Failed");
+
+            ImGui::Spacing();
             // Option C: Direct C++ helpers
             ImGui::Text("Option C (Direct C++):");
             ImGui::SameLine();
@@ -2625,7 +2629,7 @@ void ImGeeShowcaseWidget::buildInterface()
     }
 
     ImGui::SameLine();
-    if (ImGui::Button("Quick Status ▲")) {
+    if (ImGui::ButtonMD("Quick Status ▲")) {
         ImGui::OpenPopupAtItem("##QuickStatusPopup", ImGui::ImGuiPopupAnchor_AboveItem, ImGui::ImGuiPopupAlign_Left);
     }
     ImGui::TimedTooltip::MD::Text("**Anchored Popup (AboveItem)**:\nClick to toggle status popup blossoming upward above button.\nMuscle-memory safe: click button again while open to close.");
