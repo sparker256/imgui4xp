@@ -1693,9 +1693,6 @@ void ImGeeShowcaseWidget::buildInterface()
         }
     }
 
-    // User toggle: false = proportional scale (default), true = auto-fit to baseline dimensions
-    static bool s_autoFitMode = false;
-
     // 1. Container / Window Chrome: Baseline 1.0x scale (rock-solid, non-twitching controls)
     ImGui::SetWindowFontScale(1.0f);
 
@@ -1709,7 +1706,6 @@ void ImGeeShowcaseWidget::buildInterface()
     ImGuiWindow* cur_win = ImGui::GetCurrentWindow();
     const float scrollbar_pad = (cur_win && cur_win->ScrollbarY) ? cur_win->ScrollbarSizes.x : 0.0f;
     const float right_margin = ImGui::GetStyle().WindowPadding.x + scrollbar_pad;
-
     const float avail_for_suite = ImMax(fixed_controls_w + 90.0f, ImGui::GetWindowWidth() - min_offset - right_margin);
     const float slider_w = ImClamp(avail_for_suite - fixed_controls_w, 90.0f, 150.0f);
     const float zoom_suite_w = fixed_controls_w + slider_w;
@@ -1743,8 +1739,6 @@ void ImGeeShowcaseWidget::buildInterface()
             if (std::abs(_fontAdjust - old_z) > 0.001f) {
                 if (std::abs(_fontAdjust - 1.0f) < 0.001f && _baselineRect.valid) {
                     RestoreWindowRect(_baselineRect);
-                } else if (s_autoFitMode) {
-                    ResizeToScale(_fontAdjust);
                 } else {
                     ScaleWindowGeometry(old_z, _fontAdjust);
                 }
@@ -1771,8 +1765,6 @@ void ImGeeShowcaseWidget::buildInterface()
         if (std::abs(_fontAdjust - _sliderStartZoom) > 0.001f) {
             if (std::abs(_fontAdjust - 1.0f) < 0.001f && _baselineRect.valid) {
                 RestoreWindowRect(_baselineRect);
-            } else if (s_autoFitMode) {
-                ResizeToScale(_fontAdjust);
             } else {
                 ScaleWindowGeometry(_sliderStartZoom, _fontAdjust);
             }
@@ -1785,8 +1777,6 @@ void ImGeeShowcaseWidget::buildInterface()
         if (std::abs(_fontAdjust - wheel_old) > 0.001f) {
             if (std::abs(_fontAdjust - 1.0f) < 0.001f && _baselineRect.valid) {
                 RestoreWindowRect(_baselineRect);
-            } else if (s_autoFitMode) {
-                ResizeToScale(_fontAdjust);
             } else {
                 ScaleWindowGeometry(wheel_old, _fontAdjust);
             }
@@ -1795,6 +1785,7 @@ void ImGeeShowcaseWidget::buildInterface()
     ImGui::TimedTooltip::MD::Text("Interactive UI Zoom: roll mouse wheel (2%%) or drag thumb.\n\n*Window resizes proportionally to match.*");
 
     ImGui::SameLine(0.0f, 3.0f);
+
     // [+] Stepper: repeating button with (n % 4 == 0) gating (hold to step smoothly)
     ImGui::PushButtonRepeat(true);
     bool inc_clicked = ImGui::Button("+##zoom_inc", ImVec2(22.0f, 0.0f));
@@ -1822,8 +1813,6 @@ void ImGeeShowcaseWidget::buildInterface()
             if (std::abs(_fontAdjust - old_z) > 0.001f) {
                 if (std::abs(_fontAdjust - 1.0f) < 0.001f && _baselineRect.valid) {
                     RestoreWindowRect(_baselineRect);
-                } else if (s_autoFitMode) {
-                    ResizeToScale(_fontAdjust);
                 } else {
                     ScaleWindowGeometry(old_z, _fontAdjust);
                 }
@@ -1880,28 +1869,12 @@ void ImGeeShowcaseWidget::buildInterface()
 
     // Proportional Window Scaling: Fit window dimensions to baseline at current zoom level
     ImGui::SameLine(0.0f, 3.0f);
-    if (s_autoFitMode) {
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.18f, 0.55f, 0.34f, 0.85f));
-        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.20f, 0.80f, 0.45f, 1.0f));
-    }
     if (ToolbarButton("Fit##fit_window", nullptr, ImVec2(32.0f, 0.0f))) {
         ResizeToScale(_fontAdjust);
     }
-    if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
-        s_autoFitMode = !s_autoFitMode;
-    }
-    if (s_autoFitMode) {
-        ImGui::PopStyleColor(2);
-    }
     bool fit_hovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
     if (fit_hovered) {
-        ImGui::TimedTooltip::TextMDProxy(ImGui::GetItemID(), fit_hovered,
-            "**Fit Window to Baseline** (%s)\n\n"
-            "• **Left-Click**: Resets window to 680x568 baseline scaled to %d%%.\n"
-            "• **Right-Click**: Toggle **Auto-Fit on Zoom** (%s).",
-            s_autoFitMode ? "<pill color=#2ecc71>Auto-Fit Mode</pill>" : "<pill color=#7f8c8d>Manual Fit</pill>",
-            (int)std::round(_fontAdjust * 100.0f),
-            s_autoFitMode ? "**ON** (fits to baseline on zoom)" : "**OFF** (scales current window geometry)");
+        ImGui::TimedTooltip::TextMDProxy(ImGui::GetItemID(), fit_hovered, "**Fit Window to Baseline**\n\nResets window to default 680x568 baseline proportions scaled to current zoom (%d%%) anchored to top-left.", (int)std::round(_fontAdjust * 100.0f));
     }
     // Cursor Handling Toggle Button (separated by 8px gap)
     ImGui::SameLine(0.0f, 8.0f);
