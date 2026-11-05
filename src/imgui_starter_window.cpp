@@ -1706,11 +1706,24 @@ void ImGeeShowcaseWidget::buildInterface()
     ImGuiWindow* cur_win = ImGui::GetCurrentWindow();
     const float scrollbar_pad = (cur_win && cur_win->ScrollbarY) ? cur_win->ScrollbarSizes.x : 0.0f;
     const float right_margin = ImGui::GetStyle().WindowPadding.x + scrollbar_pad;
+
+#ifndef EXPERIMENT_ZOOM_ROTARY_KNOB
+#define EXPERIMENT_ZOOM_ROTARY_KNOB 1  // 1 = Avionics Rotary Knob experiment, 0 = Classic Track Slider
+#endif
+
+#if EXPERIMENT_ZOOM_ROTARY_KNOB
+    // Rotary Knob: knob dial (~18px) + value readout (~36px) = ~58px
+    const float knob_ui_w = 58.0f;
+    const float zoom_suite_w = fixed_controls_w + knob_ui_w;
+    const float target_offset = ImGui::GetWindowWidth() - zoom_suite_w - right_margin;
+    ImGui::SameLine(ImMax(min_offset, target_offset));
+#else
     const float avail_for_suite = ImMax(fixed_controls_w + 90.0f, ImGui::GetWindowWidth() - min_offset - right_margin);
     const float slider_w = ImClamp(avail_for_suite - fixed_controls_w, 90.0f, 150.0f);
     const float zoom_suite_w = fixed_controls_w + slider_w;
     const float target_offset = ImGui::GetWindowWidth() - zoom_suite_w - right_margin;
     ImGui::SameLine(ImMax(min_offset, target_offset));
+#endif
 
     // [-] Stepper: repeating button with (n % 4 == 0) gating (hold to step smoothly)
     ImGui::PushButtonRepeat(true);
@@ -1751,6 +1764,42 @@ void ImGeeShowcaseWidget::buildInterface()
 
     ImGui::SameLine(0.0f, 3.0f);
 
+#if EXPERIMENT_ZOOM_ROTARY_KNOB
+    // --- Experiment: Avionics Rotary Knob (270-degree potentiometer with mouse wheel) ---
+    float pre_knob_zoom = _fontAdjust;
+    float pct = _fontAdjust * 100.0f;
+    float old_pct = pct;
+    // 9.0f radius = 18px diameter, perfectly matching the 18-20px frame height of adjacent stepper buttons
+    bool knob_changed = ImGui::Knob("##zoom_knob", &pct, 50.0f, 200.0f, "%.0f%%", 9.0f, 2.0f, ImGuiKnobFlags_None);
+    if (knob_changed) {
+        _fontAdjust = pct / 100.0f;
+    }
+    if (ImGui::IsItemActivated()) {
+        _sliderStartZoom = pre_knob_zoom;
+    }
+    if (ImGui::IsItemDeactivatedAfterEdit()) {
+        if (std::abs(_fontAdjust - _sliderStartZoom) > 0.001f) {
+            if (std::abs(_fontAdjust - 1.0f) < 0.001f && _baselineRect.valid) {
+                RestoreWindowRect(_baselineRect);
+            } else {
+                ScaleWindowGeometry(_sliderStartZoom, _fontAdjust);
+            }
+            _sliderStartZoom = _fontAdjust;
+        }
+    }
+    // Sensitive mouse wheel adjustment on the knob (2% per click, matching slider)
+    if (knob_changed && !ImGui::IsItemActive()) {
+        float old_z = old_pct / 100.0f;
+        if (std::abs(_fontAdjust - old_z) > 0.001f) {
+            if (std::abs(_fontAdjust - 1.0f) < 0.001f && _baselineRect.valid) {
+                RestoreWindowRect(_baselineRect);
+            } else {
+                ScaleWindowGeometry(old_z, _fontAdjust);
+            }
+        }
+    }
+    ImGui::TimedTooltip::MD::Text("Interactive UI Zoom: drag knob or roll mouse wheel (2%%).\n\n*Window resizes proportionally to match.*");
+#else
     // Track slider: Range 50% to 200%, 1.67x wider (150px) for spacious text and thumb breathing room
     float pre_slider_zoom = _fontAdjust;
     float pct = _fontAdjust * 100.0f;
@@ -1783,6 +1832,7 @@ void ImGeeShowcaseWidget::buildInterface()
         }
     }
     ImGui::TimedTooltip::MD::Text("Interactive UI Zoom: roll mouse wheel (2%%) or drag thumb.\n\n*Window resizes proportionally to match.*");
+#endif
 
     ImGui::SameLine(0.0f, 3.0f);
 
