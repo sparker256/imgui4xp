@@ -1693,27 +1693,8 @@ void ImGeeShowcaseWidget::buildInterface()
         }
     }
 
-    // Debounce timer for mouse-wheel window zooming so the window never jumps out from under the cursor while spinning!
-    static float s_wheelQuietTimer = 0.0f;
-    static float s_wheelStartZoom = 1.0f;
-    static bool  s_wheelResizePending = false;
-    static bool  s_autoFitMode = false; // User toggle: false = proportional scale, true = auto-fit to baseline
-
-    if (s_wheelQuietTimer > 0.0f) {
-        s_wheelQuietTimer -= dt;
-        if (s_wheelQuietTimer <= 0.0f && s_wheelResizePending) {
-            s_wheelResizePending = false;
-            if (std::abs(_fontAdjust - s_wheelStartZoom) > 0.001f) {
-                if (std::abs(_fontAdjust - 1.0f) < 0.001f && _baselineRect.valid) {
-                    RestoreWindowRect(_baselineRect);
-                } else if (s_autoFitMode) {
-                    ResizeToScale(_fontAdjust);
-                } else {
-                    ScaleWindowGeometry(s_wheelStartZoom, _fontAdjust);
-                }
-            }
-        }
-    }
+    // User toggle: false = proportional scale (default), true = auto-fit to baseline dimensions
+    static bool s_autoFitMode = false;
 
     // 1. Container / Window Chrome: Baseline 1.0x scale (rock-solid, non-twitching controls)
     ImGui::SetWindowFontScale(1.0f);
@@ -1729,23 +1710,11 @@ void ImGeeShowcaseWidget::buildInterface()
     const float scrollbar_pad = (cur_win && cur_win->ScrollbarY) ? cur_win->ScrollbarSizes.x : 0.0f;
     const float right_margin = ImGui::GetStyle().WindowPadding.x + scrollbar_pad;
 
-#ifndef EXPERIMENT_ZOOM_ROTARY_KNOB
-#define EXPERIMENT_ZOOM_ROTARY_KNOB 1  // 1 = Avionics Rotary Knob experiment, 0 = Classic Track Slider
-#endif
-
-#if EXPERIMENT_ZOOM_ROTARY_KNOB
-    // Rotary Knob: 22px dial + 4px spacing + "Zoom 200%" (~64px) = ~90px
-    const float knob_ui_w = 90.0f;
-    const float zoom_suite_w = fixed_controls_w + knob_ui_w;
-    const float target_offset = ImGui::GetWindowWidth() - zoom_suite_w - right_margin;
-    ImGui::SameLine(ImMax(min_offset, target_offset));
-#else
     const float avail_for_suite = ImMax(fixed_controls_w + 90.0f, ImGui::GetWindowWidth() - min_offset - right_margin);
     const float slider_w = ImClamp(avail_for_suite - fixed_controls_w, 90.0f, 150.0f);
     const float zoom_suite_w = fixed_controls_w + slider_w;
     const float target_offset = ImGui::GetWindowWidth() - zoom_suite_w - right_margin;
     ImGui::SameLine(ImMax(min_offset, target_offset));
-#endif
 
     // [-] Stepper: repeating button with (n % 4 == 0) gating (hold to step smoothly)
     ImGui::PushButtonRepeat(true);
@@ -1788,53 +1757,6 @@ void ImGeeShowcaseWidget::buildInterface()
 
     ImGui::SameLine(0.0f, 3.0f);
 
-#if EXPERIMENT_ZOOM_ROTARY_KNOB
-    // --- Experiment: Avionics Rotary Knob (270-degree potentiometer with mouse wheel) ---
-    float pre_knob_zoom = _fontAdjust;
-    float pct = _fontAdjust * 100.0f;
-    float old_pct = pct;
-
-    // Avionics color styling: Sky Blue active arc, Emerald indicator needle, High-contrast dark bezel
-    ImGui::PushStyleColor(ImGuiCol_SliderGrab, ImVec4(0.20f, 0.60f, 0.86f, 1.0f));       // Vibrant Sky Blue
-    ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, ImVec4(0.18f, 0.80f, 0.44f, 1.0f)); // Bright Emerald
-    ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.12f, 0.14f, 0.18f, 0.95f));          // High-contrast bezel
-
-    // 11.0f radius = 22px diameter (matches exact 22px height of adjacent steppers and buttons)
-    // ImGuiKnobFlags_ShowTicks draws authentic avionics perimeter ticks; format displays "Zoom 100%"
-    bool knob_changed = ImGui::Knob("##zoom_knob", &pct, 50.0f, 200.0f, "Zoom %.0f%%", 11.0f, 2.0f,
-                                    ImGuiKnobFlags_ShowTicks | ImGuiKnobFlags_CursorHand);
-    ImGui::PopStyleColor(3);
-
-    if (knob_changed) {
-        _fontAdjust = pct / 100.0f;
-    }
-    if (ImGui::IsItemActivated()) {
-        _sliderStartZoom = pre_knob_zoom;
-    }
-    if (ImGui::IsItemDeactivatedAfterEdit()) {
-        if (std::abs(_fontAdjust - _sliderStartZoom) > 0.001f) {
-            if (std::abs(_fontAdjust - 1.0f) < 0.001f && _baselineRect.valid) {
-                RestoreWindowRect(_baselineRect);
-            } else if (s_autoFitMode) {
-                ResizeToScale(_fontAdjust);
-            } else {
-                ScaleWindowGeometry(_sliderStartZoom, _fontAdjust);
-            }
-            _sliderStartZoom = _fontAdjust;
-        }
-    }
-    // Debounced mouse wheel adjustment:
-    // Font scale and knob rotate instantly in real time, but window geometry stays 100% stationary
-    // until 350ms after the wheel stops spinning, eliminating cursor jumping!
-    if (knob_changed && !ImGui::IsItemActive()) {
-        if (!s_wheelResizePending) {
-            s_wheelStartZoom = old_pct / 100.0f;
-            s_wheelResizePending = true;
-        }
-        s_wheelQuietTimer = 0.35f; // Hold window stationary during active scrolling
-    }
-    ImGui::TimedTooltip::MD::Text("Interactive UI Zoom: drag knob or roll mouse wheel (2%%).\n\n*Window resizes smoothly once adjustment pauses.*");
-#else
     // Track slider: Range 50% to 200%, 1.67x wider (150px) for spacious text and thumb breathing room
     float pre_slider_zoom = _fontAdjust;
     float pct = _fontAdjust * 100.0f;
@@ -1849,6 +1771,8 @@ void ImGeeShowcaseWidget::buildInterface()
         if (std::abs(_fontAdjust - _sliderStartZoom) > 0.001f) {
             if (std::abs(_fontAdjust - 1.0f) < 0.001f && _baselineRect.valid) {
                 RestoreWindowRect(_baselineRect);
+            } else if (s_autoFitMode) {
+                ResizeToScale(_fontAdjust);
             } else {
                 ScaleWindowGeometry(_sliderStartZoom, _fontAdjust);
             }
@@ -1861,16 +1785,16 @@ void ImGeeShowcaseWidget::buildInterface()
         if (std::abs(_fontAdjust - wheel_old) > 0.001f) {
             if (std::abs(_fontAdjust - 1.0f) < 0.001f && _baselineRect.valid) {
                 RestoreWindowRect(_baselineRect);
+            } else if (s_autoFitMode) {
+                ResizeToScale(_fontAdjust);
             } else {
                 ScaleWindowGeometry(wheel_old, _fontAdjust);
             }
         }
     }
     ImGui::TimedTooltip::MD::Text("Interactive UI Zoom: roll mouse wheel (2%%) or drag thumb.\n\n*Window resizes proportionally to match.*");
-#endif
 
     ImGui::SameLine(0.0f, 3.0f);
-
     // [+] Stepper: repeating button with (n % 4 == 0) gating (hold to step smoothly)
     ImGui::PushButtonRepeat(true);
     bool inc_clicked = ImGui::Button("+##zoom_inc", ImVec2(22.0f, 0.0f));
