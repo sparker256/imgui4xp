@@ -1693,6 +1693,14 @@ void ImGeeShowcaseWidget::buildInterface()
         }
     }
 
+    // Initialize default theme (ImGee Charcoal Slate) once on startup
+    static bool s_themeInitialized = false;
+    static int  s_currentTheme = 0; // 0 = Charcoal (Default), 1 = Rusty, 2 = Stock Dark, 3 = Classic, 4 = Light
+    if (!s_themeInitialized) {
+        ImGui::ApplyDefaultTheme();
+        s_themeInitialized = true;
+    }
+
     // 1. Container / Window Chrome: Baseline 1.0x scale (rock-solid, non-twitching controls)
     ImGui::SetWindowFontScale(1.0f);
 
@@ -2778,6 +2786,50 @@ void ImGeeShowcaseWidget::buildInterface()
         // Selection changed
     }
     ImGui::TimedTooltip::MD::Text("**Upward Blossoming Pulldown** (`ImGuiPopupAnchor_AboveItem`):\nPops up above status bar with inverted procedural vector caret.");
+
+    // ImGee Theme Selector Combo (Charcoal, Rusty, ImGui Stock)
+    const char* const theme_names[] = {
+        "Charcoal (Default)",
+        "Rusty (Aviation)",
+        "ImGui Dark",
+        "ImGui Classic",
+        "ImGui Light"
+    };
+    const float theme_combo_w = 145.0f;
+    const float theme_label_w = ImGui::CalcTextSize("Theme:").x;
+    const float theme_suite_w = theme_label_w + ImGui::GetStyle().ItemSpacing.x + theme_combo_w;
+    const float footer_margin = ImGui::GetStyle().WindowPadding.x + ((cur_win && cur_win->ScrollbarY) ? cur_win->ScrollbarSizes.x : 0.0f);
+    const float target_theme_x = ImGui::GetWindowWidth() - theme_suite_w - footer_margin;
+
+    if (target_theme_x > ImGui::GetCursorPosX() + 10.0f) {
+        ImGui::SameLine(target_theme_x);
+    } else {
+        ImGui::SameLine(0.0f, 10.0f);
+    }
+
+    ImGui::TextUnformatted("Theme:");
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(theme_combo_w);
+    bool theme_changed = ImGui::Combo("##ThemePicker", &s_currentTheme, theme_names, IM_ARRAYSIZE(theme_names));
+    if (ImGui::AdjustItemOnMouseWheel(&s_currentTheme, 0, (int)IM_ARRAYSIZE(theme_names) - 1, 1)) {
+        theme_changed = true;
+    }
+    if (theme_changed) {
+        switch (s_currentTheme) {
+            case 0: ImGui::ApplyDefaultTheme(); break;
+            case 1: ImGui::StyleColorsRusty(); break;
+            case 2: ImGui::StyleColorsDark(); break;
+            case 3: ImGui::StyleColorsClassic(); break;
+            case 4: ImGui::StyleColorsLight(); break;
+            default: break;
+        }
+    }
+    ImGui::TimedTooltip::MD::Text(
+        "**ImGee Theme Presets** (Click dropdown or roll mouse wheel):\n"
+        "• **Charcoal**: Sleek modern slate/graphite flight deck palette (default).\n"
+        "• **Rusty**: Warm aviation bronze & terracotta palette (ABC classic).\n"
+        "• **ImGui Dark / Classic / Light**: Stock Dear ImGui fallback schemes."
+    );
 
     // Continuously preserve user's customized 100% baseline window layout (position & dimensions)
     if (std::abs(_fontAdjust - 1.0f) < 0.001f) {
