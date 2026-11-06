@@ -2172,6 +2172,44 @@ void ImGeeShowcaseWidget::buildInterface()
             }
             ImGui::TimedTooltip::MD::Text("Bill Good's FlyWithLua repository.");
 
+            ImGui::Spacing();
+            ImGui::Separator();
+            ImGui::TextMD("#### Canonical Markdown Buttons & Rich Button Faces (`ImGui::MD::Button`)");
+            ImGui::TextMD("Mirrors native `ImGui::Button(label, size)` with full Markdown parsing on button faces, standalone pills, and vector icons:");
+            ImGui::Spacing();
+
+            // 1. Standalone Pill & Badge buttons (renders styled oval directly without ugly gray rectangle box!)
+            static int s_pillClickCount = 0;
+            if (ImGui::MD::Button("<pill orange> :retweet: Refresh </pill>##pill_btn")) {
+                s_pillClickCount++;
+            }
+            ImGui::TimedTooltip::MD::Text("**Standalone Pill Button**:\nRenders pure rounded pill with zero background box.\nClick count: %d", s_pillClickCount);
+
+            ImGui::SameLine();
+            static bool s_pillState = true;
+            if (ImGui::MD::Button(s_pillState ? "<pill green> ONLINE </pill>##pill_state" : "<pill red> OFFLINE </pill>##pill_state")) {
+                s_pillState = !s_pillState;
+            }
+            ImGui::TimedTooltip::MD::Text("**Dynamic State Pill Button**:\nClick to toggle status pill.");
+
+            ImGui::SameLine();
+            if (ImGui::MD::Button("<badge blue>v2.4.0 Release</badge>##badge_btn")) {
+                // Clicked
+            }
+            ImGui::TimedTooltip::MD::Text("**Standalone Badge Button**:\nRenders direct clickable release badge.");
+
+            // 2. Rich Markdown Text & Vector Icon Buttons
+            ImGui::SameLine();
+            if (ImGui::MD::Button("**Bold** & *Italic*##btn_rich", ImVec2(120.0f, 0.0f))) {
+                // Clicked
+            }
+            ImGui::TimedTooltip::MD::Text("Standard button chrome with rich formatted Markdown text centered inside.");
+
+            ImGui::SameLine();
+            if (ImGui::ButtonMD("<icon undo color=#e74c3c /> **Reset**##btn_undo", "**Warning Tooltip:**\nReverts all test settings.")) {
+                // Clicked
+            }
+
             ImGui::EndTabItem();
         }
 
@@ -2758,7 +2796,7 @@ void ImGeeShowcaseWidget::buildInterface()
     }
 
     ImGui::SameLine();
-    if (ImGui::ButtonMD("Quick Status ▲")) {
+    if (ImGui::MD::Button("Quick Status ▲")) {
         ImGui::OpenPopupAtItem("##QuickStatusPopup", ImGui::ImGuiPopupAnchor_AboveItem, ImGui::ImGuiPopupAlign_Left);
     }
     ImGui::TimedTooltip::MD::Text("**Anchored Popup (AboveItem)**:\nClick to toggle status popup blossoming upward above button.\nMuscle-memory safe: click button again while open to close.");
