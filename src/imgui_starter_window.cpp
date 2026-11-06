@@ -1867,11 +1867,11 @@ void ImGeeShowcaseWidget::buildInterface()
     }
     if (rst_hovered) {
         if (is_modified) {
-            ImGui::TimedTooltip::TextMDProxy(ImGui::GetItemID(), rst_hovered, "Reset zoom from **%d%%** back to **100%% baseline**.", (int)std::round(_fontAdjust * 100.0f));
+            ImGui::TimedTooltip::TextMDProxy(ImGui::GetItemID(), rst_hovered, "**Reset (↺ 100%%):** Reset zoom from **%d%%** back to **100%% baseline**.", (int)std::round(_fontAdjust * 100.0f));
         } else if (can_restore) {
-            ImGui::TimedTooltip::TextMDProxy(ImGui::GetItemID(), rst_hovered, "1-click toggle back to prior **%d%% zoom**.", (int)std::round(_lastZoom * 100.0f));
+            ImGui::TimedTooltip::TextMDProxy(ImGui::GetItemID(), rst_hovered, "**Toggle (↺ prior):** 1-click toggle back to prior **%d%% zoom**.", (int)std::round(_lastZoom * 100.0f));
         } else {
-            ImGui::TimedTooltip::TextMDProxy(ImGui::GetItemID(), rst_hovered, "Zoom is at **100%% baseline**.");
+            ImGui::TimedTooltip::TextMDProxy(ImGui::GetItemID(), rst_hovered, "**Reset (↺ 100%%):** Zoom is at **100%% baseline**.");
         }
     }
 
@@ -2065,6 +2065,7 @@ void ImGeeShowcaseWidget::buildInterface()
             ImGui::TextMD("**Inline Styles:** **bold**, *italic*, ~~strikethrough~~, ++underline++, and `monospace`.");
             ImGui::TextMD("**Hotkeys:** <kbd>AP DISC</kbd> or <kbd>Z</kbd>   |   <kdb>Ctrl</kdb>+<kdb>Shift</kdb>+<kdb>F12</kdb>");
             ImGui::TextMD("**Release:** Core: <badge>v2.3.0</badge>   Platform: <badge>macOS Universal</badge>");
+            ImGui::TextMD("**Tags & Icons Inside Emphasis:** **Reset (↺ 100%)**   |   *Caution: ⚠ Engine Master*   |   *Status: <badge red>CRITICAL</badge>*   |   **Dual Icons: ↺ and ↻**");
 
             ImGui::Spacing();
             ImGui::TextMD("#### GitHub Flavored Markdown (GFM) Tables");
