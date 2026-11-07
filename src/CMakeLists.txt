@@ -143,3 +143,10 @@ endif ()
 set_target_properties(imgui4xp PROPERTIES PREFIX "")
 set_target_properties(imgui4xp PROPERTIES OUTPUT_NAME "imgui4xp")
 set_target_properties(imgui4xp PROPERTIES SUFFIX ".xpl")
+
+if (APPLE)
+    add_custom_command(TARGET imgui4xp POST_BUILD
+        COMMAND /usr/bin/codesign -s - -f $<TARGET_FILE:imgui4xp>
+        COMMENT "Ad-hoc signing universal binary for macOS"
+    )
+endif ()

@@ -51,7 +51,7 @@ protected:
     }
 
     // Dynamic UI Zoom multiplier (Responsive UI Scaling Math)
-    float GetExtensionScaleFactor() const override { return _fontAdjust; }
+    float getFontAdjust() const override { return _fontAdjust; }
 
     void buildInterface() override;
 
