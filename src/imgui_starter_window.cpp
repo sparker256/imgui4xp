@@ -203,6 +203,7 @@ using ImGui::CalcToggleButtonWidth;
 
 // The raw TTF data of OpenFontIcons has been generated into the following file
 #include "fa-solid-900.inc"
+#include "gf-roboto-bold-italic.inc"
 
 // Initial data for the example table
 ImguiWidget::tableDataListTy TABLE_CONTENT = {
@@ -403,6 +404,14 @@ void configureImgWindow()
       FontItalicH2 = ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Roboto-Italic.ttf", 15);
   }
 
+  // 3b. Bold-Italic Font - Roboto-BoldItalic 14px (compressed memory font)
+  ImFontConfig biConfig;
+  strncpy(biConfig.Name, "Roboto-BoldItalic-700-14px*", 40);
+  FontBoldItalic = ImgWindow::sFontAtlas->AddFontFromMemoryCompressedTTF(
+      gf_roboto_bold_italic_compressed_data,
+      gf_roboto_bold_italic_compressed_size,
+      14.0f, &biConfig);
+
   // 4. Monospace Font - Prefer RobotoMono-Regular, fallback to B612Mono / Menlo / DejaVuSansMono
   FontMono = ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/plugins/imgui4xp/fonts/RobotoMono-Regular.ttf", 14);
   if (!FontMono) {
@@ -454,6 +463,7 @@ void configureImgWindow()
   s_MarkdownConfig.headingItalicFont = FontItalicH2; // Fallback heading italic
   s_MarkdownConfig.boldFont = FontBold; // Roboto-Bold 15
   s_MarkdownConfig.italicFont = FontItalic; // Roboto-Italic 14
+  s_MarkdownConfig.boldItalicFont = FontBoldItalic; // Roboto-BoldItalic 14
   s_MarkdownConfig.regularFont = Font7; // Roboto-Regular 14
   s_MarkdownConfig.monoFont = FontMono; // RobotoMono 14
   s_MarkdownConfig.headingFormats[0] = { Font9, true };
@@ -480,6 +490,7 @@ void configureImgWindow()
     ImGui::SetFontRole(ImGui::ImFontRole::Bold, FontBold);
     ImGui::SetFontRole(ImGui::ImFontRole::BoldLarge, Font9);
     ImGui::SetFontRole(ImGui::ImFontRole::Italic, FontItalic);
+    if (FontBoldItalic) ImGui::SetFontRole(ImGui::ImFontRole::BoldItalic, FontBoldItalic);
     ImGui::SetFontRole(ImGui::ImFontRole::Monospace, FontMono);
     ImGui::SetFontRole(ImGui::ImFontRole::Heading1, Font9);
     ImGui::SetFontRole(ImGui::ImFontRole::Heading2, Font8);
@@ -2062,7 +2073,8 @@ void ImGeeShowcaseWidget::buildInterface()
             ImGui::Spacing();
 
             ImGui::TextMD("**Status:** Engine 1: <pill color=#2ecc71>NOMINAL</pill>   Fuel Pump: <pill color=#f39c12>LOW PRESS</pill>   Gen 1: <pill color=#e74c3c>OFFLINE</pill>");
-            ImGui::TextMD("**Inline Styles:** **bold**, *italic*, ~~strikethrough~~, ++underline++, and `monospace`.");
+            ImGui::TextMD("**Inline Styles:** **bold**, *italic*, ***bold-italic***, ~~strikethrough~~, ++underline++, and `monospace`.");
+            ImGui::TextMD("**Nested Tags:** <b><i>Bold Italic</i></b>   |   <style bold italic>Style Tag</style>   |   <style red><b>Red Bold</b></style>");
             ImGui::TextMD("**Hotkeys:** <kbd>AP DISC</kbd> or <kbd>Z</kbd>   |   <kdb>Ctrl</kdb>+<kdb>Shift</kdb>+<kdb>F12</kdb>");
             ImGui::TextMD("**Release:** Core: <badge>v2.3.0</badge>   Platform: <badge>macOS Universal</badge>");
             ImGui::TextMD("**Tags & Icons Inside Emphasis:** **Reset (↺ 100%)**   |   *Caution: ⚠ Engine Master*   |   *Status: <badge red>CRITICAL</badge>*   |   **Dual Icons: ↺ and ↻**");

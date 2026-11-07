@@ -31,6 +31,7 @@ inline ImFont* Font8 = nullptr;
 inline ImFont* Font9 = nullptr;
 inline ImFont* FontBold = nullptr;
 inline ImFont* FontItalic = nullptr;
+inline ImFont* FontBoldItalic = nullptr;
 inline ImFont* FontItalicH1 = nullptr;
 inline ImFont* FontItalicH2 = nullptr;
 inline ImFont* FontMono = nullptr;
