@@ -709,9 +709,9 @@ void ImguiWidget::buildInterface() {
     ImGui::Text("X-Plane Window Id: %p", GetWindowId());
     ImGui::EndGroup();
 
-    if (ImGui::TreeNode("Contrib UX & Modern Cockpit Suite")) {
-        ImGui::TextMD("# Contrib UX Showcase");
-        ImGui::TextMD("Turnkey extensions from `ImgWindow/contrib/` for modern cockpit plugins:");
+    if (ImGui::TreeNode("ImGee UX & Modern Cockpit Suite")) {
+        ImGui::TextMD("# ImGee UX Showcase");
+        ImGui::TextMD("Turnkey ImGee extensions from `ImgWindow/contrib/` (`#include \"ImgWindow/contrib.h\"`) for modern cockpit plugins:");
         
         ImGui::Bullet();
         ImGui::TextMD("**Semantic Markdown:** `# H1`, `## H2`, `**bold**`, `*italic*`, and `monospace`.");
@@ -759,7 +759,7 @@ void ImguiWidget::buildInterface() {
         ImGui::TextUnformatted("No longer Ocean Blue");
 
         ImGui::Separator();
-        ImGui::TextMD("### Markdown & Styling Tags (Contrib)");
+        ImGui::TextMD("### Markdown & Styling Tags (ImGee)");
         ImGui::TextMD("Direct color tag: <color #2b65ec>Ocean Blue via `<color #2b65ec>` tag</color>");
         ImGui::TextMD("Status pills: <pill color=#2ecc71>ONLINE</pill>  <pill color=#e74c3c>FAIL</pill>  <pill color=#f39c12>ARMED</pill>");
         ImGui::TextMD("Keybinding badges: <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>F12</kbd>");
@@ -834,7 +834,7 @@ void ImguiWidget::buildInterface() {
         ImGui::PopStyleColor();
 
         ImGui::Separator();
-        ImGui::TextMD("#### Modern Cockpit Switch (Contrib):");
+        ImGui::TextMD("#### Modern Cockpit Switch (ImGee):");
         ImGui::ToggleButton("Master Caution Switch", &makeRed);
         ImGui::TimedTooltip::MD::Text("Animated cockpit rocker switch with automatic dual-state tooltip.");
 

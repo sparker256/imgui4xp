@@ -37,7 +37,7 @@ inline ImFont* FontMono = nullptr;
 inline ImFont* FontSmall = nullptr;
 inline ImFont* FontTiny = nullptr;
 
-// Dedicated fixed-size, non-scrollable window showcasing ImGee / contrib UX suite
+// Dedicated fixed-size, non-scrollable window showcasing ImGee UX suite (ImgWindow/contrib/)
 class ImGeeShowcaseWidget: public ImgWindow {
 public:
     ImGeeShowcaseWidget(int width = 680, int height = 568,

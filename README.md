@@ -58,6 +58,23 @@ You may want to change the value of the user-defined build macro
 `XPLANE11_ROOT` in the build settings to point to your X-Plane 11
 installation. Then the resulting binary is installed there right away.
 
+## ImGee 1.0.0 Modern Cockpit Suite (`ImgWindow/contrib/`)
+
+This release bundles **ImGee 1.0.0**, an enterprise-grade cockpit UX and styling suite built into `src/ImgWindow/contrib/` and accessible in any C++ source file via:
+```cpp
+#include "ImgWindow/contrib.h"
+```
+
+### Features at a Glance:
+* **Avionics Controls:** Rotary dimmer dials, korry split-lens pushbuttons, rocker switches, mouse-wheel sliders with 1-click restore.
+* **CommonMark Engine:** Real-time markdown with procedural vector icons, `<pill>`, `<badge>`, `<kbd>`, `<style>`, `<backdrop>`, and auto-formatted tables.
+* **Canonical `ImGui::MD::Button`:** 1:1 drop-in replacement for `ImGui::Button()` with rich markdown button faces and standalone styled pill buttons.
+* **Stationary Tooltips:** Zero-jitter `TimedTooltip::MD::Text` with dwell timers.
+* **Live Cockpit Showcase:** Launch `"ImGee Cockpit Showcase"` from the X-Plane Plugins menu to explore all controls, live markdown scratchpad, and the interactive theme picker.
+
+For architectural documentation, see [`docs/ImGee_Architecture_and_Transcript_2026-10-26.md`](docs/ImGee_Architecture_and_Transcript_2026-10-26.md).  
+For distribution guidelines and details on X-Plane updater systems (such as SkunkCrafts Updater), see [`docs/Distribution_and_Updaters.md`](docs/Distribution_and_Updaters.md).
+
 ## Imgui4xp
 
 <img width="868" alt="Imgui4xp" src="https://github.com/sparker256/Imgui4xp/blob/master/imgui4xp_Github.jpg">
