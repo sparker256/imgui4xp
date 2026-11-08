@@ -2828,9 +2828,18 @@ void ImGeeShowcaseWidget::buildInterface()
         ImGui::Spacing();
         static int s_PopupCamMode = 0;
         static const char* const popupCamItems[] = { "Cockpit 3D", "Chase 30m", "Tower View" };
+        static const char* const popupCamTips[] = {
+            "Pilot eye 3D cockpit perspective with 6DOF head movement.",
+            "External chase camera trailing 30m behind aircraft.",
+            "Stationary airport control tower vantage point."
+        };
         ImGui::TextUnformatted("View:");
         ImGui::SameLine();
-        ImGui::SelectPulldown("##PopupCamMode", &s_PopupCamMode, popupCamItems, 3, nullptr, 130.0f);
+        ImGui::SelectPulldown("##PopupCamMode", &s_PopupCamMode, popupCamItems, 3, popupCamTips, 130.0f);
+        ImGui::TimedTooltip::MD::Text(
+            s_PopupCamMode == 0 ? "**Cockpit 3D View**\nDirect pilot perspective inside virtual cockpit." :
+            s_PopupCamMode == 1 ? "**Chase 30m View**\nExternal chase camera trailing 30m behind aircraft." :
+                                  "**Tower View**\nStationary airport control tower vantage point.");
         ImGui::Spacing();
         float last_h = ImGui::GetLastPopupHeight("##QuickStatusPopup");
         ImGui::TextDisabled("Measured Popup Height: %.1f px", last_h);
@@ -2840,10 +2849,19 @@ void ImGeeShowcaseWidget::buildInterface()
     ImGui::SameLine();
     static int s_DockCamMode = 0;
     static const char* const dockCamItems[] = { "Cockpit 3D", "Chase 30m", "Tower View" };
-    if (ImGui::SelectPulldown("##DockCamMode", &s_DockCamMode, dockCamItems, 3, nullptr, 130.0f, ImGui::ImGuiPopupAnchor_AboveItem)) {
+    static const char* const dockCamTips[] = {
+        "Pilot eye 3D cockpit perspective with 6DOF head movement.",
+        "External chase camera trailing 30m behind aircraft.",
+        "Stationary airport control tower vantage point."
+    };
+    if (ImGui::SelectPulldown("##DockCamMode", &s_DockCamMode, dockCamItems, 3, dockCamTips, 130.0f, ImGui::ImGuiPopupAnchor_AboveItem)) {
         // Selection changed
     }
-    ImGui::TimedTooltip::MD::Text("**Upward Blossoming Pulldown** (`ImGuiPopupAnchor_AboveItem`):\nPops up above status bar with inverted procedural vector caret.");
+    ImGui::TimedTooltip::MD::Text(
+        "**Upward Blossoming Pulldown** (`ImGuiPopupAnchor_AboveItem`):\n"
+        "Active Camera: **%s**\n"
+        "Pops up above status bar with inverted procedural vector caret.",
+        dockCamItems[s_DockCamMode]);
 
     // ImGee Theme Selector Combo (Charcoal, Rusty, ImGui Stock)
     const char* const theme_names[] = {
