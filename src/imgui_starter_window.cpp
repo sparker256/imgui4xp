@@ -2835,7 +2835,7 @@ void ImGeeShowcaseWidget::buildInterface()
         };
         ImGui::TextUnformatted("View:");
         ImGui::SameLine();
-        ImGui::SelectPulldown("##PopupCamMode", &s_PopupCamMode, popupCamItems, 3, popupCamTips, 130.0f);
+        ImGui::SelectPulldown("##PopupCamMode", &s_PopupCamMode, popupCamItems, 3, popupCamTips, 130.0f, ImGui::ImGuiPopupAnchor_BelowItem, ImGui::ImGuiPopupAlign_Left, true /* wrap */);
         ImGui::TimedTooltip::MD::Text(
             s_PopupCamMode == 0 ? "**Cockpit 3D View**\nDirect pilot perspective inside virtual cockpit." :
             s_PopupCamMode == 1 ? "**Chase 30m View**\nExternal chase camera trailing 30m behind aircraft." :
@@ -2854,7 +2854,7 @@ void ImGeeShowcaseWidget::buildInterface()
         "**Chase 30m**\nExternal chase camera trailing 30m behind aircraft.",
         "**Tower View**\nStationary airport control tower vantage point."
     };
-    if (ImGui::SelectPulldownMD("##DockCamMode", &s_DockCamMode, dockCamItems, 3, dockCamTips, 130.0f, ImGui::ImGuiPopupAnchor_AboveItem)) {
+    if (ImGui::SelectPulldownMD("##DockCamMode", &s_DockCamMode, dockCamItems, 3, dockCamTips, 130.0f, ImGui::ImGuiPopupAnchor_AboveItem, ImGui::ImGuiPopupAlign_Left, true /* wrap */)) {
         // Selection changed
     }
     ImGui::TimedTooltip::MD::Text(
