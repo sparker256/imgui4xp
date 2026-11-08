@@ -2829,9 +2829,9 @@ void ImGeeShowcaseWidget::buildInterface()
         static int s_PopupCamMode = 0;
         static const char* const popupCamItems[] = { "Cockpit 3D", "Chase 30m", "Tower View" };
         static const char* const popupCamTips[] = {
-            "Pilot eye 3D cockpit perspective with 6DOF head movement.",
-            "External chase camera trailing 30m behind aircraft.",
-            "Stationary airport control tower vantage point."
+            "**Cockpit 3D**\nPilot eye 3D perspective with 6DOF head movement.",
+            "**Chase 30m**\nExternal chase camera trailing 30m behind aircraft.",
+            "**Tower View**\nStationary airport control tower vantage point."
         };
         ImGui::TextUnformatted("View:");
         ImGui::SameLine();
@@ -2850,11 +2850,11 @@ void ImGeeShowcaseWidget::buildInterface()
     static int s_DockCamMode = 0;
     static const char* const dockCamItems[] = { "Cockpit 3D", "Chase 30m", "Tower View" };
     static const char* const dockCamTips[] = {
-        "Pilot eye 3D cockpit perspective with 6DOF head movement.",
-        "External chase camera trailing 30m behind aircraft.",
-        "Stationary airport control tower vantage point."
+        "**Cockpit 3D**\nPilot eye 3D perspective with 6DOF head movement.",
+        "**Chase 30m**\nExternal chase camera trailing 30m behind aircraft.",
+        "**Tower View**\nStationary airport control tower vantage point."
     };
-    if (ImGui::SelectPulldown("##DockCamMode", &s_DockCamMode, dockCamItems, 3, dockCamTips, 130.0f, ImGui::ImGuiPopupAnchor_AboveItem)) {
+    if (ImGui::SelectPulldownMD("##DockCamMode", &s_DockCamMode, dockCamItems, 3, dockCamTips, 130.0f, ImGui::ImGuiPopupAnchor_AboveItem)) {
         // Selection changed
     }
     ImGui::TimedTooltip::MD::Text(
