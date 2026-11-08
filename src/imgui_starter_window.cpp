@@ -2883,13 +2883,17 @@ void ImGeeShowcaseWidget::buildInterface()
         ImGui::SameLine(0.0f, 10.0f);
     }
 
+    static const char* const theme_tips[] = {
+        "**Charcoal (Default)**\nSleek modern slate/graphite flight deck palette.",
+        "**Rusty (Aviation)**\nWarm aviation bronze & terracotta palette (ABC classic).",
+        "**ImGui Dark**\nStock Dear ImGui dark gray color scheme.",
+        "**ImGui Classic**\nLegacy Dear ImGui purplish-blue color scheme.",
+        "**ImGui Light**\nHigh-contrast light daytime color scheme."
+    };
     ImGui::TextUnformatted("Theme:");
     ImGui::SameLine();
     ImGui::SetNextItemWidth(theme_combo_w);
-    bool theme_changed = ImGui::Combo("##ThemePicker", &s_currentTheme, theme_names, IM_ARRAYSIZE(theme_names));
-    if (ImGui::AdjustItemOnMouseWheel(&s_currentTheme, 0, (int)IM_ARRAYSIZE(theme_names) - 1, 1)) {
-        theme_changed = true;
-    }
+    bool theme_changed = ImGui::MouseWheelCombo("##ThemePicker", &s_currentTheme, theme_names, IM_ARRAYSIZE(theme_names), -1, false, theme_tips);
     if (theme_changed) {
         switch (s_currentTheme) {
             case 0: ImGui::ApplyDefaultTheme(); break;
