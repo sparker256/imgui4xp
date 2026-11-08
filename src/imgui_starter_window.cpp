@@ -502,6 +502,11 @@ void configureImgWindow()
     // 6. Register In-Memory Images (mirroring into Markdown & StyledText registries)
     ImgWindow::RegisterMemoryImage("avionics_beacon", s_AvionicsIconPng, sizeof(s_AvionicsIconPng));
     ImgWindow::RegisterMemoryImage("avionics_pixel", s_AvionicsPixelPng, sizeof(s_AvionicsPixelPng));
+
+    // 7. Custom Style Tags & Template Aliases (RegisterMarkdownStyleTag / RegisterMarkdownTagAlias)
+    ImGui::RegisterMarkdownStyleTag("cam", "green bold mono");
+    ImGui::RegisterMarkdownTagAlias("tip", "<style gold><b>:star: Tip:</b></style> %s");
+    ImGui::RegisterMarkdownTagAlias("hotkey", "**[<style #40c0ff mono>%s</style>]**");
 }
 
 // Undo what we did in configureImgWindow()
@@ -2075,6 +2080,8 @@ void ImGeeShowcaseWidget::buildInterface()
             ImGui::TextMD("**Status:** Engine 1: <pill color=#2ecc71>NOMINAL</pill>   Fuel Pump: <pill color=#f39c12>LOW PRESS</pill>   Gen 1: <pill color=#e74c3c>OFFLINE</pill>");
             ImGui::TextMD("**Inline Styles:** **bold**, *italic*, ***bold-italic***, ~~strikethrough~~, ++underline++, and `monospace`.");
             ImGui::TextMD("**Nested Tags:** <b><i>Bold Italic</i></b>   |   <style bold italic>Style Tag</style>   |   <style red><b>Red Bold</b></style>");
+            ImGui::TextMD("**Custom Style Tags:** Camera offsets: <cam>pitch</cam> and <cam>yaw</cam> (auto-styled as green bold mono).");
+            ImGui::TextMD("**Template Aliases:** <tip>Verify altimeter before descent</tip>   |   Press <hotkey>Shift+C</hotkey> to recenter.");
             ImGui::TextMD("**Hotkeys:** <kbd>AP DISC</kbd> or <kbd>Z</kbd>   |   <kdb>Ctrl</kdb>+<kdb>Shift</kdb>+<kdb>F12</kdb>");
             ImGui::TextMD("**Release:** Core: <badge>v2.3.0</badge>   Platform: <badge>macOS Universal</badge>");
             ImGui::TextMD("**Tags & Icons Inside Emphasis:** **Reset (↺ 100%)**   |   *Caution: ⚠ Engine Master*   |   *Status: <badge red>CRITICAL</badge>*   |   **Dual Icons: ↺ and ↻**");
