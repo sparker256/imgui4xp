@@ -655,13 +655,14 @@ void ImguiWidget::buildInterface() {
     // Modern Avionics Glass Top Grip Handle
     if (HasWindowDragArea()) {
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
+        ImVec2 win_pos = ImGui::GetWindowPos();
         float avail_w = ImGui::GetWindowWidth();
-        float center_x = avail_w * 0.5f;
+        float center_x = win_pos.x + avail_w * 0.5f;
         float grip_w = 48.0f;
-        float grip_y = 6.0f;
+        float grip_y = win_pos.y + 6.0f;
         draw_list->AddRectFilled(ImVec2(center_x - grip_w * 0.5f, grip_y),
                                  ImVec2(center_x + grip_w * 0.5f, grip_y + 4.0f),
-                                 IM_COL32(255, 255, 255, 80), 2.0f);
+                                 IM_COL32(255, 255, 255, 100), 2.0f);
     }
     
     // Button with fixed width 30 and standard height
@@ -743,11 +744,13 @@ void ImguiWidget::buildInterface() {
             style.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
             style.Colors[ImGuiCol_Border].w = std::min(1.0f, mWindowOpacity * 0.8f + 0.2f);
         }
-        ImGui::TimedTooltip::MD::Text(
+        char opac_tip[256];
+        std::snprintf(opac_tip, sizeof(opac_tip),
             "**Continuous Backdrop Opacity**:\n"
             "Drag or mouse-wheel to seamlessly tune glass transparency over the 3D cockpit.\n"
             "Current: **%.0f%%** | Click [Reset] to restore factory 80%% glass.",
             mWindowOpacity * 100.0f);
+        ImGui::TimedTooltip::MD::Text("%s", opac_tip);
 
         ImGui::SameLine(0.0f, 10.0f);
         if (ImGui::SmallButton("100% Solid")) {
@@ -755,7 +758,7 @@ void ImguiWidget::buildInterface() {
             style.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
             style.Colors[ImGuiCol_Border].w = 1.0f;
         }
-        ImGui::TimedTooltip::MD::Text("100% Opaque (max contrast for high-glare daytime flight).");
+        ImGui::TimedTooltip::MD::Text("%s", "100% Opaque (max contrast for high-glare daytime flight).");
 
         ImGui::SameLine();
         if (ImGui::SmallButton("80% Glass")) {
@@ -763,7 +766,7 @@ void ImguiWidget::buildInterface() {
             style.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
             style.Colors[ImGuiCol_Border].w = 0.70f;
         }
-        ImGui::TimedTooltip::MD::Text("80% Smoked Glass (ideal balance of contrast & runway visibility).");
+        ImGui::TimedTooltip::MD::Text("%s", "80% Smoked Glass (ideal balance of contrast & runway visibility).");
 
         ImGui::SameLine();
         if (ImGui::SmallButton("45% HUD")) {
@@ -771,7 +774,7 @@ void ImguiWidget::buildInterface() {
             style.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
             style.Colors[ImGuiCol_Border].w = 0.45f;
         }
-        ImGui::TimedTooltip::MD::Text("45% Semi-Transparent HUD overlay.");
+        ImGui::TimedTooltip::MD::Text("%s", "45% Semi-Transparent HUD overlay.");
 
         ImGui::SameLine();
         if (ImGui::SmallButton("15% Ghost")) {
@@ -779,14 +782,14 @@ void ImguiWidget::buildInterface() {
             style.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
             style.Colors[ImGuiCol_Border].w = 0.25f;
         }
-        ImGui::TimedTooltip::MD::Text("15% Ultra-light see-through HUD mode.");
+        ImGui::TimedTooltip::MD::Text("%s", "15% Ultra-light see-through HUD mode.");
 
         ImGui::SameLine(0.0f, 14.0f);
         if (ImGui::SmallButton("Switch to Native Bezel...")) {
             requestSwapDecoration = true;
             XPLMScheduleFlightLoop(flId, -1.0, 1);
         }
-        ImGui::TimedTooltip::MD::Text(
+        ImGui::TimedTooltip::MD::Text("%s",
             "**X-Plane Native Bezel**:\n"
             "Re-creates window with standard X-Plane rounded rectangle bezel.");
     } else {
@@ -797,7 +800,7 @@ void ImguiWidget::buildInterface() {
             requestSwapDecoration = true;
             XPLMScheduleFlightLoop(flId, -1.0, 1);
         }
-        ImGui::TimedTooltip::MD::Text(
+        ImGui::TimedTooltip::MD::Text("%s",
             "**Modern Cockpit Glass Mode** (SelfDecoratedResizable):\n"
             "Converts window to a frameless, resizable glass HUD panel with continuous opacity controls.");
     }
