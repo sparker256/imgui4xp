@@ -1741,8 +1741,8 @@ ImGeeShowcaseWidget::ImGeeShowcaseWidget(int width, int height,
     flId = XPLMCreateFlightLoop(&flDef);
 
     SetWindowTitle("ImGee Cockpit Showcase");
-    SetWindowResizingLimits(580, 350, 2560, 1440);
-    SetUnscaledChrome(0, 340);
+    SetWindowResizingLimits(580, 378, 2560, 1440);
+    SetUnscaledChrome(0, 108);
     // Pre-load default note from disk if available
     std::string default_note = "./Resources/plugins/imgui4xp/notes/flight_briefing.md";
     if (!LoadTextFile(default_note, scratchpadText)) {
@@ -1792,7 +1792,7 @@ float ImGeeShowcaseWidget::cbFlightLoop(float, float, int, void* inRefcon)
             : xplm_WindowDecorationRoundRectangle;
 
         int width = std::max(580, right - left);
-        int height = std::max(350, top - bottom);
+        int height = std::max(378, top - bottom);
 
         auto new_wnd = std::make_shared<ImGeeShowcaseWidget>(width, height, new_dec, xplm_WindowLayerFloatingWindows);
         new_wnd->SetWindowGeometry(left, top, right, bottom);
@@ -1837,7 +1837,7 @@ void ImGeeShowcaseWidget::RestoreWindowRect(const WindowRectSnapshot& rect)
         int h = std::abs(rect.t - rect.b);
         if (w > 0 && h > 0) {
             w = ImClamp(w, 580, 2560);
-            h = ImClamp(h, 350, 1440);
+            h = ImClamp(h, 378, 1440);
             SetWindowGeometryVR(w, h);
         }
         return;
@@ -1854,7 +1854,7 @@ void ImGeeShowcaseWidget::RestoreWindowRect(const WindowRectSnapshot& rect)
     int r = rect.r;
     int b = rect.b;
 
-    ClampGeometryToScreen(l, t, r, b, 580, 350, 2560, 1440, GetEffectiveTopMargin());
+    ClampGeometryToScreen(l, t, r, b, 580, 378, 2560, 1440, GetEffectiveTopMargin());
 
     SetWindowGeometry(l, t, r, b);
 }
@@ -1863,7 +1863,7 @@ void ShowImGeeShowcaseWindow()
 {
     ImGuiContext* prevContext = ImGui::GetCurrentContext();
     if (!s_pShowcaseWidget) {
-        s_pShowcaseWidget = std::make_shared<ImGeeShowcaseWidget>(680, 568);
+        s_pShowcaseWidget = std::make_shared<ImGeeShowcaseWidget>(680, 596);
         gWndList.push_back(s_pShowcaseWidget);
     }
     s_pShowcaseWidget->SetVisible(true);
@@ -2098,7 +2098,7 @@ void ImGeeShowcaseWidget::buildInterface()
     }
     bool fit_hovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
     if (fit_hovered) {
-        ImGui::TimedTooltip::TextMDProxy(ImGui::GetItemID(), fit_hovered, "**Fit Window to Baseline**\n\nResets window to default 680x568 baseline proportions scaled to current zoom (%d%%) anchored to top-left.", (int)std::round(_fontAdjust * 100.0f));
+        ImGui::TimedTooltip::TextMDProxy(ImGui::GetItemID(), fit_hovered, "**Fit Window to Baseline**\n\nResets window to default 680x596 baseline proportions scaled to current zoom (%d%%) anchored to top-left.", (int)std::round(_fontAdjust * 100.0f));
     }
     // Cursor Handling Toggle Button (separated by 8px gap)
     ImGui::SameLine(0.0f, 8.0f);

@@ -144,7 +144,7 @@ PLUGIN_API int XPluginEnable(void) {
     // Pre-create showcase window in hidden state so it's ready on-demand without mid-frame allocations
     if (!s_pShowcaseWidget) {
         ImGuiContext* prevContext = ImGui::GetCurrentContext();
-        s_pShowcaseWidget = std::make_shared<ImGeeShowcaseWidget>(680, 568);
+        s_pShowcaseWidget = std::make_shared<ImGeeShowcaseWidget>(680, 596);
         s_pShowcaseWidget->SetVisible(false);
         gWndList.push_back(s_pShowcaseWidget);
         if (prevContext) {
