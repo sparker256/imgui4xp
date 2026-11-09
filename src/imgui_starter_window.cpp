@@ -2129,30 +2129,24 @@ void ImGeeShowcaseWidget::buildInterface()
 
     bool is_sc_trans = IsSelfDecorated();
     const float sc_toggle_w = CalcToggleButtonWidth("Transparent##sc_trans");
-    const float sc_opac_lbl_w = is_sc_trans ? (ImGui::CalcTextSize("Opacity:").x + 12.0f) : 0.0f;
-    const float sc_theme_lbl_w = ImGui::CalcTextSize("Theme:").x + 14.0f;
-    const float r2_fixed_w = sc_toggle_w + sc_opac_lbl_w + sc_theme_lbl_w;
+    const float opac_lbl_w = ImGui::CalcTextSize("Opacity:").x;
+    const float theme_lbl_w = ImGui::CalcTextSize("Theme:").x;
+    const float theme_combo_w = 135.0f;
+    const float theme_section_w = theme_lbl_w + 4.0f + theme_combo_w;
+    const float section_gap = 10.0f;
+
+    // When transparent, Opacity appears to the LEFT of the Transparent toggle;
+    // this keeps Transparent and Theme completely invariant (zero shift when toggling!)
+    const float opac_slider_w = 80.0f;
+    const float opac_section_w = is_sc_trans ? (opac_lbl_w + 4.0f + opac_slider_w + section_gap) : 0.0f;
+    const float r2_suite_w = opac_section_w + sc_toggle_w + section_gap + theme_section_w;
 
     const float min_r2_offset = ImGui::GetCursorPosX() + ImGui::GetStyle().ItemSpacing.x;
-    const float r2_avail = ImMax(r2_fixed_w + 170.0f, ImGui::GetWindowWidth() - min_r2_offset - right_margin);
-    const float r2_slack = r2_avail - r2_fixed_w;
-    const float opac_slider_w = is_sc_trans ? ImClamp(r2_slack * 0.35f, 65.0f, 95.0f) : 0.0f;
-    const float theme_combo_w = ImClamp(r2_slack - opac_slider_w, 105.0f, 140.0f);
-    const float r2_suite_w = r2_fixed_w + opac_slider_w + theme_combo_w;
-
     const float r2_target_offset = ImGui::GetWindowWidth() - r2_suite_w - right_margin;
     ImGui::SameLine(ImMax(min_r2_offset, r2_target_offset));
 
-    if (ImGui::ToggleButton("Transparent##sc_trans", &is_sc_trans,
-                            "Transparent HUD: <pill color=#7f8c8d>OFF</pill> <pill color=#1a252f fg=#555555>ON</pill>\n\nStandard X-Plane rounded rectangle bezel.\nClick to switch to frameless Glass HUD.",
-                            "Transparent HUD: <pill color=#1a252f fg=#555555>OFF</pill> <pill color=#2ecc71>ON</pill>\n\nModern Glass HUD panel with continuous opacity controls.\nClick to restore native X-Plane bezel."))
-    {
-        requestSwapDecoration = true;
-        XPLMScheduleFlightLoop(flId, -1.0, 1);
-    }
-
+    // 1. Opacity Slider (appears seamlessly to the left of Transparent toggle when active)
     if (is_sc_trans) {
-        ImGui::SameLine(0.0f, 8.0f);
         ImGui::AlignTextToFramePadding();
         ImGui::TextUnformatted("Opacity:");
         ImGui::SameLine(0.0f, 4.0f);
@@ -2169,6 +2163,17 @@ void ImGeeShowcaseWidget::buildInterface()
             "Current: **%.0f%%** | Click :reset: to restore factory 80%% glass.",
             mWindowOpacity * 100.0f);
         ImGui::TimedTooltip::MD::Text("%s", sc_opac_tip);
+
+        ImGui::SameLine(0.0f, section_gap);
+    }
+
+    // 2. Transparent HUD Toggle (rock-solid invariant position!)
+    if (ImGui::ToggleButton("Transparent##sc_trans", &is_sc_trans,
+                            "Transparent HUD: <pill color=#7f8c8d>OFF</pill> <pill color=#1a252f fg=#555555>ON</pill>\n\nStandard X-Plane rounded rectangle bezel.\nClick to switch to frameless Glass HUD.",
+                            "Transparent HUD: <pill color=#1a252f fg=#555555>OFF</pill> <pill color=#2ecc71>ON</pill>\n\nModern Glass HUD panel with continuous opacity controls.\nClick to restore native X-Plane bezel."))
+    {
+        requestSwapDecoration = true;
+        XPLMScheduleFlightLoop(flId, -1.0, 1);
     }
 
     static const char* const theme_names[] = {
@@ -2186,7 +2191,7 @@ void ImGeeShowcaseWidget::buildInterface()
         "**ImGui Light**\nHigh-contrast light daytime color scheme."
     };
 
-    ImGui::SameLine(0.0f, 10.0f);
+    ImGui::SameLine(0.0f, section_gap);
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted("Theme:");
     ImGui::SameLine(0.0f, 4.0f);
@@ -2795,48 +2800,6 @@ void ImGeeShowcaseWidget::buildInterface()
                 ImGui::EndPopup();
             }
 
-            ImGui::SameLine();
-            ImGui::TextDisabled("|");
-
-            ImGui::SameLine();
-            if (ToolbarButton("Clear", "Clears the scratchpad editor buffer")) {
-                scratchpadText.clear();
-                cached_cur_pos = 0;
-                has_active_selection = false;
-                cached_sel_start = cached_sel_end = -1;
-                ImGuiID target_id = (g.InputTextState.ID != 0) ? g.InputTextState.ID : (g.InputTextDeactivatedState.ID != 0 ? g.InputTextDeactivatedState.ID : s_scratchpadEditorId);
-                if (target_id != 0) {
-                    g.InputTextState.ReloadSelectionStart = 0;
-                    g.InputTextState.ReloadSelectionEnd = 0;
-                    g.InputTextState.WantReloadUserBuf = true;
-                    g.InputTextReactivateId = target_id;
-                    g.InputTextDeactivatedState.ID = 0;
-                }
-            }
-
-            ImGui::SameLine();
-            if (ToolbarButton("Reset Sample", "Restores the flight briefing sample")) {
-                scratchpadText = "### Live Flight Briefing\n"
-                                 "* Status: <pill color=#2ecc71>CLEARED</pill>\n"
-                                 "* Departure: **KSEA** Rwy 16L\n"
-                                 "* Route: `SEA8 JAWBN Q29`\n"
-                                 "* Clearance: <big color=#3498db>FL180</big> <tiny color=#888888>SUB-BUS 2A</tiny> <small color=#27ae60>14.2V</small> <huge color=#e74c3c>ALERT</huge>\n"
-                                 "---\n"
-                                 "| Waypoint | Target Alt | Fuel | ETA |\n"
-                                 "| :--- | :---: | ---: | ---: |\n"
-                                 "| **SEA8** | 3,000 ft | 98% | 18:05z |\n"
-                                 "| **JAWBN** | 12,000 ft | 92% | 18:18z |\n"
-                                 "| **Q29** | FL240 | 85% | 18:34z |\n"
-                                 "<!-- table-preset: width=420 sort=\"Waypoint\" asc -->\n"
-                                 "---\n"
-                                 "```cpp\n"
-                                 "void ExecuteClimb() {\n"
-                                 "    Autopilot::SetTargetAlt(14000);\n"
-                                 "}\n"
-                                 "```";
-            }
-            ImGui::TimedTooltip::MD::Text("Restores the flight briefing sample");
-
             // --- File Persistence Toolbar (imgui_file_dialog.h integration) ---
             ImGui::Spacing();
             const char* notes_dir = "./Resources/plugins/imgui4xp/notes";
@@ -2886,6 +2849,48 @@ void ImGeeShowcaseWidget::buildInterface()
                     g.InputTextDeactivatedState.ID = 0;
                 }
             }
+
+            ImGui::SameLine();
+            ImGui::TextDisabled("|");
+
+            ImGui::SameLine();
+            if (ToolbarButton("Clear", "Clears the scratchpad editor buffer")) {
+                scratchpadText.clear();
+                cached_cur_pos = 0;
+                has_active_selection = false;
+                cached_sel_start = cached_sel_end = -1;
+                ImGuiID target_id = (g.InputTextState.ID != 0) ? g.InputTextState.ID : (g.InputTextDeactivatedState.ID != 0 ? g.InputTextDeactivatedState.ID : s_scratchpadEditorId);
+                if (target_id != 0) {
+                    g.InputTextState.ReloadSelectionStart = 0;
+                    g.InputTextState.ReloadSelectionEnd = 0;
+                    g.InputTextState.WantReloadUserBuf = true;
+                    g.InputTextReactivateId = target_id;
+                    g.InputTextDeactivatedState.ID = 0;
+                }
+            }
+
+            ImGui::SameLine();
+            if (ToolbarButton("Reset Sample", "Restores the flight briefing sample")) {
+                scratchpadText = "### Live Flight Briefing\n"
+                                 "* Status: <pill color=#2ecc71>CLEARED</pill>\n"
+                                 "* Departure: **KSEA** Rwy 16L\n"
+                                 "* Route: `SEA8 JAWBN Q29`\n"
+                                 "* Clearance: <big color=#3498db>FL180</big> :plane: <tiny color=#888888>SUB-BUS 2A</tiny> <small color=#27ae60>14.2V</small> <huge color=#e74c3c>ALERT</huge>\n"
+                                 "---\n"
+                                 "| Waypoint | Target Alt | Fuel | ETA |\n"
+                                 "| :--- | :---: | ---: | ---: |\n"
+                                 "| **SEA8** | 3,000 ft | 98% | 18:05z |\n"
+                                 "| **JAWBN** | 12,000 ft | 92% | 18:18z |\n"
+                                 "| **Q29** | FL240 | 85% | 18:34z |\n"
+                                 "<!-- table-preset: width=420 sort=\"Waypoint\" asc -->\n"
+                                 "---\n"
+                                 "```cpp\n"
+                                 "void ExecuteClimb() {\n"
+                                 "    Autopilot::SetTargetAlt(14000);\n"
+                                 "}\n"
+                                 "```";
+            }
+            ImGui::TimedTooltip::MD::Text("Restores the flight briefing sample");
 
             if (!noteStatusMsg.empty() && noteStatusTimer > 0.0f) {
                 ImGui::SameLine();
