@@ -93,6 +93,21 @@ IMGUI_API bool ToolbarButton(const char* label,
     return clicked;
 }
 
+IMGUI_API bool ToolbarButtonMD(const char* label,
+                               const char* tip = nullptr,
+                               const ImVec2& size = ImVec2(0, 0))
+{
+    bool clicked = ImGui::ButtonMD(label, size);
+    bool hovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+    if (!clicked && hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+        clicked = true;
+    }
+    if (tip && hovered) {
+        ImGui::TimedTooltip::TextMDProxy(ImGui::GetItemID(), hovered, "%s", tip);
+    }
+    return clicked;
+}
+
 /// Lance's 1-Click Active-ID Toolbar Checkbox:
 /// Allows checkboxes to toggle on the first click even when InputTextMultiline holds g.ActiveId,
 /// eliminating the two-click penalty, preventing double-toggle flickering, and preserving active text selection.
@@ -193,6 +208,7 @@ inline float CalcToggleButtonWidth(const char* label_text) {
 
 }
 using ImGui::ToolbarButton;
+using ImGui::ToolbarButtonMD;
 using ImGui::ToolbarCheckbox;
 using ImGui::ToolbarToggleButton;
 using ImGui::CalcToggleButtonWidth;
@@ -2718,8 +2734,8 @@ void ImGeeShowcaseWidget::buildInterface()
             }
 
             ImGui::SameLine();
-            if (ToolbarButton("Icon ▼", "Insert CommonMark vector icons & emoji shortcodes (:plane:, :star:, etc.)")) {
-                ImGui::OpenPopupAtItem("##ScratchpadIconPopup", ImGui::ImGuiPopupAnchor_BelowItem, ImGui::ImGuiPopupAlign_Left);
+            if (ToolbarButtonMD("Icon <icon caret-down />##tb_icon", "Insert CommonMark vector icons & emoji shortcodes (:plane:, :star:, etc.)")) {
+                ImGui::OpenPopupAtItem("##ScratchpadIconPopup", ImGui::ImGuiPopupAnchor_BelowItem, ImGui::ImGuiPopupAlign_Right);
             }
             if (ImGui::BeginAnchoredPopup("##ScratchpadIconPopup")) {
                 ImGui::TextMD("#### Insert Vector Icon");
@@ -2728,7 +2744,7 @@ void ImGeeShowcaseWidget::buildInterface()
 
                 static int s_iconFormat = 0; // 0 = Shortcode (:name:), 1 = HTML Tag (<icon name />)
                 const char* fmt_names[] = { "Shortcode (:name:)", "Tag (<icon name />)" };
-                ImGui::SetNextItemWidth(170.0f);
+                ImGui::SetNextItemWidth(252.0f);
                 ImGui::Combo("##icon_fmt", &s_iconFormat, fmt_names, 2);
                 ImGui::Spacing();
 
@@ -2755,7 +2771,7 @@ void ImGeeShowcaseWidget::buildInterface()
                     if (idx % 3 != 0) ImGui::SameLine();
                     char btn_id[64];
                     std::snprintf(btn_id, sizeof(btn_id), "%s##icn_%zu", s_icons[idx].label, idx);
-                    if (ImGui::MD::Button(btn_id, ImVec2(92.0f, 0.0f))) {
+                    if (ImGui::MD::Button(btn_id, ImVec2(80.0f, 0.0f))) {
                         std::string insert_str;
                         if (s_iconFormat == 0) {
                             insert_str = std::string(":") + s_icons[idx].name + ":";
