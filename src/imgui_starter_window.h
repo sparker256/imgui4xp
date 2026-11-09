@@ -145,6 +145,10 @@ protected:
     const int       myWinNum;
     // Note to myself that a change of window mode is requested
     XPLMWindowPositioningMode nextWinPosMode = -1;
+    // Request dynamic swap between Solid Native Bezel and Modern Glass HUD
+    bool requestSwapDecoration = false;
+    float mWindowOpacity = 0.80f;
+    bool mIsGlassHUD = false;
     // Our flight loop callback in case we need one
     XPLMFlightLoopID flId = nullptr;
     // Values in node "Buttons" / "Checkboxes"

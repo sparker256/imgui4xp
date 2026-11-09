@@ -593,19 +593,18 @@ ImguiWidget::ImguiWidget(int left, int top, int right, int bot,
     ImGuiIO& io = ImGui::GetIO();
     io.IniFilename = nullptr;
     
-    // We take the parameter combination "SelfDecorateResizeable" + "LayerFlightOverlay"
-    // to mean: simulate HUD
-    if (decoration  == xplm_WindowDecorationSelfDecoratedResizable &&
-        layer       == xplm_WindowLayerFloatingWindows)
+    mIsGlassHUD = (decoration == xplm_WindowDecorationSelfDecoratedResizable ||
+                   decoration == xplm_WindowDecorationSelfDecorated);
+    if (mIsGlassHUD)
     {
-        // let's set a fairly transparent, barely visible background
+        // Modern Avionics Glass HUD: 80% smoked glass backdrop with subtle border
         ImGuiStyle& style = ImGui::GetStyle();
-        style.Colors[ImGuiCol_WindowBg] = ImColor(0, 0, 0, 0x10);
-        // There's no window decoration, so to move the window we need to
-        // activate a "drag area", here a small strip (roughly double text height)
-        // at the top of the window, ie. the window can be moved by
-        // dragging a spot near the window's top
-        SetWindowDragArea(0, 5, INT_MAX, 5 + 2*int(FONT_SIZE));
+        style.Colors[ImGuiCol_WindowBg] = ImVec4(0.12f, 0.14f, 0.17f, mWindowOpacity);
+        style.Colors[ImGuiCol_Border]   = ImVec4(0.35f, 0.42f, 0.50f, 0.70f);
+        style.WindowBorderSize = 1.0f;
+        style.WindowRounding   = 6.0f;
+        // Drag area across top header (roughly double text height)
+        SetWindowDragArea(0, 0, INT_MAX, int(FONT_SIZE * 2.2f));
     }
 
     // Create a flight loop id, but don't schedule it yet
@@ -653,48 +652,55 @@ void ImguiWidget::buildInterface() {
 
     ImGui::TextUnformatted("Hello, World!");
     
-    // If we are a transparent HUD-like window then we draw 3 lines that look
-    // a bit like a head...so people know where to drag the window to move it
+    // Modern Avionics Glass Top Grip Handle
     if (HasWindowDragArea()) {
-        ImGui::SameLine();
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
-        ImVec2 pos_start = ImGui::GetCursorPos();
-        float x_end = ImGui::GetContentRegionAvail().x - 75;
-        for (int i = 0; i < 3; i++) {
-            draw_list->AddLine(pos_start, {x_end, pos_start.y}, IM_COL32(0xa0, 0xa0, 0xa0, 255), 1.0f);
-            pos_start.y += 5;
-        }
+        float avail_w = ImGui::GetWindowWidth();
+        float center_x = avail_w * 0.5f;
+        float grip_w = 48.0f;
+        float grip_y = 6.0f;
+        draw_list->AddRectFilled(ImVec2(center_x - grip_w * 0.5f, grip_y),
+                                 ImVec2(center_x + grip_w * 0.5f, grip_y + 4.0f),
+                                 IM_COL32(255, 255, 255, 80), 2.0f);
     }
     
     // Button with fixed width 30 and standard height
-    // to pop out the window in an OS window
+    // to pop out the window in an OS window, plus close button for custom-decorated windows
     static float btnWidth = ImGui::CalcTextSize(ICON_FA_WINDOW_MAXIMIZE).x + 5;
     const bool bBtnPopOut = !IsPoppedOut();
     const bool bBtnPopIn  = IsPoppedOut() || IsInVR();
     const bool bBtnVR     = vr_is_enabled && !IsInVR();
-    int numBtn = bBtnPopOut + bBtnPopIn + bBtnVR;
+    const bool bBtnClose  = IsSelfDecorated();
+    int numBtn = bBtnPopOut + bBtnPopIn + bBtnVR + bBtnClose;
     if (numBtn > 0) {
         // Setup colors for window sizing buttons
         ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetColorU32(ImGuiCol_ScrollbarGrabActive)); // dark gray
         ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32_BLACK_TRANS);                           // transparent
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetColorU32(ImGuiCol_ScrollbarGrab)); // lighter gray
 
+        if (bBtnClose) {
+            // Right-aligned close button for frameless custom-decorated windows
+            ImGui::SameLine(ImGui::GetContentRegionAvail().x - (numBtn * btnWidth));
+            if (ImGui::ButtonTooltip(ICON_FA_WINDOW_CLOSE, "Close window"))
+                SetVisible(false);
+            --numBtn;
+        }
         if (bBtnVR) {
-            // Same line, but right-alinged
+            // Same line, but right-aligned
             ImGui::SameLine(ImGui::GetContentRegionAvail().x - (numBtn * btnWidth));
             if (ImGui::ButtonTooltip(ICON_FA_EXTERNAL_LINK_SQUARE_ALT, "Move into VR"))
                 nextWinPosMode = xplm_WindowVR;
             --numBtn;
         }
         if (bBtnPopIn) {
-            // Same line, but right-alinged
+            // Same line, but right-aligned
             ImGui::SameLine(ImGui::GetContentRegionAvail().x - (numBtn * btnWidth));
             if (ImGui::ButtonTooltip(ICON_FA_WINDOW_RESTORE, "Move back into X-Plane"))
                 nextWinPosMode = xplm_WindowPositionFree;
             --numBtn;
         }
         if (bBtnPopOut) {
-            // Same line, but right-alinged
+            // Same line, but right-aligned
             ImGui::SameLine(ImGui::GetContentRegionAvail().x - (numBtn * btnWidth));
             if (ImGui::ButtonTooltip(ICON_FA_WINDOW_MAXIMIZE, "Pop out into separate window"))
                 nextWinPosMode = xplm_WindowPopOut;
@@ -724,6 +730,79 @@ void ImguiWidget::buildInterface() {
     ImGui::Text("Window #%d", myWinNum);
     ImGui::Text("X-Plane Window Id: %p", GetWindowId());
     ImGui::EndGroup();
+
+    // Modern Backdrop Opacity & Window Mode Controller
+    ImGui::Spacing();
+    ImGui::Separator();
+    if (IsSelfDecorated()) {
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextMD("**Glass Opacity:**");
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(140.0f);
+        if (ImGui::PercentSliderWithReset("##BackdropOpacity", &mWindowOpacity, 0.80f, 0.10f, 1.00f, "%.0f%%")) {
+            style.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
+            style.Colors[ImGuiCol_Border].w = std::min(1.0f, mWindowOpacity * 0.8f + 0.2f);
+        }
+        ImGui::TimedTooltip::MD::Text(
+            "**Continuous Backdrop Opacity**:\n"
+            "Drag or mouse-wheel to seamlessly tune glass transparency over the 3D cockpit.\n"
+            "Current: **%.0f%%** | Click [Reset] to restore factory 80%% glass.",
+            mWindowOpacity * 100.0f);
+
+        ImGui::SameLine(0.0f, 10.0f);
+        if (ImGui::SmallButton("100% Solid")) {
+            mWindowOpacity = 1.0f;
+            style.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
+            style.Colors[ImGuiCol_Border].w = 1.0f;
+        }
+        ImGui::TimedTooltip::MD::Text("100% Opaque (max contrast for high-glare daytime flight).");
+
+        ImGui::SameLine();
+        if (ImGui::SmallButton("80% Glass")) {
+            mWindowOpacity = 0.80f;
+            style.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
+            style.Colors[ImGuiCol_Border].w = 0.70f;
+        }
+        ImGui::TimedTooltip::MD::Text("80% Smoked Glass (ideal balance of contrast & runway visibility).");
+
+        ImGui::SameLine();
+        if (ImGui::SmallButton("45% HUD")) {
+            mWindowOpacity = 0.45f;
+            style.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
+            style.Colors[ImGuiCol_Border].w = 0.45f;
+        }
+        ImGui::TimedTooltip::MD::Text("45% Semi-Transparent HUD overlay.");
+
+        ImGui::SameLine();
+        if (ImGui::SmallButton("15% Ghost")) {
+            mWindowOpacity = 0.15f;
+            style.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
+            style.Colors[ImGuiCol_Border].w = 0.25f;
+        }
+        ImGui::TimedTooltip::MD::Text("15% Ultra-light see-through HUD mode.");
+
+        ImGui::SameLine(0.0f, 14.0f);
+        if (ImGui::SmallButton("Switch to Native Bezel...")) {
+            requestSwapDecoration = true;
+            XPLMScheduleFlightLoop(flId, -1.0, 1);
+        }
+        ImGui::TimedTooltip::MD::Text(
+            "**X-Plane Native Bezel**:\n"
+            "Re-creates window with standard X-Plane rounded rectangle bezel.");
+    } else {
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextDisabled("Backdrop: X-Plane Native Bezel (Solid Maps Style)");
+        ImGui::SameLine();
+        if (ImGui::SmallButton("Switch to Modern Glass HUD Mode...")) {
+            requestSwapDecoration = true;
+            XPLMScheduleFlightLoop(flId, -1.0, 1);
+        }
+        ImGui::TimedTooltip::MD::Text(
+            "**Modern Cockpit Glass Mode** (SelfDecoratedResizable):\n"
+            "Converts window to a frameless, resizable glass HUD panel with continuous opacity controls.");
+    }
+    ImGui::Separator();
+    ImGui::Spacing();
 
     if (ImGui::TreeNode("ImGee UX & Modern Cockpit Suite")) {
         ImGui::TextMD("# ImGee UX Showcase");
@@ -1521,6 +1600,35 @@ float ImguiWidget::cbFlightLoop(float, float, int, void* inRefcon)
 {
     // refcon is pointer to ImguiWidget
     ImguiWidget& wnd = *reinterpret_cast<ImguiWidget*>(inRefcon);
+
+    // Has user requested decoration swap (Solid <-> Modern Glass HUD)?
+    if (wnd.requestSwapDecoration) {
+        wnd.requestSwapDecoration = false;
+        int left, top, right, bottom;
+        wnd.GetCurrentWindowGeometry(left, top, right, bottom);
+        bool is_vis = wnd.GetVisible();
+        XPLMWindowDecoration cur_dec = wnd.GetWindowDecoration();
+        XPLMWindowDecoration new_dec = (cur_dec == xplm_WindowDecorationRoundRectangle)
+            ? xplm_WindowDecorationSelfDecoratedResizable
+            : xplm_WindowDecorationRoundRectangle;
+
+        auto new_wnd = std::make_shared<ImguiWidget>(left, top, right, bottom, new_dec, xplm_WindowLayerFloatingWindows);
+        new_wnd->SetVisible(is_vis);
+        new_wnd->mWindowOpacity = wnd.mWindowOpacity;
+
+        // Keep old window alive in static graveyard to prevent destruction while inside its own callback
+        static ImgWindowSPtrTy s_DeferredGraveyard = nullptr;
+        s_DeferredGraveyard = nullptr;
+
+        for (auto& p : gWndList) {
+            if (p.get() == &wnd) {
+                s_DeferredGraveyard = p;
+                p = new_wnd;
+                break;
+            }
+        }
+        return 0.0f;
+    }
 
     // Has user requested a change in window mode?
     if (wnd.nextWinPosMode >= 0) {
