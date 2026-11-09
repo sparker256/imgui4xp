@@ -48,7 +48,7 @@ public:
 
 protected:
     ImGuiWindowFlags_ beforeBegin() override {
-        return ImGuiWindowFlags_None;
+        return static_cast<ImGuiWindowFlags_>(ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
     }
 
     // Dynamic UI Zoom multiplier (Responsive UI Scaling Math)

@@ -1727,8 +1727,8 @@ ImGeeShowcaseWidget::ImGeeShowcaseWidget(int width, int height,
         style.Colors[ImGuiCol_Border]   = ImVec4(0.35f, 0.42f, 0.50f, 0.70f);
         style.WindowBorderSize = 1.0f;
         style.WindowRounding   = 6.0f;
-        // Drag area across top header (roughly double text height)
-        SetWindowDragArea(0, 0, INT_MAX, int(FONT_SIZE * 2.2f));
+        // Drag area centered on top grip handle (60px wide, 16px high)
+        SetWindowDragArea(width / 2 - 30, 0, width / 2 + 30, 16);
     }
 
     // Create flight loop for dynamic decoration swap
@@ -1877,9 +1877,12 @@ void ImGeeShowcaseWidget::buildInterface()
 {
     // Modern Avionics Glass Top Grip Handle
     if (HasWindowDragArea()) {
+        float avail_w = ImGui::GetWindowWidth();
+        int center_local = int(avail_w * 0.5f);
+        SetWindowDragArea(center_local - 30, 0, center_local + 30, 16);
+
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
         ImVec2 win_pos = ImGui::GetWindowPos();
-        float avail_w = ImGui::GetWindowWidth();
         float center_x = win_pos.x + avail_w * 0.5f;
         float grip_w = 48.0f;
         float grip_y = win_pos.y + 6.0f;
@@ -2230,12 +2233,18 @@ void ImGeeShowcaseWidget::buildInterface()
 
     ImGui::Spacing();
 
+    // Reserve space for Close button footer (rendered at 1.0x unscaled chrome scale)
+    const float unscaled_frame_h = ImGui::GetStyle().FontSizeBase + ImGui::GetStyle().FramePadding.y * 2.0f;
+    const float footer_reserve = unscaled_frame_h + ImGui::GetStyle().ItemSpacing.y;
 
     if (ImGui::BeginTabBar("ImGeeShowcaseTabBar", ImGuiTabBarFlags_NoTooltip)) {
         bool tab_knobs = ImGui::BeginTabItem("Avionics Knobs & Sliders");
         ImGui::TimedTooltip::MD::Text("Precision autopilot dials, sliders, procedural gauges, and copy button.");
         if (tab_knobs) {
-            ImGui::Spacing();
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+            ImGui::PushStyleColor(ImGuiCol_ChildBg, IM_COL32(0, 0, 0, 0));
+            if (ImGui::BeginChild("TabKnobsScroll", ImVec2(0.0f, -footer_reserve), ImGuiChildFlags_None, ImGuiWindowFlags_None)) {
+                ImGui::Spacing();
             ImGui::TextMD("#### Precision Knobs with 1-Click Restore");
             ImGui::TextMD("Hover and roll mouse wheel to adjust values. Click :reset: to restore calibrated defaults:");
             ImGui::Spacing();
@@ -2341,8 +2350,12 @@ void ImGeeShowcaseWidget::buildInterface()
                     text_to_copy = state->TextA.Data;
                 }
             }
-            ImGui::CopyButton("##copy_xpndr", text_to_copy);
-            ImGui::TimedTooltip::MD::Text("Copy active squawk code (**%s**) to OS clipboard.", text_to_copy);
+                ImGui::CopyButton("##copy_xpndr", text_to_copy);
+                ImGui::TimedTooltip::MD::Text("Copy active squawk code (**%s**) to OS clipboard.", text_to_copy);
+            }
+            ImGui::EndChild();
+            ImGui::PopStyleColor();
+            ImGui::PopStyleVar();
 
             ImGui::EndTabItem();
         }
@@ -2350,7 +2363,10 @@ void ImGeeShowcaseWidget::buildInterface()
         bool tab_switches = ImGui::BeginTabItem("Switches & Toggles");
         ImGui::TimedTooltip::MD::Text("Animated tactile cockpit rocker switches and pushbutton annunciators.");
         if (tab_switches) {
-            ImGui::Spacing();
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+            ImGui::PushStyleColor(ImGuiCol_ChildBg, IM_COL32(0, 0, 0, 0));
+            if (ImGui::BeginChild("TabSwitchesScroll", ImVec2(0.0f, -footer_reserve), ImGuiChildFlags_None, ImGuiWindowFlags_None)) {
+                ImGui::Spacing();
             ImGui::TextMD("#### Tactile Cockpit Rocker Switches");
             ImGui::TextMD("Animated toggle switches with native hover cursor and state-aware tooltips:");
             ImGui::Spacing();
@@ -2373,10 +2389,14 @@ void ImGeeShowcaseWidget::buildInterface()
                                 "Pitot Heat: <pill color=#e67e22>HEATING</pill>");
             ImGui::TimedTooltip::MD::Text("Airspeed probe anti-ice heating element.");
 
-            ImGui::ToggleButton("Yaw Damper", &yawDamper,
-                                "Yaw Damper: <pill color=#7f8c8d>DISARMED</pill>",
-                                "Yaw Damper: <pill color=#2ecc71>ENGAGED</pill>");
-            ImGui::TimedTooltip::MD::Text("Yaw stability augmentation and turn coordination.");
+                ImGui::ToggleButton("Yaw Damper", &yawDamper,
+                                    "Yaw Damper: <pill color=#7f8c8d>DISARMED</pill>",
+                                    "Yaw Damper: <pill color=#2ecc71>ENGAGED</pill>");
+                ImGui::TimedTooltip::MD::Text("Yaw stability augmentation and turn coordination.");
+            }
+            ImGui::EndChild();
+            ImGui::PopStyleColor();
+            ImGui::PopStyleVar();
 
             ImGui::EndTabItem();
         }
@@ -2384,7 +2404,10 @@ void ImGeeShowcaseWidget::buildInterface()
         bool tab_markdown = ImGui::BeginTabItem("Typography & Markdown");
         ImGui::TimedTooltip::MD::Text("Interactive CommonMark elements, status pills, release badges, and clickable links.");
         if (tab_markdown) {
-            ImGui::Spacing();
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+            ImGui::PushStyleColor(ImGuiCol_ChildBg, IM_COL32(0, 0, 0, 0));
+            if (ImGui::BeginChild("TabMarkdownScroll", ImVec2(0.0f, -footer_reserve), ImGuiChildFlags_None, ImGuiWindowFlags_None)) {
+                ImGui::Spacing();
             ImGui::TextMD("#### Interactive Semantic Markdown & CommonMark Features");
             ImGui::TextMD("Inline pills, badges, formatting, and CommonMark 4.1 thematic breaks:");
             ImGui::Spacing();
@@ -2536,10 +2559,14 @@ void ImGeeShowcaseWidget::buildInterface()
             }
             ImGui::TimedTooltip::MD::Text("Standard button chrome with rich formatted Markdown text centered inside.");
 
-            ImGui::SameLine();
-            if (ImGui::ButtonMD("<icon undo color=#e74c3c /> **Reset**##btn_undo", "**Warning Tooltip:**\nReverts all test settings.")) {
-                // Clicked
+                ImGui::SameLine();
+                if (ImGui::ButtonMD("<icon undo color=#e74c3c /> **Reset**##btn_undo", "**Warning Tooltip:**\nReverts all test settings.")) {
+                    // Clicked
+                }
             }
+            ImGui::EndChild();
+            ImGui::PopStyleColor();
+            ImGui::PopStyleVar();
 
             ImGui::EndTabItem();
         }
@@ -2931,9 +2958,7 @@ void ImGeeShowcaseWidget::buildInterface()
             float pane_right_w = total_pane_w - pane_left_w;
 
             float avail_h = ImGui::GetContentRegionAvail().y;
-            // Reserve space for Close button footer (rendered at 1.0x unscaled chrome scale, flush against child borders)
-            float unscaled_frame_h = ImGui::GetStyle().FontSizeBase + ImGui::GetStyle().FramePadding.y * 2.0f;
-            float footer_reserve = unscaled_frame_h + ImGui::GetStyle().ItemSpacing.y;
+            // Panes adapt to remaining height above the pinned footer
             float pane_h = ImMax(120.0f, avail_h - footer_reserve);
 
             // Seamless 1-click active retention for Word Wrap & Sync Scroll toggles:
