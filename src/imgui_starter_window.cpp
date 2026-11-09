@@ -1741,8 +1741,8 @@ ImGeeShowcaseWidget::ImGeeShowcaseWidget(int width, int height,
     flId = XPLMCreateFlightLoop(&flDef);
 
     SetWindowTitle("ImGee Cockpit Showcase");
-    SetWindowResizingLimits(580, 378, 2560, 1440);
-    SetUnscaledChrome(0, 108);
+    SetWindowResizingLimits(340, 320, 2560, 1440);
+    SetUnscaledChrome(0, 80);
     // Pre-load default note from disk if available
     std::string default_note = "./Resources/plugins/imgui4xp/notes/flight_briefing.md";
     if (!LoadTextFile(default_note, scratchpadText)) {
@@ -1791,8 +1791,8 @@ float ImGeeShowcaseWidget::cbFlightLoop(float, float, int, void* inRefcon)
             ? xplm_WindowDecorationSelfDecoratedResizable
             : xplm_WindowDecorationRoundRectangle;
 
-        int width = std::max(580, right - left);
-        int height = std::max(378, top - bottom);
+        int width = std::max(340, right - left);
+        int height = std::max(320, top - bottom);
 
         auto new_wnd = std::make_shared<ImGeeShowcaseWidget>(width, height, new_dec, xplm_WindowLayerFloatingWindows);
         new_wnd->SetWindowGeometry(left, top, right, bottom);
@@ -1836,8 +1836,8 @@ void ImGeeShowcaseWidget::RestoreWindowRect(const WindowRectSnapshot& rect)
         int w = std::abs(rect.r - rect.l);
         int h = std::abs(rect.t - rect.b);
         if (w > 0 && h > 0) {
-            w = ImClamp(w, 580, 2560);
-            h = ImClamp(h, 378, 1440);
+            w = ImClamp(w, 340, 2560);
+            h = ImClamp(h, 320, 1440);
             SetWindowGeometryVR(w, h);
         }
         return;
@@ -1854,7 +1854,7 @@ void ImGeeShowcaseWidget::RestoreWindowRect(const WindowRectSnapshot& rect)
     int r = rect.r;
     int b = rect.b;
 
-    ClampGeometryToScreen(l, t, r, b, 580, 378, 2560, 1440, GetEffectiveTopMargin());
+    ClampGeometryToScreen(l, t, r, b, 340, 320, 2560, 1440, GetEffectiveTopMargin());
 
     SetWindowGeometry(l, t, r, b);
 }
@@ -1920,11 +1920,17 @@ void ImGeeShowcaseWidget::buildInterface()
     // 1. Container / Window Chrome: Baseline 1.0x scale (rock-solid, non-twitching controls)
     ImGui::SetWindowFontScale(1.0f);
 
-    // Title on left
-    ImGui::TextMD("# ImGee UX & Modern Cockpit Suite");
+    // Title on left (responsive title length prevents right-clipping on compact zoom)
+    const char* title_md = (ImGui::GetWindowWidth() > 540.0f) ? "# ImGee UX & Modern Cockpit Suite"
+                         : (ImGui::GetWindowWidth() > 400.0f) ? "# ImGee Showcase"
+                         : "# ImGee";
+    const char* title_plain = (ImGui::GetWindowWidth() > 540.0f) ? "ImGee UX & Modern Cockpit Suite"
+                            : (ImGui::GetWindowWidth() > 400.0f) ? "ImGee Showcase"
+                            : "ImGee";
+    ImGui::TextMD(title_md);
 
     // Steppers + Slider + Reset + Fit + Cursor suite (responsive width in chrome)
-    const float title_w = Font9 ? Font9->CalcTextSizeA(Font9->LegacySize, FLT_MAX, -1.0f, "ImGee UX & Modern Cockpit Suite").x : 315.0f;
+    const float title_w = Font9 ? Font9->CalcTextSizeA(Font9->LegacySize, FLT_MAX, -1.0f, title_plain).x : 315.0f;
     const float min_offset = ImGui::GetStyle().WindowPadding.x + title_w + ImGui::GetStyle().ItemSpacing.x;
     const float fixed_controls_w = 139.0f;
     ImGuiWindow* cur_win = ImGui::GetCurrentWindow();
@@ -2120,7 +2126,10 @@ void ImGeeShowcaseWidget::buildInterface()
         }
     }
 
-    // Row 2: Cockpit Environment & Theme Controls (invariant 1.0x chrome scale above tabs)
+    // 2. Inner Content Canvas: Apply dynamic _fontAdjust to Row 2, tabs, and interactive controls
+    ImGui::SetWindowFontScale(_fontAdjust);
+
+    // Row 2: Cockpit Environment & Theme Controls (scales smoothly with window zoom ratio)
     ImGui::AlignTextToFramePadding();
     ImGui::TextDisabled("Cockpit Suite Reference:");
     if (ImGui::IsItemHovered()) {
@@ -2131,14 +2140,14 @@ void ImGeeShowcaseWidget::buildInterface()
     const float sc_toggle_w = CalcToggleButtonWidth("Transparent##sc_trans");
     const float opac_lbl_w = ImGui::CalcTextSize("Opacity:").x;
     const float theme_lbl_w = ImGui::CalcTextSize("Theme:").x;
-    const float theme_combo_w = 135.0f;
-    const float theme_section_w = theme_lbl_w + 4.0f + theme_combo_w;
-    const float section_gap = 10.0f;
+    const float theme_combo_w = 135.0f * _fontAdjust;
+    const float theme_section_w = theme_lbl_w + 4.0f * _fontAdjust + theme_combo_w;
+    const float section_gap = 10.0f * _fontAdjust;
 
     // When transparent, Opacity appears to the LEFT of the Transparent toggle;
     // this keeps Transparent and Theme completely invariant (zero shift when toggling!)
-    const float opac_slider_w = 80.0f;
-    const float opac_section_w = is_sc_trans ? (opac_lbl_w + 4.0f + opac_slider_w + section_gap) : 0.0f;
+    const float opac_slider_w = 80.0f * _fontAdjust;
+    const float opac_section_w = is_sc_trans ? (opac_lbl_w + 4.0f * _fontAdjust + opac_slider_w + section_gap) : 0.0f;
     const float r2_suite_w = opac_section_w + sc_toggle_w + section_gap + theme_section_w;
 
     const float min_r2_offset = ImGui::GetCursorPosX() + ImGui::GetStyle().ItemSpacing.x;
@@ -2221,8 +2230,6 @@ void ImGeeShowcaseWidget::buildInterface()
 
     ImGui::Spacing();
 
-    // 2. Inner Content Canvas: Apply dynamic _fontAdjust to all tabs and interactive controls    // 2. Inner Content Canvas: Apply dynamic _fontAdjust to all tabs and interactive controls
-    ImGui::SetWindowFontScale(_fontAdjust);
 
     if (ImGui::BeginTabBar("ImGeeShowcaseTabBar", ImGuiTabBarFlags_NoTooltip)) {
         bool tab_knobs = ImGui::BeginTabItem("Avionics Knobs & Sliders");
