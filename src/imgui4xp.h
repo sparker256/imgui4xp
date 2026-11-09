@@ -55,4 +55,14 @@ extern ImgWindowSPtrVecTy gWndList;
 /// Calculate window's standard coordinates
 void CalcWinCoords (int& left, int& top, int& right, int& bottom);
 
+/// Creates another window right inside the list
+void AddWindow (XPLMWindowDecoration decoration = xplm_WindowDecorationRoundRectangle,
+                XPLMWindowLayer layer = xplm_WindowLayerFloatingWindows);
+
+// Plugin menu and command item indices
+extern XPLMMenuID g_hPluginMenu;
+extern int g_menuItemDemo;
+extern int g_menuItemShowcase;
+extern int g_menuItemGather;
+
 #endif // #ifndef IMGUI4XP_H

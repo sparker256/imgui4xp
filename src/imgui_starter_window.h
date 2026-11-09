@@ -38,6 +38,7 @@ inline ImFont* FontMono = nullptr;
 inline ImFont* FontSmall = nullptr;
 inline ImFont* FontTiny = nullptr;
 
+#if defined(IMGEE_VERSION)
 // Dedicated fixed-size, non-scrollable window showcasing ImGee UX suite (ImgWindow/contrib/)
 class ImGeeShowcaseWidget: public ImgWindow {
 public:
@@ -64,6 +65,7 @@ protected:
 private:
     XPLMFlightLoopID flId = nullptr;
     bool requestSwapDecoration = false;
+    XPLMWindowPositioningMode nextWinPosMode = -1;
     float mWindowOpacity = 0.80f;
     bool mIsGlassHUD = false;
 
@@ -141,6 +143,16 @@ typedef ImGeeShowcaseWidget ContribShowcaseWidget;
 void ShowImGeeShowcaseWindow();
 inline void ShowContribShowcaseWindow() { ShowImGeeShowcaseWindow(); }
 inline std::shared_ptr<ImGeeShowcaseWidget> s_pShowcaseWidget = nullptr;
+void ToggleImGeeShowcaseWindow();
+#else
+inline void ToggleImGeeShowcaseWindow() {}
+#endif
+
+class ImguiWidget;
+inline std::shared_ptr<ImguiWidget> s_pStarterWidget = nullptr;
+void UpdateMenuCheckmarks();
+void ToggleStarterWindow();
+void GatherAllWindows();
 
 // Our own class defining our own UI
 class ImguiWidget: public ImgWindow {

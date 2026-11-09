@@ -468,6 +468,7 @@ void configureImgWindow()
       FontTiny = ImgWindow::sFontAtlas->AddFontFromFileTTF("./Resources/fonts/Roboto-Regular.ttf", 10);
   }
 
+#if defined(IMGEE_VERSION)
   // Configure default Markdown font associations & link callback
   static ImGui::MarkdownConfig s_MarkdownConfig;
   s_MarkdownConfig.h1Font = Font9;      // Roboto-Bold 20
@@ -523,12 +524,15 @@ void configureImgWindow()
     ImGui::RegisterMarkdownStyleTag("cam", "green bold mono");
     ImGui::RegisterMarkdownTagAlias("tip", "<style gold><b>:star: Tip:</b></style> %s");
     ImGui::RegisterMarkdownTagAlias("hotkey", "**[<style #40c0ff mono>%s</style>]**");
+#endif
 }
 
 // Undo what we did in configureImgWindow()
 void cleanupAfterImgWindow()
 {
+#if defined(IMGEE_VERSION)
     s_pShowcaseWidget.reset();
+#endif
     // Clean up our custom loaded image texture
     if (ImguiWidget::image_id) {
         ImgWindow::DeleteTexture(ImguiWidget::image_id);
@@ -691,11 +695,17 @@ void ImguiWidget::buildInterface() {
         if (is_hovered) {
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
         }
+#if defined(IMGEE_VERSION) && !defined(IMGEE_DISABLE_TIMED_TOOLTIP)
         ImGui::TimedTooltip::TextMDProxy("##DemoFauxGripDragHandle", is_hovered,
             "**Window Drag Handle** (Glass HUD)\n"
             "• Left-drag here to reposition window.\n"
             "• *ProTip:* You can **right-drag anywhere** inside the window to move it!"
         );
+#else
+        if (is_hovered) {
+            ImGui::SetTooltip("Window Drag Handle (Glass HUD)\nLeft-drag here to reposition window.\nProTip: You can right-drag anywhere inside the window to move it!");
+        }
+#endif
     }
     
     // Button with fixed width 30 and standard height
@@ -715,8 +725,10 @@ void ImguiWidget::buildInterface() {
         if (bBtnClose) {
             // Right-aligned close button for frameless custom-decorated windows
             ImGui::SameLine(ImGui::GetContentRegionAvail().x - (numBtn * btnWidth));
-            if (ImGui::ButtonTooltip(ICON_FA_WINDOW_CLOSE, "Close window"))
+            if (ImGui::ButtonTooltip(ICON_FA_WINDOW_CLOSE, "Close window")) {
                 SetVisible(false);
+                UpdateMenuCheckmarks();
+            }
             --numBtn;
         }
         if (bBtnVR) {
@@ -765,47 +777,74 @@ void ImguiWidget::buildInterface() {
     ImGui::Text("X-Plane Window Id: %p", GetWindowId());
     ImGui::EndGroup();
 
-    // Modern Backdrop Opacity & Window Mode Controller
+    // Modern Backdrop Opacity / Saturation & Window Mode Controller
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::AlignTextToFramePadding();
     bool is_bill_trans = IsSelfDecorated();
-    if (ImGui::ToggleButton("Transparent##bill_trans", &is_bill_trans,
-                            "Transparent: <pill color=#7f8c8d>OFF</pill> <pill color=#1a252f fg=#555555>ON</pill>\n\nStandard X-Plane rounded bezel (solid).\nClick to switch to Modern Glass HUD mode.",
-                            "Transparent: <pill color=#1a252f fg=#555555>OFF</pill> <pill color=#2ecc71>ON</pill>\n\nModern Glass HUD panel with continuous opacity controls.\nClick to restore native X-Plane bezel."))
+    bool is_popped_out = IsPoppedOut();
+    const char* bill_toggle_lbl = is_popped_out ? "Custom##bill_trans" : "Transparent##bill_trans";
+    const char* bill_off_tip = is_popped_out
+        ? "Custom: <pill color=#7f8c8d>OFF</pill> <pill color=#1a252f fg=#555555>ON</pill>\n\nStandard X-Plane OS window styling.\nClick to switch to custom styling."
+        : "Transparent: <pill color=#7f8c8d>OFF</pill> <pill color=#1a252f fg=#555555>ON</pill>\n\nStandard X-Plane rounded bezel (solid).\nClick to switch to Modern Glass HUD mode.";
+    const char* bill_on_tip = is_popped_out
+        ? "Custom: <pill color=#1a252f fg=#555555>OFF</pill> <pill color=#2ecc71>ON</pill>\n\nCustom styling with continuous saturation controls.\nClick to restore standard styling."
+        : "Transparent: <pill color=#1a252f fg=#555555>OFF</pill> <pill color=#2ecc71>ON</pill>\n\nModern Glass HUD panel with continuous opacity controls.\nClick to restore native X-Plane bezel.";
+
+#if defined(IMGEE_VERSION) && !defined(IMGEE_DISABLE_WIDGETS)
+    if (ImGui::ToggleButton(bill_toggle_lbl, &is_bill_trans, bill_off_tip, bill_on_tip))
     {
         requestSwapDecoration = true;
         XPLMScheduleFlightLoop(flId, -1.0, 1);
     }
+#else
+    if (ImGui::Checkbox(bill_toggle_lbl, &is_bill_trans))
+    {
+        requestSwapDecoration = true;
+        XPLMScheduleFlightLoop(flId, -1.0, 1);
+    }
+#endif
     if (is_bill_trans) {
         ImGui::SameLine(0.0f, 12.0f);
         ImGui::AlignTextToFramePadding();
-        ImGui::TextUnformatted("Opacity:");
+        ImGui::TextUnformatted(is_popped_out ? "Saturation:" : "Opacity:");
         ImGui::SameLine(0.0f, 6.0f);
         ImGui::SetNextItemWidth(120.0f);
+#if defined(IMGEE_VERSION) && !defined(IMGEE_DISABLE_WIDGETS)
         if (ImGui::PercentSliderWithReset("##BackdropOpacity", &mWindowOpacity, 0.80f, 0.10f, 1.00f, "%.0f%%")) {
             style.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
             style.Colors[ImGuiCol_Border].w = std::min(1.0f, mWindowOpacity * 0.8f + 0.2f);
         }
         char opac_tip[256];
-        std::snprintf(opac_tip, sizeof(opac_tip),
-            "**Continuous Backdrop Opacity**:\n"
-            "Drag or mouse-wheel to seamlessly tune glass transparency over the 3D cockpit.\n"
-            "Current: **%.0f%%** | Click :reset: to restore factory 80%% glass.",
-            mWindowOpacity * 100.0f);
+        if (is_popped_out) {
+            std::snprintf(opac_tip, sizeof(opac_tip),
+                "**Desktop Window Background Saturation**:\n"
+                "Drag or mouse-wheel to tune custom background contrast.\n"
+                "Current: **%.0f%%** | Click :reset: to restore factory 80%%.",
+                mWindowOpacity * 100.0f);
+        } else {
+            std::snprintf(opac_tip, sizeof(opac_tip),
+                "**Continuous Backdrop Opacity**:\n"
+                "Drag or mouse-wheel to seamlessly tune glass transparency over the 3D cockpit.\n"
+                "Current: **%.0f%%** | Click :reset: to restore factory 80%% glass.",
+                mWindowOpacity * 100.0f);
+        }
         ImGui::TimedTooltip::MD::Text("%s", opac_tip);
+#else
+        if (ImGui::SliderFloat("##BackdropOpacity", &mWindowOpacity, 0.10f, 1.00f, "%.2f")) {
+            style.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
+            style.Colors[ImGuiCol_Border].w = std::min(1.0f, mWindowOpacity * 0.8f + 0.2f);
+        }
+#endif
     }
     ImGui::Separator();
     ImGui::Spacing();
 
+#if defined(IMGEE_VERSION)
     bool tree_open = ImGui::TreeNodeEx("ImGee UX & Modern Cockpit Suite", ImGuiTreeNodeFlags_None);
     ImGui::SameLine(0.0f, 8.0f);
     if (ImGui::SmallButton("Open ImGee Cockpit Showcase Window...##imgee_showcase_btn")) {
-        if (s_pShowcaseWidget && s_pShowcaseWidget->GetVisible()) {
-            s_pShowcaseWidget->SetVisible(false);
-        } else {
-            ShowImGeeShowcaseWindow();
-        }
+        ToggleImGeeShowcaseWindow();
     }
     ImGui::TimedTooltip::MD::Text("Opens or toggles the dedicated, non-scrollable ImGee showcase window featuring avionics knobs, procedural dials, and live scratchpad.");
 
@@ -840,6 +879,7 @@ void ImguiWidget::buildInterface() {
 
         ImGui::TreePop();
     }
+#endif
 
     if (ImGui::TreeNode("Styling Widgets")) {
         const char *text = "Centered Text";
@@ -929,10 +969,12 @@ void ImguiWidget::buildInterface() {
         ImGui::TextUnformatted("Some Text");
         ImGui::PopStyleColor();
 
+#if defined(IMGEE_VERSION)
         ImGui::Separator();
         ImGui::TextMD("#### Modern Cockpit Switch (ImGee):");
         ImGui::ToggleButton("Master Caution Switch", &makeRed);
         ImGui::TimedTooltip::MD::Text("Animated cockpit rocker switch with automatic dual-state tooltip.");
+#endif
 
         ImGui::TreePop();
     }
@@ -1605,8 +1647,16 @@ float ImguiWidget::cbFlightLoop(float, float, int, void* inRefcon)
     // Has user requested decoration swap (Solid <-> Modern Glass HUD)?
     if (wnd.requestSwapDecoration) {
         wnd.requestSwapDecoration = false;
+        bool was_popped_out = wnd.IsPoppedOut();
+        int osL = 0, osT = 0, osR = 0, osB = 0;
+        if (was_popped_out) {
+            wnd.GetWindowGeometryOS(osL, osT, osR, osB);
+        }
         int left, top, right, bottom;
-        wnd.GetCurrentWindowGeometry(left, top, right, bottom);
+        wnd.GetWindowGeometry(left, top, right, bottom);
+        if (right <= left || top <= bottom) {
+            CalcWinCoords(left, top, right, bottom);
+        }
         bool is_vis = wnd.GetVisible();
         XPLMWindowDecoration cur_dec = wnd.GetWindowDecoration();
         XPLMWindowDecoration new_dec = (cur_dec == xplm_WindowDecorationRoundRectangle)
@@ -1615,6 +1665,13 @@ float ImguiWidget::cbFlightLoop(float, float, int, void* inRefcon)
 
         auto new_wnd = std::make_shared<ImguiWidget>(left, top, right, bottom, new_dec, xplm_WindowLayerFloatingWindows);
         new_wnd->mWindowOpacity = wnd.mWindowOpacity;
+
+        if (was_popped_out) {
+            new_wnd->SetWindowPositioningMode(xplm_WindowPopOut, -1);
+            if (osR > osL && osT > osB) {
+                new_wnd->SetWindowGeometryOS(osL, osT, osR, osB);
+            }
+        }
 
         // Hide and retire the old window immediately so it stops rendering underneath!
         wnd.SetVisible(false);
@@ -1630,7 +1687,9 @@ float ImguiWidget::cbFlightLoop(float, float, int, void* inRefcon)
                 break;
             }
         }
+        s_pStarterWidget = new_wnd;
         new_wnd->SetVisible(is_vis);
+        UpdateMenuCheckmarks();
         return 0.0f;
     }
 
@@ -1650,6 +1709,7 @@ float ImguiWidget::cbFlightLoop(float, float, int, void* inRefcon)
             wnd.SetWindowGeometry(left, top, right, bottom);
         }
         wnd.nextWinPosMode = -1;
+        UpdateMenuCheckmarks();
     }
     
     // don't call me again
@@ -1657,6 +1717,7 @@ float ImguiWidget::cbFlightLoop(float, float, int, void* inRefcon)
 }
 
 
+#if defined(IMGEE_VERSION)
 // MARK: - ImGeeShowcaseWidget Implementation
 
 // Static File Helpers for Live Scratchpad
@@ -1800,8 +1861,16 @@ float ImGeeShowcaseWidget::cbFlightLoop(float, float, int, void* inRefcon)
 
     if (wnd.requestSwapDecoration) {
         wnd.requestSwapDecoration = false;
+        bool was_popped_out = wnd.IsPoppedOut();
+        int osL = 0, osT = 0, osR = 0, osB = 0;
+        if (was_popped_out) {
+            wnd.GetWindowGeometryOS(osL, osT, osR, osB);
+        }
         int left, top, right, bottom;
-        wnd.GetCurrentWindowGeometry(left, top, right, bottom);
+        wnd.GetWindowGeometry(left, top, right, bottom);
+        if (right <= left || top <= bottom) {
+            CalcWinCoords(left, top, right, bottom);
+        }
         bool is_vis = wnd.GetVisible();
         XPLMWindowDecoration cur_dec = wnd.GetWindowDecoration();
         XPLMWindowDecoration new_dec = (cur_dec == xplm_WindowDecorationRoundRectangle)
@@ -1825,6 +1894,13 @@ float ImGeeShowcaseWidget::cbFlightLoop(float, float, int, void* inRefcon)
             new_wnd->SetBaselineWindowSize(base_w, base_h);
         }
 
+        if (was_popped_out) {
+            new_wnd->SetWindowPositioningMode(xplm_WindowPopOut, -1);
+            if (osR > osL && osT > osB) {
+                new_wnd->SetWindowGeometryOS(osL, osT, osR, osB);
+            }
+        }
+
         // Hide old window immediately so it stops rendering underneath!
         wnd.SetVisible(false);
 
@@ -1840,7 +1916,24 @@ float ImGeeShowcaseWidget::cbFlightLoop(float, float, int, void* inRefcon)
         }
         s_pShowcaseWidget = new_wnd;
         new_wnd->SetVisible(is_vis);
+        UpdateMenuCheckmarks();
         return 0.0f;
+    }
+
+    if (wnd.nextWinPosMode >= 0) {
+        wnd.SetWindowPositioningMode(wnd.nextWinPosMode);
+        if (wnd.nextWinPosMode == xplm_WindowPositionFree) {
+            int left, top, right, bottom;
+            wnd.GetCurrentWindowGeometry(left, top, right, bottom);
+            const int width  = right - left;
+            const int height = top - bottom;
+            CalcWinCoords(left, top, right, bottom);
+            right  = left + width;
+            bottom = top  - height;
+            wnd.SetWindowGeometry(left, top, right, bottom);
+        }
+        wnd.nextWinPosMode = -1;
+        UpdateMenuCheckmarks();
     }
     return 0.0f;
 }
@@ -1885,6 +1978,7 @@ void ShowImGeeShowcaseWindow()
     }
     s_pShowcaseWidget->SetVisible(true);
     s_pShowcaseWidget->BringWindowToFront();
+    UpdateMenuCheckmarks();
     if (prevContext) {
         ImGui::SetCurrentContext(prevContext);
     }
@@ -1965,7 +2059,7 @@ void ImGeeShowcaseWidget::buildInterface()
     // Steppers + Slider + Reset + Fit + Cursor suite (responsive width in chrome)
     const float title_w = Font9 ? Font9->CalcTextSizeA(Font9->LegacySize, FLT_MAX, -1.0f, title_plain).x : 315.0f;
     const float min_offset = ImGui::GetStyle().WindowPadding.x + title_w + ImGui::GetStyle().ItemSpacing.x;
-    const float fixed_controls_w = 139.0f;
+    const float fixed_controls_w = 175.0f + (IsSelfDecorated() ? 30.0f : 0.0f) + ((vr_is_enabled && !IsInVR()) ? 28.0f : 0.0f);
     ImGuiWindow* cur_win = ImGui::GetCurrentWindow();
     const float scrollbar_pad = (cur_win && cur_win->ScrollbarY) ? cur_win->ScrollbarSizes.x : 0.0f;
     const float right_margin = ImGui::GetStyle().WindowPadding.x + scrollbar_pad;
@@ -2152,10 +2246,33 @@ void ImGeeShowcaseWidget::buildInterface()
             : "**ImGui Dynamic Cursors:** <pill color=#7f8c8d>DISABLED</pill>\n\nClick to enable ImGui contextual mouse cursors (hand, resize, text).");
     }
 
+    // Window Mode Buttons (Pop-out into OS window / Pop back into simulator)
+    if (IsPoppedOut() || IsInVR()) {
+        ImGui::SameLine(0.0f, 4.0f);
+        if (ToolbarButton(ICON_FA_WINDOW_RESTORE "##sc_popin", "Move back into X-Plane", ImVec2(24.0f, 0.0f))) {
+            nextWinPosMode = xplm_WindowPositionFree;
+            XPLMScheduleFlightLoop(flId, -1.0, 1);
+        }
+    } else {
+        ImGui::SameLine(0.0f, 4.0f);
+        if (ToolbarButton(ICON_FA_WINDOW_MAXIMIZE "##sc_popout", "Pop out into separate OS desktop window", ImVec2(24.0f, 0.0f))) {
+            nextWinPosMode = xplm_WindowPopOut;
+            XPLMScheduleFlightLoop(flId, -1.0, 1);
+        }
+    }
+    if (vr_is_enabled && !IsInVR()) {
+        ImGui::SameLine(0.0f, 4.0f);
+        if (ToolbarButton(ICON_FA_EXTERNAL_LINK_SQUARE_ALT "##sc_vr", "Move into VR", ImVec2(24.0f, 0.0f))) {
+            nextWinPosMode = xplm_WindowVR;
+            XPLMScheduleFlightLoop(flId, -1.0, 1);
+        }
+    }
+
     if (IsSelfDecorated()) {
         ImGui::SameLine(0.0f, 6.0f);
         if (ToolbarButton(ICON_FA_WINDOW_CLOSE "##sc_close", "Close showcase window", ImVec2(24.0f, 0.0f))) {
             SetVisible(false);
+            UpdateMenuCheckmarks();
         }
     }
 
@@ -2170,15 +2287,18 @@ void ImGeeShowcaseWidget::buildInterface()
     }
 
     bool is_sc_trans = IsSelfDecorated();
-    const float sc_toggle_w = CalcToggleButtonWidth("Transparent##sc_trans");
-    const float opac_lbl_w = ImGui::CalcTextSize("Opacity:").x;
+    bool is_sc_popped = IsPoppedOut();
+    const char* sc_toggle_name = is_sc_popped ? "Custom##sc_trans" : "Transparent##sc_trans";
+    const char* sc_slider_label = is_sc_popped ? "Saturation:" : "Opacity:";
+    const float sc_toggle_w = CalcToggleButtonWidth(sc_toggle_name);
+    const float opac_lbl_w = ImGui::CalcTextSize(sc_slider_label).x;
     const float theme_lbl_w = ImGui::CalcTextSize("Theme:").x;
     const float theme_combo_w = 135.0f * _fontAdjust;
     const float theme_section_w = theme_lbl_w + 4.0f * _fontAdjust + theme_combo_w;
     const float section_gap = 10.0f * _fontAdjust;
 
-    // When transparent, Opacity appears to the LEFT of the Transparent toggle;
-    // this keeps Transparent and Theme completely invariant (zero shift when toggling!)
+    // When transparent/custom, Opacity/Saturation appears to the LEFT of the toggle;
+    // this keeps toggle and Theme completely invariant (zero shift when toggling!)
     const float opac_slider_w = 80.0f * _fontAdjust;
     const float opac_section_w = is_sc_trans ? (opac_lbl_w + 4.0f * _fontAdjust + opac_slider_w + section_gap) : 0.0f;
     const float r2_suite_w = opac_section_w + sc_toggle_w + section_gap + theme_section_w;
@@ -2187,32 +2307,45 @@ void ImGeeShowcaseWidget::buildInterface()
     const float r2_target_offset = ImGui::GetWindowWidth() - r2_suite_w - right_margin;
     ImGui::SameLine(ImMax(min_r2_offset, r2_target_offset));
 
-    // 1. Opacity Slider (appears seamlessly to the left of Transparent toggle when active)
+    // 1. Opacity / Saturation Slider
     if (is_sc_trans) {
         ImGui::AlignTextToFramePadding();
-        ImGui::TextUnformatted("Opacity:");
+        ImGui::TextUnformatted(sc_slider_label);
         ImGui::SameLine(0.0f, 4.0f);
         ImGui::SetNextItemWidth(opac_slider_w);
-        if (ImGui::PercentSliderWithReset("##ShowcaseOpacity", &mWindowOpacity, 0.80f, 0.10f, 1.00f, "%.0f%%")) {
+        if (ImGui::PercentSliderWithReset(is_sc_popped ? "##ShowcaseSaturation" : "##ShowcaseOpacity", &mWindowOpacity, 0.80f, 0.10f, 1.00f, "%.0f%%")) {
             ImGuiStyle& st = ImGui::GetStyle();
             st.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
             st.Colors[ImGuiCol_Border].w = std::min(1.0f, mWindowOpacity * 0.8f + 0.2f);
         }
         char sc_opac_tip[256];
-        std::snprintf(sc_opac_tip, sizeof(sc_opac_tip),
-            "**Continuous Backdrop Opacity**:\n"
-            "Drag or mouse-wheel to seamlessly tune glass transparency over the 3D cockpit.\n"
-            "Current: **%.0f%%** | Click :reset: to restore factory 80%% glass.",
-            mWindowOpacity * 100.0f);
+        if (is_sc_popped) {
+            std::snprintf(sc_opac_tip, sizeof(sc_opac_tip),
+                "**Desktop Window Background Saturation**:\n"
+                "Drag or mouse-wheel to tune custom background contrast.\n"
+                "Current: **%.0f%%** | Click :reset: to restore factory 80%%.",
+                mWindowOpacity * 100.0f);
+        } else {
+            std::snprintf(sc_opac_tip, sizeof(sc_opac_tip),
+                "**Continuous Backdrop Opacity**:\n"
+                "Drag or mouse-wheel to seamlessly tune glass transparency over the 3D cockpit.\n"
+                "Current: **%.0f%%** | Click :reset: to restore factory 80%% glass.",
+                mWindowOpacity * 100.0f);
+        }
         ImGui::TimedTooltip::MD::Text("%s", sc_opac_tip);
 
         ImGui::SameLine(0.0f, section_gap);
     }
 
-    // 2. Transparent HUD Toggle (rock-solid invariant position!)
-    if (ImGui::ToggleButton("Transparent##sc_trans", &is_sc_trans,
-                            "Transparent HUD: <pill color=#7f8c8d>OFF</pill> <pill color=#1a252f fg=#555555>ON</pill>\n\nStandard X-Plane rounded rectangle bezel.\nClick to switch to frameless Glass HUD.",
-                            "Transparent HUD: <pill color=#1a252f fg=#555555>OFF</pill> <pill color=#2ecc71>ON</pill>\n\nModern Glass HUD panel with continuous opacity controls.\nClick to restore native X-Plane bezel."))
+    // 2. Transparent / Custom HUD Toggle (rock-solid invariant position!)
+    const char* sc_off_tip = is_sc_popped
+        ? "Custom HUD: <pill color=#7f8c8d>OFF</pill> <pill color=#1a252f fg=#555555>ON</pill>\n\nStandard desktop OS styling.\nClick to switch to custom frameless HUD."
+        : "Transparent HUD: <pill color=#7f8c8d>OFF</pill> <pill color=#1a252f fg=#555555>ON</pill>\n\nStandard X-Plane rounded rectangle bezel.\nClick to switch to frameless Glass HUD.";
+    const char* sc_on_tip = is_sc_popped
+        ? "Custom HUD: <pill color=#1a252f fg=#555555>OFF</pill> <pill color=#2ecc71>ON</pill>\n\nCustom HUD with continuous saturation controls.\nClick to restore standard desktop styling."
+        : "Transparent HUD: <pill color=#1a252f fg=#555555>OFF</pill> <pill color=#2ecc71>ON</pill>\n\nModern Glass HUD panel with continuous opacity controls.\nClick to restore native X-Plane bezel.";
+
+    if (ImGui::ToggleButton(sc_toggle_name, &is_sc_trans, sc_off_tip, sc_on_tip))
     {
         requestSwapDecoration = true;
         XPLMScheduleFlightLoop(flId, -1.0, 1);
@@ -3293,3 +3426,5 @@ void ImGeeShowcaseWidget::buildInterface()
         _baselineRect.valid = true;
     }
 }
+
+#endif // IMGEE_VERSION
