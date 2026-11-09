@@ -735,11 +735,21 @@ void ImguiWidget::buildInterface() {
     // Modern Backdrop Opacity & Window Mode Controller
     ImGui::Spacing();
     ImGui::Separator();
-    if (IsSelfDecorated()) {
+    ImGui::AlignTextToFramePadding();
+    bool is_bill_trans = IsSelfDecorated();
+    if (ImGui::ToggleButton("Transparent##bill_trans", &is_bill_trans,
+                            "Transparent: <pill color=#7f8c8d>OFF</pill> <pill color=#1a252f fg=#555555>ON</pill>\n\nStandard X-Plane rounded bezel (solid).\nClick to switch to Modern Glass HUD mode.",
+                            "Transparent: <pill color=#1a252f fg=#555555>OFF</pill> <pill color=#2ecc71>ON</pill>\n\nModern Glass HUD panel with continuous opacity controls.\nClick to restore native X-Plane bezel."))
+    {
+        requestSwapDecoration = true;
+        XPLMScheduleFlightLoop(flId, -1.0, 1);
+    }
+    if (is_bill_trans) {
+        ImGui::SameLine(0.0f, 12.0f);
         ImGui::AlignTextToFramePadding();
-        ImGui::TextMD("**Glass Opacity:**");
-        ImGui::SameLine();
-        ImGui::SetNextItemWidth(140.0f);
+        ImGui::TextUnformatted("Opacity:");
+        ImGui::SameLine(0.0f, 6.0f);
+        ImGui::SetNextItemWidth(120.0f);
         if (ImGui::PercentSliderWithReset("##BackdropOpacity", &mWindowOpacity, 0.80f, 0.10f, 1.00f, "%.0f%%")) {
             style.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
             style.Colors[ImGuiCol_Border].w = std::min(1.0f, mWindowOpacity * 0.8f + 0.2f);
@@ -751,58 +761,6 @@ void ImguiWidget::buildInterface() {
             "Current: **%.0f%%** | Click [Reset] to restore factory 80%% glass.",
             mWindowOpacity * 100.0f);
         ImGui::TimedTooltip::MD::Text("%s", opac_tip);
-
-        ImGui::SameLine(0.0f, 10.0f);
-        if (ImGui::SmallButton("100% Solid")) {
-            mWindowOpacity = 1.0f;
-            style.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
-            style.Colors[ImGuiCol_Border].w = 1.0f;
-        }
-        ImGui::TimedTooltip::MD::Text("%s", "100% Opaque (max contrast for high-glare daytime flight).");
-
-        ImGui::SameLine();
-        if (ImGui::SmallButton("80% Glass")) {
-            mWindowOpacity = 0.80f;
-            style.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
-            style.Colors[ImGuiCol_Border].w = 0.70f;
-        }
-        ImGui::TimedTooltip::MD::Text("%s", "80% Smoked Glass (ideal balance of contrast & runway visibility).");
-
-        ImGui::SameLine();
-        if (ImGui::SmallButton("45% HUD")) {
-            mWindowOpacity = 0.45f;
-            style.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
-            style.Colors[ImGuiCol_Border].w = 0.45f;
-        }
-        ImGui::TimedTooltip::MD::Text("%s", "45% Semi-Transparent HUD overlay.");
-
-        ImGui::SameLine();
-        if (ImGui::SmallButton("15% Ghost")) {
-            mWindowOpacity = 0.15f;
-            style.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
-            style.Colors[ImGuiCol_Border].w = 0.25f;
-        }
-        ImGui::TimedTooltip::MD::Text("%s", "15% Ultra-light see-through HUD mode.");
-
-        ImGui::SameLine(0.0f, 14.0f);
-        if (ImGui::SmallButton("Switch to Native Bezel...")) {
-            requestSwapDecoration = true;
-            XPLMScheduleFlightLoop(flId, -1.0, 1);
-        }
-        ImGui::TimedTooltip::MD::Text("%s",
-            "**X-Plane Native Bezel**:\n"
-            "Re-creates window with standard X-Plane rounded rectangle bezel.");
-    } else {
-        ImGui::AlignTextToFramePadding();
-        ImGui::TextDisabled("Backdrop: X-Plane Native Bezel (Solid Maps Style)");
-        ImGui::SameLine();
-        if (ImGui::SmallButton("Switch to Modern Glass HUD Mode...")) {
-            requestSwapDecoration = true;
-            XPLMScheduleFlightLoop(flId, -1.0, 1);
-        }
-        ImGui::TimedTooltip::MD::Text("%s",
-            "**Modern Cockpit Glass Mode** (SelfDecoratedResizable):\n"
-            "Converts window to a frameless, resizable glass HUD panel with continuous opacity controls.");
     }
     ImGui::Separator();
     ImGui::Spacing();
@@ -2121,80 +2079,10 @@ void ImGeeShowcaseWidget::buildInterface()
         }
     }
 
-    // Modern Backdrop Opacity & Mode Controller
-    ImGuiStyle& style = ImGui::GetStyle();
-    if (IsSelfDecorated()) {
-        ImGui::AlignTextToFramePadding();
-        ImGui::TextMD("**Glass Opacity:**");
-        ImGui::SameLine();
-        ImGui::SetNextItemWidth(120.0f);
-        if (ImGui::PercentSliderWithReset("##ShowcaseOpacity", &mWindowOpacity, 0.80f, 0.10f, 1.00f, "%.0f%%")) {
-            style.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
-            style.Colors[ImGuiCol_Border].w = std::min(1.0f, mWindowOpacity * 0.8f + 0.2f);
-        }
-        char opac_tip[256];
-        std::snprintf(opac_tip, sizeof(opac_tip),
-            "**Continuous Backdrop Opacity**:\n"
-            "Drag or mouse-wheel to seamlessly tune glass transparency over the 3D cockpit.\n"
-            "Current: **%.0f%%** | Click [Reset] to restore factory 80%% glass.",
-            mWindowOpacity * 100.0f);
-        ImGui::TimedTooltip::MD::Text("%s", opac_tip);
-
-        ImGui::SameLine(0.0f, 8.0f);
-        if (ImGui::SmallButton("100% Solid##sc")) {
-            mWindowOpacity = 1.0f;
-            style.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
-            style.Colors[ImGuiCol_Border].w = 1.0f;
-        }
-        ImGui::TimedTooltip::MD::Text("%s", "100% Opaque (max contrast for high-glare daytime flight).");
-
-        ImGui::SameLine();
-        if (ImGui::SmallButton("80% Glass##sc")) {
-            mWindowOpacity = 0.80f;
-            style.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
-            style.Colors[ImGuiCol_Border].w = 0.70f;
-        }
-        ImGui::TimedTooltip::MD::Text("%s", "80% Smoked Glass (ideal balance of contrast & runway visibility).");
-
-        ImGui::SameLine();
-        if (ImGui::SmallButton("45% HUD##sc")) {
-            mWindowOpacity = 0.45f;
-            style.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
-            style.Colors[ImGuiCol_Border].w = 0.45f;
-        }
-        ImGui::TimedTooltip::MD::Text("%s", "45% Semi-Transparent HUD overlay.");
-
-        ImGui::SameLine();
-        if (ImGui::SmallButton("15% Ghost##sc")) {
-            mWindowOpacity = 0.15f;
-            style.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
-            style.Colors[ImGuiCol_Border].w = 0.25f;
-        }
-        ImGui::TimedTooltip::MD::Text("%s", "15% Ultra-light see-through HUD mode.");
-
-        ImGui::SameLine(0.0f, 10.0f);
-        if (ImGui::SmallButton("Switch to Native Bezel...##sc")) {
-            requestSwapDecoration = true;
-            XPLMScheduleFlightLoop(flId, -1.0, 1);
-        }
-        ImGui::TimedTooltip::MD::Text("%s",
-            "**X-Plane Native Bezel**:\n"
-            "Re-creates showcase window with standard X-Plane rounded rectangle bezel.");
-    } else {
-        ImGui::AlignTextToFramePadding();
-        ImGui::TextDisabled("Backdrop: X-Plane Native Bezel (Solid Maps Style)");
-        ImGui::SameLine();
-        if (ImGui::SmallButton("Switch to Modern Glass HUD Mode...##sc")) {
-            requestSwapDecoration = true;
-            XPLMScheduleFlightLoop(flId, -1.0, 1);
-        }
-        ImGui::TimedTooltip::MD::Text("%s",
-            "**Modern Cockpit Glass Mode** (SelfDecoratedResizable):\n"
-            "Converts showcase window to a frameless, resizable glass HUD panel with continuous opacity controls.");
-    }
+    ImGui::TextDisabled("Dedicated reference showcase for avionics controls, dials, and CommonMark.");
     ImGui::Spacing();
 
-    // 2. Inner Content Canvas: Apply dynamic _fontAdjust to all tabs and interactive controls
+    // 2. Inner Content Canvas: Apply dynamic _fontAdjust to all tabs and interactive controls    // 2. Inner Content Canvas: Apply dynamic _fontAdjust to all tabs and interactive controls
     ImGui::SetWindowFontScale(_fontAdjust);
 
     if (ImGui::BeginTabBar("ImGeeShowcaseTabBar", ImGuiTabBarFlags_NoTooltip)) {
@@ -3141,7 +3029,7 @@ void ImGeeShowcaseWidget::buildInterface()
         "Pops up above status bar with inverted procedural vector caret.",
         dockCamItems[s_DockCamMode]);
 
-    // ImGee Theme Selector Combo (Charcoal, Rusty, ImGui Stock)
+    // ImGee Theme Selector & Opacity Suite
     const char* const theme_names[] = {
         "Charcoal (Default)",
         "Rusty (Aviation)",
@@ -3149,17 +3037,59 @@ void ImGeeShowcaseWidget::buildInterface()
         "ImGui Classic",
         "ImGui Light"
     };
-    const float theme_combo_w = 145.0f;
+    const float theme_combo_w = 135.0f;
     const float theme_label_w = ImGui::CalcTextSize("Theme:").x;
     const float theme_suite_w = theme_label_w + ImGui::GetStyle().ItemSpacing.x + theme_combo_w;
-    const float footer_margin = ImGui::GetStyle().WindowPadding.x + ((cur_win && cur_win->ScrollbarY) ? cur_win->ScrollbarSizes.x : 0.0f);
-    const float target_theme_x = ImGui::GetWindowWidth() - theme_suite_w - footer_margin;
 
-    if (target_theme_x > ImGui::GetCursorPosX() + 10.0f) {
-        ImGui::SameLine(target_theme_x);
+    const float opac_label_w = ImGui::CalcTextSize("Opacity:").x;
+    const float opac_slider_w = 80.0f;
+    const float opac_suite_w = opac_label_w + ImGui::GetStyle().ItemSpacing.x + opac_slider_w;
+
+    const float toggle_w = CalcToggleButtonWidth("Transparent##sc_trans");
+    const float right_suite_w = theme_suite_w + ImGui::GetStyle().ItemSpacing.x + opac_suite_w + ImGui::GetStyle().ItemSpacing.x + toggle_w;
+
+    const float footer_margin = ImGui::GetStyle().WindowPadding.x + ((cur_win && cur_win->ScrollbarY) ? cur_win->ScrollbarSizes.x : 0.0f);
+    const float target_right_x = ImGui::GetWindowWidth() - right_suite_w - footer_margin;
+
+    if (target_right_x > ImGui::GetCursorPosX() + 10.0f) {
+        ImGui::SameLine(target_right_x);
     } else {
         ImGui::SameLine(0.0f, 10.0f);
     }
+
+    // 1. Transparent HUD Toggle
+    bool is_sc_trans = IsSelfDecorated();
+    if (ImGui::ToggleButton("Transparent##sc_trans", &is_sc_trans,
+                            "Transparent HUD: <pill color=#7f8c8d>OFF</pill> <pill color=#1a252f fg=#555555>ON</pill>\n\nStandard X-Plane rounded rectangle bezel.\nClick to switch to frameless Glass HUD.",
+                            "Transparent HUD: <pill color=#1a252f fg=#555555>OFF</pill> <pill color=#2ecc71>ON</pill>\n\nModern Glass HUD panel with continuous opacity controls.\nClick to restore native X-Plane bezel."))
+    {
+        requestSwapDecoration = true;
+        XPLMScheduleFlightLoop(flId, -1.0, 1);
+    }
+
+    // 2. Opacity Slider with 1-Click Baseline Reset
+    ImGui::SameLine(0.0f, 6.0f);
+    ImGui::TextUnformatted("Opacity:");
+    ImGui::SameLine(0.0f, 4.0f);
+    ImGui::SetNextItemWidth(opac_slider_w);
+    if (ImGui::PercentSliderWithReset("##ShowcaseOpacity", &mWindowOpacity, 0.80f, 0.10f, 1.00f, "%.0f%%")) {
+        if (!IsSelfDecorated()) {
+            // Dragging opacity while in bezel mode automatically engages transparent glass HUD!
+            requestSwapDecoration = true;
+            XPLMScheduleFlightLoop(flId, -1.0, 1);
+        } else {
+            ImGuiStyle& st = ImGui::GetStyle();
+            st.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
+            st.Colors[ImGuiCol_Border].w = std::min(1.0f, mWindowOpacity * 0.8f + 0.2f);
+        }
+    }
+    char sc_opac_tip[256];
+    std::snprintf(sc_opac_tip, sizeof(sc_opac_tip),
+        "**Continuous Backdrop Opacity**:\n"
+        "Drag or mouse-wheel to seamlessly tune glass transparency over the 3D cockpit.\n"
+        "Current: **%.0f%%** | Click [Reset] to restore factory 80%% glass.",
+        mWindowOpacity * 100.0f);
+    ImGui::TimedTooltip::MD::Text("%s", sc_opac_tip);
 
     static const char* const theme_tips[] = {
         "**Charcoal (Default)**\nSleek modern slate/graphite flight deck palette.",
@@ -3168,8 +3098,11 @@ void ImGeeShowcaseWidget::buildInterface()
         "**ImGui Classic**\nLegacy Dear ImGui purplish-blue color scheme.",
         "**ImGui Light**\nHigh-contrast light daytime color scheme."
     };
+
+    // 3. Theme Selector
+    ImGui::SameLine(0.0f, 6.0f);
     ImGui::TextUnformatted("Theme:");
-    ImGui::SameLine();
+    ImGui::SameLine(0.0f, 4.0f);
     ImGui::SetNextItemWidth(theme_combo_w);
     bool theme_changed = ImGui::MouseWheelCombo("##ThemePicker", &s_currentTheme, theme_names, IM_ARRAYSIZE(theme_names), -1, true /* wrap */, theme_tips);
     if (theme_changed) {
