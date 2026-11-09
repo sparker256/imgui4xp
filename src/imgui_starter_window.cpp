@@ -1718,8 +1718,8 @@ ImGeeShowcaseWidget::ImGeeShowcaseWidget(int width, int height,
     flId = XPLMCreateFlightLoop(&flDef);
 
     SetWindowTitle("ImGee Cockpit Showcase");
-    SetWindowResizingLimits(565, 330, 2560, 1440);
-    SetUnscaledChrome(0, 68);
+    SetWindowResizingLimits(580, 350, 2560, 1440);
+    SetUnscaledChrome(0, 80);
     // Pre-load default note from disk if available
     std::string default_note = "./Resources/plugins/imgui4xp/notes/flight_briefing.md";
     if (!LoadTextFile(default_note, scratchpadText)) {
@@ -1768,8 +1768,8 @@ float ImGeeShowcaseWidget::cbFlightLoop(float, float, int, void* inRefcon)
             ? xplm_WindowDecorationSelfDecoratedResizable
             : xplm_WindowDecorationRoundRectangle;
 
-        int width = std::max(565, right - left);
-        int height = std::max(330, top - bottom);
+        int width = std::max(580, right - left);
+        int height = std::max(350, top - bottom);
 
         auto new_wnd = std::make_shared<ImGeeShowcaseWidget>(width, height, new_dec, xplm_WindowLayerFloatingWindows);
         new_wnd->SetWindowGeometry(left, top, right, bottom);
@@ -1807,8 +1807,8 @@ void ImGeeShowcaseWidget::RestoreWindowRect(const WindowRectSnapshot& rect)
         int w = std::abs(rect.r - rect.l);
         int h = std::abs(rect.t - rect.b);
         if (w > 0 && h > 0) {
-            w = ImClamp(w, 565, 2560);
-            h = ImClamp(h, 330, 1440);
+            w = ImClamp(w, 580, 2560);
+            h = ImClamp(h, 350, 1440);
             SetWindowGeometryVR(w, h);
         }
         return;
@@ -1825,7 +1825,7 @@ void ImGeeShowcaseWidget::RestoreWindowRect(const WindowRectSnapshot& rect)
     int r = rect.r;
     int b = rect.b;
 
-    ClampGeometryToScreen(l, t, r, b, 565, 330, 2560, 1440, GetEffectiveTopMargin());
+    ClampGeometryToScreen(l, t, r, b, 580, 350, 2560, 1440, GetEffectiveTopMargin());
 
     SetWindowGeometry(l, t, r, b);
 }
@@ -1868,12 +1868,24 @@ void ImGeeShowcaseWidget::buildInterface()
         }
     }
 
-    // Initialize default theme (ImGee Charcoal Slate) once on startup
-    static bool s_themeInitialized = false;
-    static int  s_currentTheme = 0; // 0 = Charcoal (Default), 1 = Rusty, 2 = Stock Dark, 3 = Classic, 4 = Light
-    if (!s_themeInitialized) {
-        ImGui::ApplyDefaultTheme();
-        s_themeInitialized = true;
+    // Initialize or restore active theme on window creation / decoration swap
+    static int s_currentTheme = 0; // 0 = Charcoal (Default), 1 = Rusty, 2 = Stock Dark, 3 = Classic, 4 = Light
+    static ImGuiContext* s_lastThemeContext = nullptr;
+    if (s_lastThemeContext != ImGui::GetCurrentContext()) {
+        s_lastThemeContext = ImGui::GetCurrentContext();
+        switch (s_currentTheme) {
+            case 0: ImGui::ApplyDefaultTheme(); break;
+            case 1: ImGui::StyleColorsRusty(); break;
+            case 2: ImGui::StyleColorsDark(); break;
+            case 3: ImGui::StyleColorsClassic(); break;
+            case 4: ImGui::StyleColorsLight(); break;
+            default: break;
+        }
+        if (mIsGlassHUD || IsSelfDecorated()) {
+            ImGuiStyle& st = ImGui::GetStyle();
+            st.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
+            st.Colors[ImGuiCol_Border].w = std::min(1.0f, mWindowOpacity * 0.8f + 0.2f);
+        }
     }
 
     // 1. Container / Window Chrome: Baseline 1.0x scale (rock-solid, non-twitching controls)
@@ -2079,7 +2091,80 @@ void ImGeeShowcaseWidget::buildInterface()
         }
     }
 
-    ImGui::TextDisabled("Dedicated reference showcase for avionics controls, dials, and CommonMark.");
+    // Row 2: Cockpit Environment & Theme Controls (invariant 1.0x chrome scale above tabs)
+    ImGui::AlignTextToFramePadding();
+    bool is_sc_trans = IsSelfDecorated();
+    if (ImGui::ToggleButton("Transparent##sc_trans", &is_sc_trans,
+                            "Transparent HUD: <pill color=#7f8c8d>OFF</pill> <pill color=#1a252f fg=#555555>ON</pill>\n\nStandard X-Plane rounded rectangle bezel.\nClick to switch to frameless Glass HUD.",
+                            "Transparent HUD: <pill color=#1a252f fg=#555555>OFF</pill> <pill color=#2ecc71>ON</pill>\n\nModern Glass HUD panel with continuous opacity controls.\nClick to restore native X-Plane bezel."))
+    {
+        requestSwapDecoration = true;
+        XPLMScheduleFlightLoop(flId, -1.0, 1);
+    }
+
+    if (is_sc_trans) {
+        ImGui::SameLine(0.0f, 8.0f);
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextUnformatted("Opacity:");
+        ImGui::SameLine(0.0f, 4.0f);
+        ImGui::SetNextItemWidth(80.0f);
+        if (ImGui::PercentSliderWithReset("##ShowcaseOpacity", &mWindowOpacity, 0.80f, 0.10f, 1.00f, "%.0f%%")) {
+            ImGuiStyle& st = ImGui::GetStyle();
+            st.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
+            st.Colors[ImGuiCol_Border].w = std::min(1.0f, mWindowOpacity * 0.8f + 0.2f);
+        }
+        char sc_opac_tip[256];
+        std::snprintf(sc_opac_tip, sizeof(sc_opac_tip),
+            "**Continuous Backdrop Opacity**:\n"
+            "Drag or mouse-wheel to seamlessly tune glass transparency over the 3D cockpit.\n"
+            "Current: **%.0f%%** | Click [Reset] to restore factory 80%% glass.",
+            mWindowOpacity * 100.0f);
+        ImGui::TimedTooltip::MD::Text("%s", sc_opac_tip);
+    }
+
+    static const char* const theme_names[] = {
+        "Charcoal (Default)",
+        "Rusty (Aviation)",
+        "ImGui Dark",
+        "ImGui Classic",
+        "ImGui Light"
+    };
+    static const char* const theme_tips[] = {
+        "**Charcoal (Default)**\nSleek modern slate/graphite flight deck palette.",
+        "**Rusty (Aviation)**\nWarm aviation bronze & terracotta palette (ABC classic).",
+        "**ImGui Dark**\nStock Dear ImGui dark gray color scheme.",
+        "**ImGui Classic**\nLegacy Dear ImGui purplish-blue color scheme.",
+        "**ImGui Light**\nHigh-contrast light daytime color scheme."
+    };
+
+    ImGui::SameLine(0.0f, 10.0f);
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextUnformatted("Theme:");
+    ImGui::SameLine(0.0f, 4.0f);
+    ImGui::SetNextItemWidth(135.0f);
+    bool theme_changed = ImGui::MouseWheelCombo("##ThemePicker", &s_currentTheme, theme_names, IM_ARRAYSIZE(theme_names), -1, true /* wrap */, theme_tips);
+    if (theme_changed) {
+        switch (s_currentTheme) {
+            case 0: ImGui::ApplyDefaultTheme(); break;
+            case 1: ImGui::StyleColorsRusty(); break;
+            case 2: ImGui::StyleColorsDark(); break;
+            case 3: ImGui::StyleColorsClassic(); break;
+            case 4: ImGui::StyleColorsLight(); break;
+            default: break;
+        }
+        if (mIsGlassHUD || IsSelfDecorated()) {
+            ImGuiStyle& st = ImGui::GetStyle();
+            st.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
+            st.Colors[ImGuiCol_Border].w = std::min(1.0f, mWindowOpacity * 0.8f + 0.2f);
+        }
+    }
+    ImGui::TimedTooltip::MD::Text(
+        "**ImGee Theme Presets** (Click dropdown or roll mouse wheel):\n"
+        "• **Charcoal**: Sleek modern slate/graphite flight deck palette (default).\n"
+        "• **Rusty**: Warm aviation bronze & terracotta palette (ABC classic).\n"
+        "• **ImGui Dark / Classic / Light**: Stock Dear ImGui fallback schemes."
+    );
+
     ImGui::Spacing();
 
     // 2. Inner Content Canvas: Apply dynamic _fontAdjust to all tabs and interactive controls    // 2. Inner Content Canvas: Apply dynamic _fontAdjust to all tabs and interactive controls
@@ -3020,7 +3105,7 @@ void ImGeeShowcaseWidget::buildInterface()
         "**Chase 30m**\nExternal chase camera trailing 30m behind aircraft.",
         "**Tower View**\nStationary airport control tower vantage point."
     };
-    if (ImGui::SelectPulldownMD("##DockCamMode", &s_DockCamMode, dockCamItems, 3, dockCamTips, 130.0f, ImGui::ImGuiPopupAnchor_AboveItem, ImGui::ImGuiPopupAlign_Left, true /* wrap */)) {
+    if (ImGui::SelectPulldownMD("##DockCamMode", &s_DockCamMode, dockCamItems, 3, dockCamTips, 90.0f, ImGui::ImGuiPopupAnchor_AboveItem, ImGui::ImGuiPopupAlign_Left, true /* wrap */)) {
         // Selection changed
     }
     ImGui::TimedTooltip::MD::Text(
@@ -3028,104 +3113,6 @@ void ImGeeShowcaseWidget::buildInterface()
         "Active Camera: **%s**\n"
         "Pops up above status bar with inverted procedural vector caret.",
         dockCamItems[s_DockCamMode]);
-
-    // ImGee Theme Selector & Opacity Suite
-    const char* const theme_names[] = {
-        "Charcoal (Default)",
-        "Rusty (Aviation)",
-        "ImGui Dark",
-        "ImGui Classic",
-        "ImGui Light"
-    };
-    const float theme_combo_w = 135.0f;
-    const float theme_label_w = ImGui::CalcTextSize("Theme:").x;
-    const float theme_suite_w = theme_label_w + ImGui::GetStyle().ItemSpacing.x + theme_combo_w;
-
-    const float opac_label_w = ImGui::CalcTextSize("Opacity:").x;
-    const float opac_slider_w = 80.0f;
-    const float opac_suite_w = opac_label_w + ImGui::GetStyle().ItemSpacing.x + opac_slider_w;
-
-    const float toggle_w = CalcToggleButtonWidth("Transparent##sc_trans");
-    const float right_suite_w = theme_suite_w + ImGui::GetStyle().ItemSpacing.x + opac_suite_w + ImGui::GetStyle().ItemSpacing.x + toggle_w;
-
-    const float footer_margin = ImGui::GetStyle().WindowPadding.x + ((cur_win && cur_win->ScrollbarY) ? cur_win->ScrollbarSizes.x : 0.0f);
-    const float target_right_x = ImGui::GetWindowWidth() - right_suite_w - footer_margin;
-
-    if (target_right_x > ImGui::GetCursorPosX() + 10.0f) {
-        ImGui::SameLine(target_right_x);
-    } else {
-        ImGui::SameLine(0.0f, 10.0f);
-    }
-
-    // 1. Transparent HUD Toggle
-    bool is_sc_trans = IsSelfDecorated();
-    if (ImGui::ToggleButton("Transparent##sc_trans", &is_sc_trans,
-                            "Transparent HUD: <pill color=#7f8c8d>OFF</pill> <pill color=#1a252f fg=#555555>ON</pill>\n\nStandard X-Plane rounded rectangle bezel.\nClick to switch to frameless Glass HUD.",
-                            "Transparent HUD: <pill color=#1a252f fg=#555555>OFF</pill> <pill color=#2ecc71>ON</pill>\n\nModern Glass HUD panel with continuous opacity controls.\nClick to restore native X-Plane bezel."))
-    {
-        requestSwapDecoration = true;
-        XPLMScheduleFlightLoop(flId, -1.0, 1);
-    }
-
-    // 2. Opacity Slider with 1-Click Baseline Reset
-    ImGui::SameLine(0.0f, 6.0f);
-    ImGui::TextUnformatted("Opacity:");
-    ImGui::SameLine(0.0f, 4.0f);
-    ImGui::SetNextItemWidth(opac_slider_w);
-    if (ImGui::PercentSliderWithReset("##ShowcaseOpacity", &mWindowOpacity, 0.80f, 0.10f, 1.00f, "%.0f%%")) {
-        if (!IsSelfDecorated()) {
-            // Dragging opacity while in bezel mode automatically engages transparent glass HUD!
-            requestSwapDecoration = true;
-            XPLMScheduleFlightLoop(flId, -1.0, 1);
-        } else {
-            ImGuiStyle& st = ImGui::GetStyle();
-            st.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
-            st.Colors[ImGuiCol_Border].w = std::min(1.0f, mWindowOpacity * 0.8f + 0.2f);
-        }
-    }
-    char sc_opac_tip[256];
-    std::snprintf(sc_opac_tip, sizeof(sc_opac_tip),
-        "**Continuous Backdrop Opacity**:\n"
-        "Drag or mouse-wheel to seamlessly tune glass transparency over the 3D cockpit.\n"
-        "Current: **%.0f%%** | Click [Reset] to restore factory 80%% glass.",
-        mWindowOpacity * 100.0f);
-    ImGui::TimedTooltip::MD::Text("%s", sc_opac_tip);
-
-    static const char* const theme_tips[] = {
-        "**Charcoal (Default)**\nSleek modern slate/graphite flight deck palette.",
-        "**Rusty (Aviation)**\nWarm aviation bronze & terracotta palette (ABC classic).",
-        "**ImGui Dark**\nStock Dear ImGui dark gray color scheme.",
-        "**ImGui Classic**\nLegacy Dear ImGui purplish-blue color scheme.",
-        "**ImGui Light**\nHigh-contrast light daytime color scheme."
-    };
-
-    // 3. Theme Selector
-    ImGui::SameLine(0.0f, 6.0f);
-    ImGui::TextUnformatted("Theme:");
-    ImGui::SameLine(0.0f, 4.0f);
-    ImGui::SetNextItemWidth(theme_combo_w);
-    bool theme_changed = ImGui::MouseWheelCombo("##ThemePicker", &s_currentTheme, theme_names, IM_ARRAYSIZE(theme_names), -1, true /* wrap */, theme_tips);
-    if (theme_changed) {
-        switch (s_currentTheme) {
-            case 0: ImGui::ApplyDefaultTheme(); break;
-            case 1: ImGui::StyleColorsRusty(); break;
-            case 2: ImGui::StyleColorsDark(); break;
-            case 3: ImGui::StyleColorsClassic(); break;
-            case 4: ImGui::StyleColorsLight(); break;
-            default: break;
-        }
-        if (mIsGlassHUD || IsSelfDecorated()) {
-            ImGuiStyle& st = ImGui::GetStyle();
-            st.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
-            st.Colors[ImGuiCol_Border].w = std::min(1.0f, mWindowOpacity * 0.8f + 0.2f);
-        }
-    }
-    ImGui::TimedTooltip::MD::Text(
-        "**ImGee Theme Presets** (Click dropdown or roll mouse wheel):\n"
-        "• **Charcoal**: Sleek modern slate/graphite flight deck palette (default).\n"
-        "• **Rusty**: Warm aviation bronze & terracotta palette (ABC classic).\n"
-        "• **ImGui Dark / Classic / Light**: Stock Dear ImGui fallback schemes."
-    );
 
     // Continuously preserve user's customized 100% baseline window layout (position & dimensions)
     if (std::abs(_fontAdjust - 1.0f) < 0.001f) {
