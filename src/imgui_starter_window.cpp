@@ -2893,7 +2893,7 @@ void ImGeeShowcaseWidget::buildInterface()
     ImGui::TextUnformatted("Theme:");
     ImGui::SameLine();
     ImGui::SetNextItemWidth(theme_combo_w);
-    bool theme_changed = ImGui::MouseWheelCombo("##ThemePicker", &s_currentTheme, theme_names, IM_ARRAYSIZE(theme_names), -1, false, theme_tips);
+    bool theme_changed = ImGui::MouseWheelCombo("##ThemePicker", &s_currentTheme, theme_names, IM_ARRAYSIZE(theme_names), -1, true /* wrap */, theme_tips);
     if (theme_changed) {
         switch (s_currentTheme) {
             case 0: ImGui::ApplyDefaultTheme(); break;
