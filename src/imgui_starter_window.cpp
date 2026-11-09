@@ -749,7 +749,7 @@ void ImguiWidget::buildInterface() {
                             "AP Master: <pill color=#2ecc71>ENGAGED</pill> <pill color=#1a252f fg=#555555>DISARMED</pill>");
 
         ImGui::SameLine();
-        if (ImGui::NativeTextLink("Official ImgWindow Docs ↗")) {
+        if (ImGui::NativeTextLink("Official ImgWindow Docs " ICON_FA_EXTERNAL_LINK_SQUARE_ALT)) {
             ImGui::OpenURL("https://github.com/slgoldberg/ImgWindow");
         }
         ImGui::TimedTooltip::MD::Text("**External Documentation**:\nOpens https://github.com/slgoldberg/ImgWindow in your default web browser.");
