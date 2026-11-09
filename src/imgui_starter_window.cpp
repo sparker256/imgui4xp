@@ -758,7 +758,7 @@ void ImguiWidget::buildInterface() {
         std::snprintf(opac_tip, sizeof(opac_tip),
             "**Continuous Backdrop Opacity**:\n"
             "Drag or mouse-wheel to seamlessly tune glass transparency over the 3D cockpit.\n"
-            "Current: **%.0f%%** | Click [Reset] to restore factory 80%% glass.",
+            "Current: **%.0f%%** | Click :reset: to restore factory 80%% glass.",
             mWindowOpacity * 100.0f);
         ImGui::TimedTooltip::MD::Text("%s", opac_tip);
     }
@@ -779,7 +779,7 @@ void ImguiWidget::buildInterface() {
         ImGui::TextMD("**Stationary TimedTooltips:** Polite, zero-jitter hover tooltips with dwell timeouts.");
         
         ImGui::Bullet();
-        ImGui::TextMD("**Avionics Controls:** Animated toggle switches, mouse-wheel sliders with 1-click restore [Reset].");
+        ImGui::TextMD("**Avionics Controls:** Animated toggle switches, mouse-wheel sliders with 1-click restore :reset:.");
 
         ImGui::Spacing();
         static bool s_DemoToggle = true;
@@ -2093,7 +2093,27 @@ void ImGeeShowcaseWidget::buildInterface()
 
     // Row 2: Cockpit Environment & Theme Controls (invariant 1.0x chrome scale above tabs)
     ImGui::AlignTextToFramePadding();
+    ImGui::TextDisabled("Cockpit Suite Reference:");
+    if (ImGui::IsItemHovered()) {
+        ImGui::TimedTooltip::MD::Text("Dedicated showcase for avionics controls, dials, continuous opacity, and CommonMark.");
+    }
+
     bool is_sc_trans = IsSelfDecorated();
+    const float sc_toggle_w = CalcToggleButtonWidth("Transparent##sc_trans");
+    const float sc_opac_lbl_w = is_sc_trans ? (ImGui::CalcTextSize("Opacity:").x + 12.0f) : 0.0f;
+    const float sc_theme_lbl_w = ImGui::CalcTextSize("Theme:").x + 14.0f;
+    const float r2_fixed_w = sc_toggle_w + sc_opac_lbl_w + sc_theme_lbl_w;
+
+    const float min_r2_offset = ImGui::GetCursorPosX() + ImGui::GetStyle().ItemSpacing.x;
+    const float r2_avail = ImMax(r2_fixed_w + 170.0f, ImGui::GetWindowWidth() - min_r2_offset - right_margin);
+    const float r2_slack = r2_avail - r2_fixed_w;
+    const float opac_slider_w = is_sc_trans ? ImClamp(r2_slack * 0.35f, 65.0f, 95.0f) : 0.0f;
+    const float theme_combo_w = ImClamp(r2_slack - opac_slider_w, 105.0f, 140.0f);
+    const float r2_suite_w = r2_fixed_w + opac_slider_w + theme_combo_w;
+
+    const float r2_target_offset = ImGui::GetWindowWidth() - r2_suite_w - right_margin;
+    ImGui::SameLine(ImMax(min_r2_offset, r2_target_offset));
+
     if (ImGui::ToggleButton("Transparent##sc_trans", &is_sc_trans,
                             "Transparent HUD: <pill color=#7f8c8d>OFF</pill> <pill color=#1a252f fg=#555555>ON</pill>\n\nStandard X-Plane rounded rectangle bezel.\nClick to switch to frameless Glass HUD.",
                             "Transparent HUD: <pill color=#1a252f fg=#555555>OFF</pill> <pill color=#2ecc71>ON</pill>\n\nModern Glass HUD panel with continuous opacity controls.\nClick to restore native X-Plane bezel."))
@@ -2107,7 +2127,7 @@ void ImGeeShowcaseWidget::buildInterface()
         ImGui::AlignTextToFramePadding();
         ImGui::TextUnformatted("Opacity:");
         ImGui::SameLine(0.0f, 4.0f);
-        ImGui::SetNextItemWidth(80.0f);
+        ImGui::SetNextItemWidth(opac_slider_w);
         if (ImGui::PercentSliderWithReset("##ShowcaseOpacity", &mWindowOpacity, 0.80f, 0.10f, 1.00f, "%.0f%%")) {
             ImGuiStyle& st = ImGui::GetStyle();
             st.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
@@ -2117,7 +2137,7 @@ void ImGeeShowcaseWidget::buildInterface()
         std::snprintf(sc_opac_tip, sizeof(sc_opac_tip),
             "**Continuous Backdrop Opacity**:\n"
             "Drag or mouse-wheel to seamlessly tune glass transparency over the 3D cockpit.\n"
-            "Current: **%.0f%%** | Click [Reset] to restore factory 80%% glass.",
+            "Current: **%.0f%%** | Click :reset: to restore factory 80%% glass.",
             mWindowOpacity * 100.0f);
         ImGui::TimedTooltip::MD::Text("%s", sc_opac_tip);
     }
@@ -2141,7 +2161,7 @@ void ImGeeShowcaseWidget::buildInterface()
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted("Theme:");
     ImGui::SameLine(0.0f, 4.0f);
-    ImGui::SetNextItemWidth(135.0f);
+    ImGui::SetNextItemWidth(theme_combo_w);
     bool theme_changed = ImGui::MouseWheelCombo("##ThemePicker", &s_currentTheme, theme_names, IM_ARRAYSIZE(theme_names), -1, true /* wrap */, theme_tips);
     if (theme_changed) {
         switch (s_currentTheme) {
@@ -2176,7 +2196,7 @@ void ImGeeShowcaseWidget::buildInterface()
         if (tab_knobs) {
             ImGui::Spacing();
             ImGui::TextMD("#### Precision Knobs with 1-Click Restore");
-            ImGui::TextMD("Hover and roll mouse wheel to adjust values. Click **[Reset]** to restore calibrated defaults:");
+            ImGui::TextMD("Hover and roll mouse wheel to adjust values. Click :reset: to restore calibrated defaults:");
             ImGui::Spacing();
 
             ImGui::SliderWithReset("Heading Bug", &headingBug, 180.0f, 0.0f, 360.0f, "%.0f deg", 0, 1.0f, "Click to reset heading to runway track (180 deg)");
@@ -2685,8 +2705,65 @@ void ImGeeShowcaseWidget::buildInterface()
             }
 
             ImGui::SameLine();
-            if (ToolbarButton("Icon", "Insert in-memory registered beacon icon `![Beacon](avionics_beacon)`")) {
-                wrap_or_insert("![Beacon](avionics_beacon)", "", "", false);
+            if (ToolbarButton("Icon ▼", "Insert CommonMark vector icons & emoji shortcodes (:plane:, :star:, etc.)")) {
+                ImGui::OpenPopupAtItem("##ScratchpadIconPopup", ImGui::ImGuiPopupAnchor_BelowItem, ImGui::ImGuiPopupAlign_Left);
+            }
+            if (ImGui::BeginAnchoredPopup("##ScratchpadIconPopup")) {
+                ImGui::TextMD("#### Insert Vector Icon");
+                ImGui::TextDisabled("Select an icon to insert at the editor cursor:");
+                ImGui::Spacing();
+
+                static int s_iconFormat = 0; // 0 = Shortcode (:name:), 1 = HTML Tag (<icon name />)
+                const char* fmt_names[] = { "Shortcode (:name:)", "Tag (<icon name />)" };
+                ImGui::SetNextItemWidth(170.0f);
+                ImGui::Combo("##icon_fmt", &s_iconFormat, fmt_names, 2);
+                ImGui::Spacing();
+
+                struct IconDef {
+                    const char* name;
+                    const char* label;
+                };
+                static const IconDef s_icons[] = {
+                    { "plane",      ":plane: Plane" },
+                    { "star",       ":star: Star" },
+                    { "gear",       ":gear: Gear" },
+                    { "warning",    ":warning: Alert" },
+                    { "check",      ":check: Check" },
+                    { "cross",      ":cross: Cross" },
+                    { "reset",      ":reset: Reset" },
+                    { "redo",       ":redo: Redo" },
+                    { "search",     ":search: Search" },
+                    { "info",       ":info: Info" },
+                    { "caret-up",   ":caret-up: Up" },
+                    { "caret-down", ":caret-down: Down" }
+                };
+
+                for (size_t idx = 0; idx < IM_ARRAYSIZE(s_icons); ++idx) {
+                    if (idx % 3 != 0) ImGui::SameLine();
+                    char btn_id[64];
+                    std::snprintf(btn_id, sizeof(btn_id), "%s##icn_%zu", s_icons[idx].label, idx);
+                    if (ImGui::MD::Button(btn_id, ImVec2(92.0f, 0.0f))) {
+                        std::string insert_str;
+                        if (s_iconFormat == 0) {
+                            insert_str = std::string(":") + s_icons[idx].name + ":";
+                        } else {
+                            insert_str = std::string("<icon ") + s_icons[idx].name + " />";
+                        }
+                        wrap_or_insert(insert_str, "", "", false);
+                        ImGui::CloseCurrentPopup();
+                    }
+                }
+
+                ImGui::Spacing();
+                ImGui::Separator();
+                ImGui::Spacing();
+                if (ImGui::Button("In-Memory Beacon Texture", ImVec2(-FLT_MIN, 0.0f))) {
+                    wrap_or_insert("![Beacon](avionics_beacon)", "", "", false);
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::TimedTooltip::MD::Text("Insert in-memory registered beacon icon texture `![Beacon](avionics_beacon)`");
+
+                ImGui::EndPopup();
             }
 
             ImGui::SameLine();
