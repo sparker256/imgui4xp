@@ -765,7 +765,18 @@ void ImguiWidget::buildInterface() {
     ImGui::Separator();
     ImGui::Spacing();
 
-    if (ImGui::TreeNode("ImGee UX & Modern Cockpit Suite")) {
+    bool tree_open = ImGui::TreeNodeEx("ImGee UX & Modern Cockpit Suite", ImGuiTreeNodeFlags_None);
+    ImGui::SameLine(0.0f, 8.0f);
+    if (ImGui::SmallButton("Open ImGee Cockpit Showcase Window...##imgee_showcase_btn")) {
+        if (s_pShowcaseWidget && s_pShowcaseWidget->GetVisible()) {
+            s_pShowcaseWidget->SetVisible(false);
+        } else {
+            ShowImGeeShowcaseWindow();
+        }
+    }
+    ImGui::TimedTooltip::MD::Text("Opens or toggles the dedicated, non-scrollable ImGee showcase window featuring avionics knobs, procedural dials, and live scratchpad.");
+
+    if (tree_open) {
         ImGui::TextMD("# ImGee UX Showcase");
         ImGui::TextMD("Turnkey ImGee extensions from `ImgWindow/contrib/` (`#include \"ImgWindow/contrib.h\"`) for modern cockpit plugins:");
         
@@ -792,11 +803,7 @@ void ImguiWidget::buildInterface() {
         ImGui::ExternalTextLink("Official ImgWindow Docs", "https://github.com/slgoldberg/ImgWindow");
         ImGui::TimedTooltip::MD::Text("**External Documentation**:\nOpens https://github.com/slgoldberg/ImgWindow in your default web browser.");
 
-        ImGui::Spacing();
-        if (ImGui::Button("Open ImGee Cockpit Showcase Window...")) {
-            ShowImGeeShowcaseWindow();
-        }
-        ImGui::TimedTooltip::MD::Text("Opens the dedicated, non-scrollable ImGee showcase window featuring avionics knobs, procedural dials, and live scratchpad.");
+
 
         ImGui::TreePop();
     }
@@ -1718,8 +1725,8 @@ ImGeeShowcaseWidget::ImGeeShowcaseWidget(int width, int height,
     flId = XPLMCreateFlightLoop(&flDef);
 
     SetWindowTitle("ImGee Cockpit Showcase");
-    SetWindowResizingLimits(580, 350, 2560, 1440);
-    SetUnscaledChrome(0, 80);
+    SetWindowResizingLimits(580, 360, 2560, 1440);
+    SetUnscaledChrome(0, 108);
     // Pre-load default note from disk if available
     std::string default_note = "./Resources/plugins/imgui4xp/notes/flight_briefing.md";
     if (!LoadTextFile(default_note, scratchpadText)) {
@@ -1769,7 +1776,7 @@ float ImGeeShowcaseWidget::cbFlightLoop(float, float, int, void* inRefcon)
             : xplm_WindowDecorationRoundRectangle;
 
         int width = std::max(580, right - left);
-        int height = std::max(350, top - bottom);
+        int height = std::max(360, top - bottom);
 
         auto new_wnd = std::make_shared<ImGeeShowcaseWidget>(width, height, new_dec, xplm_WindowLayerFloatingWindows);
         new_wnd->SetWindowGeometry(left, top, right, bottom);
@@ -1778,6 +1785,12 @@ float ImGeeShowcaseWidget::cbFlightLoop(float, float, int, void* inRefcon)
         new_wnd->_lastZoom = wnd._lastZoom;
         new_wnd->_baselineRect = wnd._baselineRect;
         new_wnd->_priorZoomRect = wnd._priorZoomRect;
+
+        int base_w = 0, base_h = 0;
+        wnd.GetBaselineWindowSize(base_w, base_h);
+        if (base_w > 0 && base_h > 0) {
+            new_wnd->SetBaselineWindowSize(base_w, base_h);
+        }
 
         // Hide old window immediately so it stops rendering underneath!
         wnd.SetVisible(false);
@@ -1808,7 +1821,7 @@ void ImGeeShowcaseWidget::RestoreWindowRect(const WindowRectSnapshot& rect)
         int h = std::abs(rect.t - rect.b);
         if (w > 0 && h > 0) {
             w = ImClamp(w, 580, 2560);
-            h = ImClamp(h, 350, 1440);
+            h = ImClamp(h, 360, 1440);
             SetWindowGeometryVR(w, h);
         }
         return;
@@ -1825,7 +1838,7 @@ void ImGeeShowcaseWidget::RestoreWindowRect(const WindowRectSnapshot& rect)
     int r = rect.r;
     int b = rect.b;
 
-    ClampGeometryToScreen(l, t, r, b, 580, 350, 2560, 1440, GetEffectiveTopMargin());
+    ClampGeometryToScreen(l, t, r, b, 580, 360, 2560, 1440, GetEffectiveTopMargin());
 
     SetWindowGeometry(l, t, r, b);
 }
@@ -1834,7 +1847,7 @@ void ShowImGeeShowcaseWindow()
 {
     ImGuiContext* prevContext = ImGui::GetCurrentContext();
     if (!s_pShowcaseWidget) {
-        s_pShowcaseWidget = std::make_shared<ImGeeShowcaseWidget>(680, 568);
+        s_pShowcaseWidget = std::make_shared<ImGeeShowcaseWidget>(680, 608);
         gWndList.push_back(s_pShowcaseWidget);
     }
     s_pShowcaseWidget->SetVisible(true);
@@ -2069,7 +2082,7 @@ void ImGeeShowcaseWidget::buildInterface()
     }
     bool fit_hovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
     if (fit_hovered) {
-        ImGui::TimedTooltip::TextMDProxy(ImGui::GetItemID(), fit_hovered, "**Fit Window to Baseline**\n\nResets window to default 680x568 baseline proportions scaled to current zoom (%d%%) anchored to top-left.", (int)std::round(_fontAdjust * 100.0f));
+        ImGui::TimedTooltip::TextMDProxy(ImGui::GetItemID(), fit_hovered, "**Fit Window to Baseline**\n\nResets window to default 680x608 baseline proportions scaled to current zoom (%d%%) anchored to top-left.", (int)std::round(_fontAdjust * 100.0f));
     }
     // Cursor Handling Toggle Button (separated by 8px gap)
     ImGui::SameLine(0.0f, 8.0f);
