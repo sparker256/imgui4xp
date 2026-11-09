@@ -1889,6 +1889,18 @@ void ImGeeShowcaseWidget::buildInterface()
         draw_list->AddRectFilled(ImVec2(center_x - grip_w * 0.5f, grip_y),
                                  ImVec2(center_x + grip_w * 0.5f, grip_y + 4.0f),
                                  IM_COL32(255, 255, 255, 100), 2.0f);
+
+        // Faux Grip Bar hover & right-drag discovery affordance
+        ImVec2 grip_min(center_x - 30.0f, win_pos.y);
+        ImVec2 grip_max(center_x + 30.0f, win_pos.y + 16.0f);
+        if (ImGui::IsMouseHoveringRect(grip_min, grip_max)) {
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+            ImGui::TimedTooltip::MD::Text(
+                "**Window Drag Handle** (Glass HUD)\n"
+                "• Left-drag here to reposition window.\n"
+                "• *ProTip:* You can **right-drag anywhere** inside the window to move it!"
+            );
+        }
     }
 
     // Update transient notification timer
