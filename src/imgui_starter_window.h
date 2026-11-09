@@ -41,7 +41,7 @@ inline ImFont* FontTiny = nullptr;
 // Dedicated fixed-size, non-scrollable window showcasing ImGee UX suite (ImgWindow/contrib/)
 class ImGeeShowcaseWidget: public ImgWindow {
 public:
-    ImGeeShowcaseWidget(int width = 680, int height = 608,
+    ImGeeShowcaseWidget(int width = 680, int height = 568,
                         XPLMWindowDecoration decoration = xplm_WindowDecorationRoundRectangle,
                         XPLMWindowLayer layer = xplm_WindowLayerFloatingWindows);
     ~ImGeeShowcaseWidget() override;
