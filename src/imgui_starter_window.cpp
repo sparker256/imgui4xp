@@ -623,10 +623,16 @@ ImguiWidget::ImguiWidget(int left, int top, int right, int bot,
         style.Colors[ImGuiCol_Border]   = ImVec4(0.35f, 0.42f, 0.50f, 0.70f);
         style.WindowBorderSize = 1.0f;
         style.WindowRounding   = 6.0f;
-        // Drag area centered on top grip handle (60px wide, 16px high)
+        // Drag area centered on top grip handle (120px wide, 16px high)
         int width = right - left;
-        SetWindowDragArea(width / 2 - 30, 0, width / 2 + 30, 16);
+        SetWindowDragArea(width / 2 - 60, 0, width / 2 + 60, 16);
     }
+
+    mSavedSimLeft = left;
+    mSavedSimTop = top;
+    mSavedSimRight = right;
+    mSavedSimBottom = bot;
+    mHasSavedSimGeometry = true;
 
     // Create a flight loop id, but don't schedule it yet
     XPLMCreateFlightLoop_t flDef = {
@@ -677,7 +683,7 @@ void ImguiWidget::buildInterface() {
     if (HasWindowDragArea()) {
         float avail_w = ImGui::GetWindowWidth();
         int center_local = int(avail_w * 0.5f);
-        SetWindowDragArea(center_local - 30, 0, center_local + 30, 16);
+        SetWindowDragArea(center_local - 60, 0, center_local + 60, 16);
 
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
         ImVec2 win_pos = ImGui::GetWindowPos();
@@ -688,9 +694,9 @@ void ImguiWidget::buildInterface() {
                                  ImVec2(center_x + grip_w * 0.5f, grip_y + 4.0f),
                                  IM_COL32(255, 255, 255, 100), 2.0f);
 
-        // Faux Grip Bar hover & right-drag discovery affordance
-        ImVec2 grip_min(center_x - 30.0f, win_pos.y);
-        ImVec2 grip_max(center_x + 30.0f, win_pos.y + 16.0f);
+        // Faux Grip Bar hover & right-drag discovery affordance (120px double-width grab region)
+        ImVec2 grip_min(center_x - 60.0f, win_pos.y);
+        ImVec2 grip_max(center_x + 60.0f, win_pos.y + 16.0f);
         bool is_hovered = ImGui::IsMouseHoveringRect(grip_min, grip_max);
         if (is_hovered) {
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
@@ -741,15 +747,18 @@ void ImguiWidget::buildInterface() {
         if (bBtnPopIn) {
             // Same line, but right-aligned
             ImGui::SameLine(ImGui::GetContentRegionAvail().x - (numBtn * btnWidth));
-            if (ImGui::ButtonTooltip(ICON_FA_WINDOW_RESTORE, "Move back into X-Plane"))
+            if (ImGui::ButtonTooltip(ICON_FA_WINDOW_MAXIMIZE, "Move back into X-Plane"))
                 nextWinPosMode = xplm_WindowPositionFree;
             --numBtn;
         }
         if (bBtnPopOut) {
             // Same line, but right-aligned
             ImGui::SameLine(ImGui::GetContentRegionAvail().x - (numBtn * btnWidth));
-            if (ImGui::ButtonTooltip(ICON_FA_WINDOW_MAXIMIZE, "Pop out into separate window"))
+            if (ImGui::ButtonTooltip(ICON_FA_WINDOW_RESTORE, "Pop out into separate window")) {
+                GetWindowGeometry(mSavedSimLeft, mSavedSimTop, mSavedSimRight, mSavedSimBottom);
+                mHasSavedSimGeometry = true;
                 nextWinPosMode = xplm_WindowPopOut;
+            }
             --numBtn;
         }
 
@@ -1665,6 +1674,11 @@ float ImguiWidget::cbFlightLoop(float, float, int, void* inRefcon)
 
         auto new_wnd = std::make_shared<ImguiWidget>(left, top, right, bottom, new_dec, xplm_WindowLayerFloatingWindows);
         new_wnd->mWindowOpacity = wnd.mWindowOpacity;
+        new_wnd->mSavedSimLeft = wnd.mSavedSimLeft;
+        new_wnd->mSavedSimTop = wnd.mSavedSimTop;
+        new_wnd->mSavedSimRight = wnd.mSavedSimRight;
+        new_wnd->mSavedSimBottom = wnd.mSavedSimBottom;
+        new_wnd->mHasSavedSimGeometry = wnd.mHasSavedSimGeometry;
 
         if (was_popped_out) {
             new_wnd->SetWindowPositioningMode(xplm_WindowPopOut, -1);
@@ -1695,18 +1709,26 @@ float ImguiWidget::cbFlightLoop(float, float, int, void* inRefcon)
 
     // Has user requested a change in window mode?
     if (wnd.nextWinPosMode >= 0) {
-        wnd.SetWindowPositioningMode(wnd.nextWinPosMode);
-        // If we pop in, then we need to explicitely set a position for the window to appear
-        if (wnd.nextWinPosMode == xplm_WindowPositionFree) {
-            int left, top, right, bottom;
-            wnd.GetCurrentWindowGeometry(left, top, right, bottom);
-            // Normalize to our starting position (WIN_PAD|WIN_PAD), but keep size unchanged
-            const int width  = right-left;
-            const int height = top-bottom;
-            CalcWinCoords(left, top, right, bottom);
-            right  = left + width;
-            bottom = top - height;
-            wnd.SetWindowGeometry(left, top, right, bottom);
+        XPLMWindowPositioningMode targetMode = wnd.nextWinPosMode;
+        if (targetMode == xplm_WindowPopOut && !wnd.IsPoppedOut()) {
+            wnd.GetWindowGeometry(wnd.mSavedSimLeft, wnd.mSavedSimTop, wnd.mSavedSimRight, wnd.mSavedSimBottom);
+            wnd.mHasSavedSimGeometry = (wnd.mSavedSimRight > wnd.mSavedSimLeft && wnd.mSavedSimTop > wnd.mSavedSimBottom);
+        }
+        wnd.SetWindowPositioningMode(targetMode);
+        // If we pop in, restore previous in-sim position and size
+        if (targetMode == xplm_WindowPositionFree) {
+            if (wnd.mHasSavedSimGeometry && wnd.mSavedSimRight > wnd.mSavedSimLeft && wnd.mSavedSimTop > wnd.mSavedSimBottom) {
+                wnd.SetWindowGeometry(wnd.mSavedSimLeft, wnd.mSavedSimTop, wnd.mSavedSimRight, wnd.mSavedSimBottom);
+            } else {
+                int left, top, right, bottom;
+                wnd.GetCurrentWindowGeometry(left, top, right, bottom);
+                const int width  = right - left;
+                const int height = top - bottom;
+                CalcWinCoords(left, top, right, bottom);
+                right  = left + width;
+                bottom = top  - height;
+                wnd.SetWindowGeometry(left, top, right, bottom);
+            }
         }
         wnd.nextWinPosMode = -1;
         UpdateMenuCheckmarks();
@@ -1805,8 +1827,8 @@ ImGeeShowcaseWidget::ImGeeShowcaseWidget(int width, int height,
         style.Colors[ImGuiCol_Border]   = ImVec4(0.35f, 0.42f, 0.50f, 0.70f);
         style.WindowBorderSize = 1.0f;
         style.WindowRounding   = 6.0f;
-        // Drag area centered on top grip handle (60px wide, 16px high)
-        SetWindowDragArea(width / 2 - 30, 0, width / 2 + 30, 16);
+        // Drag area centered on top grip handle (120px wide, 16px high)
+        SetWindowDragArea(width / 2 - 60, 0, width / 2 + 60, 16);
     }
 
     // Create flight loop for dynamic decoration swap
@@ -1845,6 +1867,11 @@ ImGeeShowcaseWidget::ImGeeShowcaseWidget(int width, int height,
     // Latch initial window geometry as 100% baseline snapshot
     GetCurrentWindowGeometry(_baselineRect.l, _baselineRect.t, _baselineRect.r, _baselineRect.b);
     _baselineRect.valid = true;
+    mSavedSimLeft = _baselineRect.l;
+    mSavedSimTop = _baselineRect.t;
+    mSavedSimRight = _baselineRect.r;
+    mSavedSimBottom = _baselineRect.b;
+    mHasSavedSimGeometry = true;
 }
 
 ImGeeShowcaseWidget::~ImGeeShowcaseWidget()
@@ -1893,6 +1920,11 @@ float ImGeeShowcaseWidget::cbFlightLoop(float, float, int, void* inRefcon)
         if (base_w > 0 && base_h > 0) {
             new_wnd->SetBaselineWindowSize(base_w, base_h);
         }
+        new_wnd->mSavedSimLeft = wnd.mSavedSimLeft;
+        new_wnd->mSavedSimTop = wnd.mSavedSimTop;
+        new_wnd->mSavedSimRight = wnd.mSavedSimRight;
+        new_wnd->mSavedSimBottom = wnd.mSavedSimBottom;
+        new_wnd->mHasSavedSimGeometry = wnd.mHasSavedSimGeometry;
 
         if (was_popped_out) {
             new_wnd->SetWindowPositioningMode(xplm_WindowPopOut, -1);
@@ -1921,16 +1953,25 @@ float ImGeeShowcaseWidget::cbFlightLoop(float, float, int, void* inRefcon)
     }
 
     if (wnd.nextWinPosMode >= 0) {
-        wnd.SetWindowPositioningMode(wnd.nextWinPosMode);
-        if (wnd.nextWinPosMode == xplm_WindowPositionFree) {
-            int left, top, right, bottom;
-            wnd.GetCurrentWindowGeometry(left, top, right, bottom);
-            const int width  = right - left;
-            const int height = top - bottom;
-            CalcWinCoords(left, top, right, bottom);
-            right  = left + width;
-            bottom = top  - height;
-            wnd.SetWindowGeometry(left, top, right, bottom);
+        XPLMWindowPositioningMode targetMode = wnd.nextWinPosMode;
+        if (targetMode == xplm_WindowPopOut && !wnd.IsPoppedOut()) {
+            wnd.GetWindowGeometry(wnd.mSavedSimLeft, wnd.mSavedSimTop, wnd.mSavedSimRight, wnd.mSavedSimBottom);
+            wnd.mHasSavedSimGeometry = (wnd.mSavedSimRight > wnd.mSavedSimLeft && wnd.mSavedSimTop > wnd.mSavedSimBottom);
+        }
+        wnd.SetWindowPositioningMode(targetMode);
+        if (targetMode == xplm_WindowPositionFree) {
+            if (wnd.mHasSavedSimGeometry && wnd.mSavedSimRight > wnd.mSavedSimLeft && wnd.mSavedSimTop > wnd.mSavedSimBottom) {
+                wnd.SetWindowGeometry(wnd.mSavedSimLeft, wnd.mSavedSimTop, wnd.mSavedSimRight, wnd.mSavedSimBottom);
+            } else {
+                int left, top, right, bottom;
+                wnd.GetCurrentWindowGeometry(left, top, right, bottom);
+                const int width  = right - left;
+                const int height = top - bottom;
+                CalcWinCoords(left, top, right, bottom);
+                right  = left + width;
+                bottom = top  - height;
+                wnd.SetWindowGeometry(left, top, right, bottom);
+            }
         }
         wnd.nextWinPosMode = -1;
         UpdateMenuCheckmarks();
@@ -1990,20 +2031,43 @@ void ImGeeShowcaseWidget::buildInterface()
     if (HasWindowDragArea()) {
         float avail_w = ImGui::GetWindowWidth();
         int center_local = int(avail_w * 0.5f);
-        SetWindowDragArea(center_local - 30, 0, center_local + 30, 16);
+
+        // Calculate responsive title and zoom suite layout boundaries to protect controls
+        const char* t_plain = (avail_w > 540.0f) ? "ImGee UX & Modern Cockpit Suite"
+                            : (avail_w > 400.0f) ? "ImGee Showcase"
+                            : "ImGee";
+        const float t_w = Font9 ? Font9->CalcTextSizeA(Font9->LegacySize, FLT_MAX, -1.0f, t_plain).x : 315.0f;
+        const float m_offset = ImGui::GetStyle().WindowPadding.x + t_w + ImGui::GetStyle().ItemSpacing.x;
+        const float fixed_w = 175.0f + (IsSelfDecorated() ? 30.0f : 0.0f) + ((vr_is_enabled && !IsInVR()) ? 28.0f : 0.0f);
+        const float r_margin = ImGui::GetStyle().WindowPadding.x + 8.0f;
+        const float avail_suite = ImMax(fixed_w + 90.0f, avail_w - m_offset - r_margin);
+        const float s_w = ImClamp(avail_suite - fixed_w, 80.0f, 130.0f);
+        const float tgt_offset = avail_w - (fixed_w + s_w) - r_margin;
+        const float suite_start = ImMax(m_offset, tgt_offset);
+
+        // Expand grab region to double width (120px) while strictly guarding zoom controls
+        int drag_left = std::max(center_local - 60, int(m_offset + 2.0f));
+        int drag_right = std::min(center_local + 60, int(suite_start - 2.0f));
+        if (drag_right > drag_left) {
+            SetWindowDragArea(drag_left, 0, drag_right, 16);
+        } else {
+            ClearWindowDragArea();
+        }
 
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
         ImVec2 win_pos = ImGui::GetWindowPos();
         float center_x = win_pos.x + avail_w * 0.5f;
-        float grip_w = 48.0f;
+        float grip_w = 48.0f; // horizontal line bar stays as it was
         float grip_y = win_pos.y + 6.0f;
         draw_list->AddRectFilled(ImVec2(center_x - grip_w * 0.5f, grip_y),
                                  ImVec2(center_x + grip_w * 0.5f, grip_y + 4.0f),
                                  IM_COL32(255, 255, 255, 100), 2.0f);
 
-        // Faux Grip Bar hover & right-drag discovery affordance
-        ImVec2 grip_min(center_x - 30.0f, win_pos.y);
-        ImVec2 grip_max(center_x + 30.0f, win_pos.y + 16.0f);
+        // Faux Grip Bar hover & right-drag discovery affordance matching active drag area
+        float hover_min_x = (drag_right > drag_left) ? (win_pos.x + float(drag_left)) : (center_x - 30.0f);
+        float hover_max_x = (drag_right > drag_left) ? (win_pos.x + float(drag_right)) : (center_x + 30.0f);
+        ImVec2 grip_min(hover_min_x, win_pos.y);
+        ImVec2 grip_max(hover_max_x, win_pos.y + 16.0f);
         bool is_hovered = ImGui::IsMouseHoveringRect(grip_min, grip_max);
         if (is_hovered) {
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
@@ -2064,7 +2128,7 @@ void ImGeeShowcaseWidget::buildInterface()
     const float scrollbar_pad = (cur_win && cur_win->ScrollbarY) ? cur_win->ScrollbarSizes.x : 0.0f;
     const float right_margin = ImGui::GetStyle().WindowPadding.x + scrollbar_pad;
     const float avail_for_suite = ImMax(fixed_controls_w + 90.0f, ImGui::GetWindowWidth() - min_offset - right_margin);
-    const float slider_w = ImClamp(avail_for_suite - fixed_controls_w, 90.0f, 150.0f);
+    const float slider_w = ImClamp(avail_for_suite - fixed_controls_w, 80.0f, 130.0f);
     const float zoom_suite_w = fixed_controls_w + slider_w;
     const float target_offset = ImGui::GetWindowWidth() - zoom_suite_w - right_margin;
     ImGui::SameLine(ImMax(min_offset, target_offset));
@@ -2249,13 +2313,15 @@ void ImGeeShowcaseWidget::buildInterface()
     // Window Mode Buttons (Pop-out into OS window / Pop back into simulator)
     if (IsPoppedOut() || IsInVR()) {
         ImGui::SameLine(0.0f, 4.0f);
-        if (ToolbarButton(ICON_FA_WINDOW_RESTORE "##sc_popin", "Move back into X-Plane", ImVec2(24.0f, 0.0f))) {
+        if (ToolbarButton(ICON_FA_WINDOW_MAXIMIZE "##sc_popin", "Move back into X-Plane", ImVec2(24.0f, 0.0f))) {
             nextWinPosMode = xplm_WindowPositionFree;
             XPLMScheduleFlightLoop(flId, -1.0, 1);
         }
     } else {
         ImGui::SameLine(0.0f, 4.0f);
-        if (ToolbarButton(ICON_FA_WINDOW_MAXIMIZE "##sc_popout", "Pop out into separate OS desktop window", ImVec2(24.0f, 0.0f))) {
+        if (ToolbarButton(ICON_FA_WINDOW_RESTORE "##sc_popout", "Pop out into separate OS desktop window", ImVec2(24.0f, 0.0f))) {
+            GetWindowGeometry(mSavedSimLeft, mSavedSimTop, mSavedSimRight, mSavedSimBottom);
+            mHasSavedSimGeometry = true;
             nextWinPosMode = xplm_WindowPopOut;
             XPLMScheduleFlightLoop(flId, -1.0, 1);
         }

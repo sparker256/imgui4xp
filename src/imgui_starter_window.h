@@ -68,6 +68,11 @@ private:
     XPLMWindowPositioningMode nextWinPosMode = -1;
     float mWindowOpacity = 0.80f;
     bool mIsGlassHUD = false;
+    int mSavedSimLeft = 0;
+    int mSavedSimTop = 0;
+    int mSavedSimRight = 0;
+    int mSavedSimBottom = 0;
+    bool mHasSavedSimGeometry = false;
 
     // Tab 1 state: Knobs, Sliders & Procedural Dials
     float       headingBug      = 180.0f;
@@ -171,6 +176,11 @@ protected:
     bool requestSwapDecoration = false;
     float mWindowOpacity = 0.80f;
     bool mIsGlassHUD = false;
+    int mSavedSimLeft = 0;
+    int mSavedSimTop = 0;
+    int mSavedSimRight = 0;
+    int mSavedSimBottom = 0;
+    bool mHasSavedSimGeometry = false;
     // Our flight loop callback in case we need one
     XPLMFlightLoopID flId = nullptr;
     // Values in node "Buttons" / "Checkboxes"
