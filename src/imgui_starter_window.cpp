@@ -749,8 +749,10 @@ void ImguiWidget::buildInterface() {
                             "AP Master: <pill color=#2ecc71>ENGAGED</pill> <pill color=#1a252f fg=#555555>DISARMED</pill>");
 
         ImGui::SameLine();
-        ImGui::ButtonLink("Official ImgWindow Docs");
-        ImGui::TimedTooltip::MD::Text("Clickable button that demonstrates the native OS hand cursor and stationary tooltip.");
+        if (ImGui::NativeTextLink("Official ImgWindow Docs ↗")) {
+            ImGui::OpenURL("https://github.com/slgoldberg/ImgWindow");
+        }
+        ImGui::TimedTooltip::MD::Text("**External Documentation**:\nOpens https://github.com/slgoldberg/ImgWindow in your default web browser.");
 
         ImGui::Spacing();
         if (ImGui::Button("Open ImGee Cockpit Showcase Window...")) {
