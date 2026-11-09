@@ -1616,8 +1616,10 @@ float ImguiWidget::cbFlightLoop(float, float, int, void* inRefcon)
             : xplm_WindowDecorationRoundRectangle;
 
         auto new_wnd = std::make_shared<ImguiWidget>(left, top, right, bottom, new_dec, xplm_WindowLayerFloatingWindows);
-        new_wnd->SetVisible(is_vis);
         new_wnd->mWindowOpacity = wnd.mWindowOpacity;
+
+        // Hide and retire the old window immediately so it stops rendering underneath!
+        wnd.SetVisible(false);
 
         // Keep old window alive in static graveyard to prevent destruction while inside its own callback
         static ImgWindowSPtrTy s_DeferredGraveyard = nullptr;
@@ -1630,6 +1632,7 @@ float ImguiWidget::cbFlightLoop(float, float, int, void* inRefcon)
                 break;
             }
         }
+        new_wnd->SetVisible(is_vis);
         return 0.0f;
     }
 
@@ -1733,6 +1736,29 @@ ImGeeShowcaseWidget::ImGeeShowcaseWidget(int width, int height,
                                          XPLMWindowLayer layer) :
     ImgWindow(WindowGeometry::Centered(width, height), decoration, layer, true /* cursors */)
 {
+    mIsGlassHUD = (decoration == xplm_WindowDecorationSelfDecoratedResizable ||
+                   decoration == xplm_WindowDecorationSelfDecorated);
+    if (mIsGlassHUD)
+    {
+        // Modern Avionics Glass HUD: 80% smoked glass backdrop with subtle border
+        ImGuiStyle& style = ImGui::GetStyle();
+        style.Colors[ImGuiCol_WindowBg] = ImVec4(0.12f, 0.14f, 0.17f, mWindowOpacity);
+        style.Colors[ImGuiCol_Border]   = ImVec4(0.35f, 0.42f, 0.50f, 0.70f);
+        style.WindowBorderSize = 1.0f;
+        style.WindowRounding   = 6.0f;
+        // Drag area across top header (roughly double text height)
+        SetWindowDragArea(0, 0, INT_MAX, int(FONT_SIZE * 2.2f));
+    }
+
+    // Create flight loop for dynamic decoration swap
+    XPLMCreateFlightLoop_t flDef = {
+        sizeof(flDef),
+        xplm_FlightLoop_Phase_BeforeFlightModel,
+        cbFlightLoop,
+        (void*)this,
+    };
+    flId = XPLMCreateFlightLoop(&flDef);
+
     SetWindowTitle("ImGee Cockpit Showcase");
     SetWindowResizingLimits(565, 330, 2560, 1440);
     SetUnscaledChrome(0, 68);
@@ -1762,7 +1788,58 @@ ImGeeShowcaseWidget::ImGeeShowcaseWidget(int width, int height,
     _baselineRect.valid = true;
 }
 
-ImGeeShowcaseWidget::~ImGeeShowcaseWidget() = default;
+ImGeeShowcaseWidget::~ImGeeShowcaseWidget()
+{
+    if (flId) {
+        XPLMDestroyFlightLoop(flId);
+        flId = nullptr;
+    }
+}
+
+float ImGeeShowcaseWidget::cbFlightLoop(float, float, int, void* inRefcon)
+{
+    ImGeeShowcaseWidget& wnd = *reinterpret_cast<ImGeeShowcaseWidget*>(inRefcon);
+
+    if (wnd.requestSwapDecoration) {
+        wnd.requestSwapDecoration = false;
+        int left, top, right, bottom;
+        wnd.GetCurrentWindowGeometry(left, top, right, bottom);
+        bool is_vis = wnd.GetVisible();
+        XPLMWindowDecoration cur_dec = wnd.GetWindowDecoration();
+        XPLMWindowDecoration new_dec = (cur_dec == xplm_WindowDecorationRoundRectangle)
+            ? xplm_WindowDecorationSelfDecoratedResizable
+            : xplm_WindowDecorationRoundRectangle;
+
+        int width = std::max(565, right - left);
+        int height = std::max(330, top - bottom);
+
+        auto new_wnd = std::make_shared<ImGeeShowcaseWidget>(width, height, new_dec, xplm_WindowLayerFloatingWindows);
+        new_wnd->SetWindowGeometry(left, top, right, bottom);
+        new_wnd->mWindowOpacity = wnd.mWindowOpacity;
+        new_wnd->_fontAdjust = wnd._fontAdjust;
+        new_wnd->_lastZoom = wnd._lastZoom;
+        new_wnd->_baselineRect = wnd._baselineRect;
+        new_wnd->_priorZoomRect = wnd._priorZoomRect;
+
+        // Hide old window immediately so it stops rendering underneath!
+        wnd.SetVisible(false);
+
+        // Keep old window alive in static graveyard to prevent destruction while inside callback
+        static ImgWindowSPtrTy s_DeferredShowcaseGraveyard = nullptr;
+        s_DeferredShowcaseGraveyard = s_pShowcaseWidget;
+
+        for (auto& p : gWndList) {
+            if (p.get() == &wnd) {
+                p = new_wnd;
+                break;
+            }
+        }
+        s_pShowcaseWidget = new_wnd;
+        new_wnd->SetVisible(is_vis);
+        return 0.0f;
+    }
+    return 0.0f;
+}
 
 void ImGeeShowcaseWidget::RestoreWindowRect(const WindowRectSnapshot& rect)
 {
@@ -1811,6 +1888,19 @@ void ShowImGeeShowcaseWindow()
 
 void ImGeeShowcaseWidget::buildInterface()
 {
+    // Modern Avionics Glass Top Grip Handle
+    if (HasWindowDragArea()) {
+        ImDrawList* draw_list = ImGui::GetWindowDrawList();
+        ImVec2 win_pos = ImGui::GetWindowPos();
+        float avail_w = ImGui::GetWindowWidth();
+        float center_x = win_pos.x + avail_w * 0.5f;
+        float grip_w = 48.0f;
+        float grip_y = win_pos.y + 6.0f;
+        draw_list->AddRectFilled(ImVec2(center_x - grip_w * 0.5f, grip_y),
+                                 ImVec2(center_x + grip_w * 0.5f, grip_y + 4.0f),
+                                 IM_COL32(255, 255, 255, 100), 2.0f);
+    }
+
     // Update transient notification timer
     float dt = ImGui::GetIO().DeltaTime;
     if (noteStatusTimer > 0.0f) {
@@ -2024,7 +2114,84 @@ void ImGeeShowcaseWidget::buildInterface()
             : "**ImGui Dynamic Cursors:** <pill color=#7f8c8d>DISABLED</pill>\n\nClick to enable ImGui contextual mouse cursors (hand, resize, text).");
     }
 
-    ImGui::TextDisabled("Dedicated reference showcase for avionics controls, dials, and CommonMark.");
+    if (IsSelfDecorated()) {
+        ImGui::SameLine(0.0f, 6.0f);
+        if (ToolbarButton(ICON_FA_WINDOW_CLOSE "##sc_close", "Close showcase window", ImVec2(24.0f, 0.0f))) {
+            SetVisible(false);
+        }
+    }
+
+    // Modern Backdrop Opacity & Mode Controller
+    ImGuiStyle& style = ImGui::GetStyle();
+    if (IsSelfDecorated()) {
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextMD("**Glass Opacity:**");
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(120.0f);
+        if (ImGui::PercentSliderWithReset("##ShowcaseOpacity", &mWindowOpacity, 0.80f, 0.10f, 1.00f, "%.0f%%")) {
+            style.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
+            style.Colors[ImGuiCol_Border].w = std::min(1.0f, mWindowOpacity * 0.8f + 0.2f);
+        }
+        char opac_tip[256];
+        std::snprintf(opac_tip, sizeof(opac_tip),
+            "**Continuous Backdrop Opacity**:\n"
+            "Drag or mouse-wheel to seamlessly tune glass transparency over the 3D cockpit.\n"
+            "Current: **%.0f%%** | Click [Reset] to restore factory 80%% glass.",
+            mWindowOpacity * 100.0f);
+        ImGui::TimedTooltip::MD::Text("%s", opac_tip);
+
+        ImGui::SameLine(0.0f, 8.0f);
+        if (ImGui::SmallButton("100% Solid##sc")) {
+            mWindowOpacity = 1.0f;
+            style.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
+            style.Colors[ImGuiCol_Border].w = 1.0f;
+        }
+        ImGui::TimedTooltip::MD::Text("%s", "100% Opaque (max contrast for high-glare daytime flight).");
+
+        ImGui::SameLine();
+        if (ImGui::SmallButton("80% Glass##sc")) {
+            mWindowOpacity = 0.80f;
+            style.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
+            style.Colors[ImGuiCol_Border].w = 0.70f;
+        }
+        ImGui::TimedTooltip::MD::Text("%s", "80% Smoked Glass (ideal balance of contrast & runway visibility).");
+
+        ImGui::SameLine();
+        if (ImGui::SmallButton("45% HUD##sc")) {
+            mWindowOpacity = 0.45f;
+            style.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
+            style.Colors[ImGuiCol_Border].w = 0.45f;
+        }
+        ImGui::TimedTooltip::MD::Text("%s", "45% Semi-Transparent HUD overlay.");
+
+        ImGui::SameLine();
+        if (ImGui::SmallButton("15% Ghost##sc")) {
+            mWindowOpacity = 0.15f;
+            style.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
+            style.Colors[ImGuiCol_Border].w = 0.25f;
+        }
+        ImGui::TimedTooltip::MD::Text("%s", "15% Ultra-light see-through HUD mode.");
+
+        ImGui::SameLine(0.0f, 10.0f);
+        if (ImGui::SmallButton("Switch to Native Bezel...##sc")) {
+            requestSwapDecoration = true;
+            XPLMScheduleFlightLoop(flId, -1.0, 1);
+        }
+        ImGui::TimedTooltip::MD::Text("%s",
+            "**X-Plane Native Bezel**:\n"
+            "Re-creates showcase window with standard X-Plane rounded rectangle bezel.");
+    } else {
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextDisabled("Backdrop: X-Plane Native Bezel (Solid Maps Style)");
+        ImGui::SameLine();
+        if (ImGui::SmallButton("Switch to Modern Glass HUD Mode...##sc")) {
+            requestSwapDecoration = true;
+            XPLMScheduleFlightLoop(flId, -1.0, 1);
+        }
+        ImGui::TimedTooltip::MD::Text("%s",
+            "**Modern Cockpit Glass Mode** (SelfDecoratedResizable):\n"
+            "Converts showcase window to a frameless, resizable glass HUD panel with continuous opacity controls.");
+    }
     ImGui::Spacing();
 
     // 2. Inner Content Canvas: Apply dynamic _fontAdjust to all tabs and interactive controls
@@ -3013,6 +3180,11 @@ void ImGeeShowcaseWidget::buildInterface()
             case 3: ImGui::StyleColorsClassic(); break;
             case 4: ImGui::StyleColorsLight(); break;
             default: break;
+        }
+        if (mIsGlassHUD || IsSelfDecorated()) {
+            ImGuiStyle& st = ImGui::GetStyle();
+            st.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
+            st.Colors[ImGuiCol_Border].w = std::min(1.0f, mWindowOpacity * 0.8f + 0.2f);
         }
     }
     ImGui::TimedTooltip::MD::Text(

@@ -56,7 +56,17 @@ protected:
 
     void buildInterface() override;
 
+    static float cbFlightLoop(float inElapsedSinceLastCall,
+                             float inElapsedTimeSinceLastFlightLoop,
+                             int   inCounter,
+                             void* inRefcon);
+
 private:
+    XPLMFlightLoopID flId = nullptr;
+    bool requestSwapDecoration = false;
+    float mWindowOpacity = 0.80f;
+    bool mIsGlassHUD = false;
+
     // Tab 1 state: Knobs, Sliders & Procedural Dials
     float       headingBug      = 180.0f;
     float       altitudeTarget  = 5500.0f;
