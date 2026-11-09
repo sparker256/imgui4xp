@@ -619,8 +619,9 @@ ImguiWidget::ImguiWidget(int left, int top, int right, int bot,
         style.Colors[ImGuiCol_Border]   = ImVec4(0.35f, 0.42f, 0.50f, 0.70f);
         style.WindowBorderSize = 1.0f;
         style.WindowRounding   = 6.0f;
-        // Drag area across top header (roughly double text height)
-        SetWindowDragArea(0, 0, INT_MAX, int(FONT_SIZE * 2.2f));
+        // Drag area centered on top grip handle (60px wide, 16px high)
+        int width = right - left;
+        SetWindowDragArea(width / 2 - 30, 0, width / 2 + 30, 16);
     }
 
     // Create a flight loop id, but don't schedule it yet
@@ -670,15 +671,31 @@ void ImguiWidget::buildInterface() {
     
     // Modern Avionics Glass Top Grip Handle
     if (HasWindowDragArea()) {
+        float avail_w = ImGui::GetWindowWidth();
+        int center_local = int(avail_w * 0.5f);
+        SetWindowDragArea(center_local - 30, 0, center_local + 30, 16);
+
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
         ImVec2 win_pos = ImGui::GetWindowPos();
-        float avail_w = ImGui::GetWindowWidth();
         float center_x = win_pos.x + avail_w * 0.5f;
         float grip_w = 48.0f;
         float grip_y = win_pos.y + 6.0f;
         draw_list->AddRectFilled(ImVec2(center_x - grip_w * 0.5f, grip_y),
                                  ImVec2(center_x + grip_w * 0.5f, grip_y + 4.0f),
                                  IM_COL32(255, 255, 255, 100), 2.0f);
+
+        // Faux Grip Bar hover & right-drag discovery affordance
+        ImVec2 grip_min(center_x - 30.0f, win_pos.y);
+        ImVec2 grip_max(center_x + 30.0f, win_pos.y + 16.0f);
+        bool is_hovered = ImGui::IsMouseHoveringRect(grip_min, grip_max);
+        if (is_hovered) {
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+        }
+        ImGui::TimedTooltip::TextMDProxy("##DemoFauxGripDragHandle", is_hovered,
+            "**Window Drag Handle** (Glass HUD)\n"
+            "• Left-drag here to reposition window.\n"
+            "• *ProTip:* You can **right-drag anywhere** inside the window to move it!"
+        );
     }
     
     // Button with fixed width 30 and standard height
@@ -1893,14 +1910,15 @@ void ImGeeShowcaseWidget::buildInterface()
         // Faux Grip Bar hover & right-drag discovery affordance
         ImVec2 grip_min(center_x - 30.0f, win_pos.y);
         ImVec2 grip_max(center_x + 30.0f, win_pos.y + 16.0f);
-        if (ImGui::IsMouseHoveringRect(grip_min, grip_max)) {
+        bool is_hovered = ImGui::IsMouseHoveringRect(grip_min, grip_max);
+        if (is_hovered) {
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
-            ImGui::TimedTooltip::MD::Text(
-                "**Window Drag Handle** (Glass HUD)\n"
-                "• Left-drag here to reposition window.\n"
-                "• *ProTip:* You can **right-drag anywhere** inside the window to move it!"
-            );
         }
+        ImGui::TimedTooltip::TextMDProxy("##ShowcaseFauxGripDragHandle", is_hovered,
+            "**Window Drag Handle** (Glass HUD)\n"
+            "• Left-drag here to reposition window.\n"
+            "• *ProTip:* You can **right-drag anywhere** inside the window to move it!"
+        );
     }
 
     // Update transient notification timer
