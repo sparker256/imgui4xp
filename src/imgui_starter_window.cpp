@@ -1742,7 +1742,7 @@ ImGeeShowcaseWidget::ImGeeShowcaseWidget(int width, int height,
 
     SetWindowTitle("ImGee Cockpit Showcase");
     SetWindowResizingLimits(580, 350, 2560, 1440);
-    SetUnscaledChrome(0, 80);
+    SetUnscaledChrome(0, 340);
     // Pre-load default note from disk if available
     std::string default_note = "./Resources/plugins/imgui4xp/notes/flight_briefing.md";
     if (!LoadTextFile(default_note, scratchpadText)) {
