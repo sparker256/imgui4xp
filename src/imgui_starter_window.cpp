@@ -745,13 +745,11 @@ void ImguiWidget::buildInterface() {
         static bool s_DemoToggle = true;
         // Korry 389 Split-Lens Pushbutton: active glow vs dark smoked glass stencil
         ImGui::ToggleButton("AP Master Switch", &s_DemoToggle,
-                            "AP Master: <pill color=#1a252f fg=#555555>ENGAGED</pill> <pill color=#e67e22>DISARMED</pill>",
-                            "AP Master: <pill color=#2ecc71>ENGAGED</pill> <pill color=#1a252f fg=#555555>DISARMED</pill>");
+                            "AP Master: <pill color=#e67e22>DISARMED</pill> <pill color=#1a252f fg=#555555>ENGAGED</pill>",
+                            "AP Master: <pill color=#1a252f fg=#555555>DISARMED</pill> <pill color=#2ecc71>ENGAGED</pill>");
 
         ImGui::SameLine();
-        if (ImGui::NativeTextLink("Official ImgWindow Docs " ICON_FA_EXTERNAL_LINK_SQUARE_ALT)) {
-            ImGui::OpenURL("https://github.com/slgoldberg/ImgWindow");
-        }
+        ImGui::ExternalTextLink("Official ImgWindow Docs", "https://github.com/slgoldberg/ImgWindow");
         ImGui::TimedTooltip::MD::Text("**External Documentation**:\nOpens https://github.com/slgoldberg/ImgWindow in your default web browser.");
 
         ImGui::Spacing();
@@ -2047,8 +2045,8 @@ void ImGeeShowcaseWidget::buildInterface()
 
             // Pattern A: Korry 389 Split-Lens Pushbutton
             ImGui::ToggleButton("Avionics Master (Korry Split-Lens)", &avionicsMaster,
-                                "Avionics: <pill color=#1a252f fg=#555555>ONLINE</pill> <pill color=#7f8c8d>OFFLINE</pill>",
-                                "Avionics: <pill color=#2ecc71>ONLINE</pill> <pill color=#1a252f fg=#555555>OFFLINE</pill>");
+                                "Avionics: <pill color=#7f8c8d>OFFLINE</pill> <pill color=#1a252f fg=#555555>ONLINE</pill>",
+                                "Avionics: <pill color=#1a252f fg=#555555>OFFLINE</pill> <pill color=#2ecc71>ONLINE</pill>");
             ImGui::TimedTooltip::MD::Text("Main avionics bus breaker and power distribution (dual-lamp stencil).");
 
             // Pattern B: Status + Action Cue (interactive guidance)
