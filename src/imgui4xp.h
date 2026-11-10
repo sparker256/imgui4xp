@@ -59,6 +59,13 @@ void CalcWinCoords (int& left, int& top, int& right, int& bottom);
 void AddWindow (XPLMWindowDecoration decoration = xplm_WindowDecorationRoundRectangle,
                 XPLMWindowLayer layer = xplm_WindowLayerFloatingWindows);
 
+// First-class X-Plane commands
+extern XPLMCommandRef s_cmdToggleDemo;
+#if defined(IMGEE_VERSION)
+extern XPLMCommandRef s_cmdToggleShowcase;
+#endif
+extern XPLMCommandRef s_cmdGatherWindows;
+
 // Plugin menu and command item indices
 extern XPLMMenuID g_hPluginMenu;
 extern int g_menuItemDemo;

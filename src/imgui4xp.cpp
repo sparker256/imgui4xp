@@ -44,11 +44,11 @@ void CalcWinCoords (int& left, int& top, int& right, int& bottom)
 }
 
 // Command references
-static XPLMCommandRef s_cmdToggleDemo = nullptr;
+XPLMCommandRef s_cmdToggleDemo = nullptr;
 #if defined(IMGEE_VERSION)
-static XPLMCommandRef s_cmdToggleShowcase = nullptr;
+XPLMCommandRef s_cmdToggleShowcase = nullptr;
 #endif
-static XPLMCommandRef s_cmdGatherWindows = nullptr;
+XPLMCommandRef s_cmdGatherWindows = nullptr;
 
 // Plugin menu and command item indices
 XPLMMenuID g_hPluginMenu = nullptr;
@@ -88,6 +88,7 @@ void UpdateMenuCheckmarks()
 
 void ToggleStarterWindow()
 {
+    ImGuiContext* prevContext = ImGui::GetCurrentContext();
     if (!s_pStarterWidget) {
         AddWindow();
         if (s_pStarterWidget) {
@@ -102,11 +103,15 @@ void ToggleStarterWindow()
         }
     }
     UpdateMenuCheckmarks();
+    if (prevContext) {
+        ImGui::SetCurrentContext(prevContext);
+    }
 }
 
 void ToggleImGeeShowcaseWindow()
 {
 #if defined(IMGEE_VERSION)
+    ImGuiContext* prevContext = ImGui::GetCurrentContext();
     if (!s_pShowcaseWidget) {
         ShowImGeeShowcaseWindow();
     } else {
@@ -117,11 +122,15 @@ void ToggleImGeeShowcaseWindow()
         }
     }
     UpdateMenuCheckmarks();
+    if (prevContext) {
+        ImGui::SetCurrentContext(prevContext);
+    }
 #endif
 }
 
 void GatherAllWindows()
 {
+    ImGuiContext* prevContext = ImGui::GetCurrentContext();
     int left, top, right, bottom;
     CalcWinCoords(left, top, right, bottom);
     for (ImgWindowSPtrTy& pWnd : gWndList) {
@@ -142,6 +151,9 @@ void GatherAllWindows()
         top  -= WIN_COLL_OFS;
     }
     UpdateMenuCheckmarks();
+    if (prevContext) {
+        ImGui::SetCurrentContext(prevContext);
+    }
 }
 
 static int CommandHandlerCB(XPLMCommandRef inCommand, XPLMCommandPhase inPhase, void* /*inRefcon*/)

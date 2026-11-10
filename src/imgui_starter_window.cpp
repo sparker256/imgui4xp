@@ -853,8 +853,20 @@ void ImguiWidget::buildInterface() {
 #if defined(IMGEE_VERSION)
     bool tree_open = ImGui::TreeNodeEx("ImGee UX & Modern Cockpit Suite", ImGuiTreeNodeFlags_None);
     ImGui::SameLine(0.0f, 8.0f);
-    if (ImGui::SmallButton("Open ImGee Cockpit Showcase Window...##imgee_showcase_btn")) {
-        ToggleImGeeShowcaseWindow();
+    bool is_showcase_open = (s_pShowcaseWidget && s_pShowcaseWidget->GetVisible());
+    const char* btn_label = is_showcase_open
+        ? "Close ImGee Showcase Window##imgee_showcase_btn"
+        : "Open ImGee Cockpit Showcase Window...##imgee_showcase_btn";
+    if (ImGui::SmallButton(btn_label)) {
+        ImGuiContext* curCtx = ImGui::GetCurrentContext();
+        if (s_cmdToggleShowcase) {
+            XPLMCommandOnce(s_cmdToggleShowcase);
+        } else {
+            ToggleImGeeShowcaseWindow();
+        }
+        if (curCtx) {
+            ImGui::SetCurrentContext(curCtx);
+        }
     }
     ImGui::TimedTooltip::MD::Text("Opens or toggles the dedicated, non-scrollable ImGee showcase window featuring avionics knobs, procedural dials, and live scratchpad.");
 
