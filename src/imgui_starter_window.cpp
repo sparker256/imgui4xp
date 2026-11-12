@@ -671,6 +671,11 @@ ImguiWidget::~ImguiWidget()
 }
 
 void ImguiWidget::buildInterface() {
+#if defined(IMGEE_VERSION) && !defined(IMGEE_DISABLE_TIMED_TOOLTIP)
+    if (IsWindowMoving()) {
+        ImGui::TimedTooltip::ClearActiveTooltip();
+    }
+#endif
 
     float win_width = ImGui::GetWindowWidth();
     float win_height = ImGui::GetWindowHeight();
@@ -696,8 +701,8 @@ void ImguiWidget::buildInterface() {
         // Faux Grip Bar hover & right-drag discovery affordance (120px double-width grab region)
         ImVec2 grip_min(center_x - 60.0f, win_pos.y);
         ImVec2 grip_max(center_x + 60.0f, win_pos.y + 16.0f);
-        bool is_hovered = ImGui::IsMouseHoveringRect(grip_min, grip_max);
-        if (is_hovered) {
+        bool is_hovered = ImGui::IsMouseHoveringRect(grip_min, grip_max) && !IsWindowMoving();
+        if (is_hovered || IsWindowMoving()) {
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
         }
 #if defined(IMGEE_VERSION) && !defined(IMGEE_DISABLE_TIMED_TOOLTIP)
@@ -2040,6 +2045,12 @@ void ShowImGeeShowcaseWindow()
 
 void ImGeeShowcaseWidget::buildInterface()
 {
+#if defined(IMGEE_VERSION) && !defined(IMGEE_DISABLE_TIMED_TOOLTIP)
+    if (IsWindowMoving()) {
+        ImGui::TimedTooltip::ClearActiveTooltip();
+    }
+#endif
+
     // Modern Avionics Glass Top Grip Handle
     const bool bShowcaseGlassHUD = (mIsGlassHUD || IsSelfDecorated());
     if (bShowcaseGlassHUD && !IsPoppedOut()) {
@@ -2081,8 +2092,8 @@ void ImGeeShowcaseWidget::buildInterface()
         float hover_max_x = win_pos.x + float(drag_right);
         ImVec2 grip_min(hover_min_x, win_pos.y);
         ImVec2 grip_max(hover_max_x, win_pos.y + 16.0f);
-        bool is_hovered = ImGui::IsMouseHoveringRect(grip_min, grip_max);
-        if (is_hovered) {
+        bool is_hovered = ImGui::IsMouseHoveringRect(grip_min, grip_max) && !IsWindowMoving();
+        if (is_hovered || IsWindowMoving()) {
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
         }
         ImGui::TimedTooltip::TextMDProxy("##ShowcaseFauxGripDragHandle", is_hovered,
