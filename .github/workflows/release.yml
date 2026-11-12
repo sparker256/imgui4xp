@@ -1,0 +1,96 @@
+name: "Release: Tag and publish GitHub Release"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce master branch only
+        run: |
+          if [[ "${{ github.ref }}" != "refs/heads/master" ]]; then
+            echo "::error::Releases may only be published from the 'master' branch (current ref: ${{ github.ref }})."
+            exit 1
+          fi
+
+      - name: Checkout master source
+        uses: actions/checkout@v6
+
+      - name: Validate VERSION_NUMBER before building
+        run: |
+          I4XP_VER=$(grep -E '^[[:space:]]*#define[[:space:]]+VERSION_NUMBER' src/imgui4xp.cpp | head -n1 | sed -E 's/^[^"]*"[[:space:]]*([^"[:space:]]+).*/\1/')
+          if [[ -z "$I4XP_VER" ]]; then
+            echo "::error::Could not parse VERSION_NUMBER from src/imgui4xp.cpp -- aborting before build."
+            exit 1
+          fi
+          echo "Validated VERSION_NUMBER: $I4XP_VER"
+
+  build:
+    needs: [preflight]
+    uses: ./.github/workflows/cmake.yml
+
+  release:
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Ensure target directories exist
+        run: |
+          mkdir -p imgui4xp/lin_x64 imgui4xp/mac_x64 imgui4xp/win_x64
+
+      - name: Download Linux binary
+        uses: actions/download-artifact@v8
+        with:
+          name: binaries-ubuntu-latest
+          path: imgui4xp/lin_x64
+
+      - name: Download macOS binary
+        uses: actions/download-artifact@v8
+        with:
+          name: binaries-macos-latest
+          path: imgui4xp/mac_x64
+
+      - name: Download Windows binary
+        uses: actions/download-artifact@v8
+        with:
+          name: binaries-windows-latest
+          path: imgui4xp/win_x64
+
+      - name: Ensure binary permissions
+        run: |
+          chmod +x imgui4xp/lin_x64/*.xpl imgui4xp/mac_x64/*.xpl || true
+
+      - name: Package Release ZIP and update Git tag
+        env:
+          I4XP_VERSION: ${{ needs.build.outputs.i4xp_version }}
+        run: |
+          mkdir -p build/dist
+          zip -rq "build/dist/imgui4xp_v${I4XP_VERSION}.zip" imgui4xp -x "*.DS_Store" "*/.gitkeep"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -f "$I4XP_VERSION" "${{ github.sha }}"
+          git push origin "refs/tags/$I4XP_VERSION" --force
+          {
+            echo "### GitHub Release Summary"
+            echo "- **Version / Tag:** \`${I4XP_VERSION}\`"
+            echo "- **Package ZIP:** \`imgui4xp_v${I4XP_VERSION}.zip\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish or update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.build.outputs.i4xp_version }}
+          name: imgui4xp ${{ needs.build.outputs.i4xp_version }}
+          generate_release_notes: true
+          files: build/dist/imgui4xp_v${{ needs.build.outputs.i4xp_version }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
