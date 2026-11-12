@@ -61,29 +61,32 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-      
-      - uses: actions/upload-artifact/merge@v7
-        with:
-          name: binaries
-          pattern: binaries-*
 
-      - uses: actions/download-artifact@v8
+      - name: Download Linux binary
+        uses: actions/download-artifact@v8
         with:
-          name: binaries
+          name: binaries-ubuntu-latest
           path: imgui4xp/lin_x64
-      - name: Test artifact download     
-        run: ls -R -l
-#      - name: Rename lin.xpl to imgui4xp.xpl
-#      When built already in right place so no need to move it. 
-#       # run: mv imgui4xp/lin_x64/imgui4xp.xpl imgui4xp/lin_x64/imgui4xp.xpl
-      - name: List folder     
-        run: ls -R -l  
-#      - name: Rename win.xpl to imgui4xp/win_x64/imgui4xp.xpl
-#      #  run: mv imgui4xp/win_x64/imgui4xp.xpl imgui4xp/win_x64/imgui4xp.xpl
-#      - name: Rename mac.xpl to imgui4xp/mac_x64/imgui4xp.xpl
-#      #  run: mv imgui4xp/mac_x64/imgui4xp.xpl imgui4xp/mac_x64/imgui4xp.xpl
-      - name: List Final Folder     
-        run: ls -R -l  
+
+      - name: Download macOS binary
+        uses: actions/download-artifact@v8
+        with:
+          name: binaries-macos-latest
+          path: imgui4xp/mac_x64
+
+      - name: Download Windows binary
+        uses: actions/download-artifact@v8
+        with:
+          name: binaries-windows-latest
+          path: imgui4xp/win_x64
+
+      - name: Ensure binary permissions
+        run: |
+          chmod +x imgui4xp/lin_x64/*.xpl imgui4xp/mac_x64/*.xpl || true
+
+      - name: List Final Folder
+        run: ls -R -l imgui4xp
+
       - uses: actions/upload-artifact@v7
         with:
           name: imgui4xp_v${{env.I4XP_VERSION}}
