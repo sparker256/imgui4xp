@@ -1,11 +1,20 @@
-name: CMake
+name: "CMake: Build and create .zip bundle"
 
-on: [push]
+on:
+  push:
+  workflow_call:
+    outputs:
+      i4xp_version:
+        description: "Version string parsed from src/imgui4xp.cpp"
+        value: ${{ jobs.package.outputs.i4xp_version }}
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-  BUILD_TYPE: RelWithDebInfo
-  I4XP_VERSION: 1.14
+  BUILD_TYPE: Release
 
 jobs:
   build:
@@ -58,6 +67,8 @@ jobs:
   package:
     needs: build
     runs-on: ubuntu-latest
+    outputs:
+      i4xp_version: ${{ steps.resolve_version.outputs.i4xp_version }}
 
     steps:
       - uses: actions/checkout@v6
@@ -86,6 +97,18 @@ jobs:
 
       - name: List Final Folder
         run: ls -R -l imgui4xp
+
+      - name: Resolve imgui4xp version
+        id: resolve_version
+        run: |
+          I4XP_VER=$(grep -E '^[[:space:]]*#define[[:space:]]+VERSION_NUMBER' src/imgui4xp.cpp | head -n1 | sed -E 's/^[^"]*"[[:space:]]*([^"[:space:]]+).*/\1/')
+          if [[ -z "$I4XP_VER" ]]; then
+            echo "::error::Could not resolve VERSION_NUMBER from src/imgui4xp.cpp"
+            exit 1
+          fi
+          echo "I4XP_VERSION=$I4XP_VER" >> "$GITHUB_ENV"
+          echo "i4xp_version=$I4XP_VER" >> "$GITHUB_OUTPUT"
+          echo "Resolved imgui4xp version: $I4XP_VER"
 
       - uses: actions/upload-artifact@v7
         with:
