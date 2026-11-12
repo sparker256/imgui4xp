@@ -47,7 +47,29 @@
 /// Is VR currently enabled?
 extern bool vr_is_enabled;
 
+// Window list
+typedef std::shared_ptr<ImgWindow> ImgWindowSPtrTy;
+typedef std::vector<ImgWindowSPtrTy> ImgWindowSPtrVecTy;
+extern ImgWindowSPtrVecTy gWndList;
+
 /// Calculate window's standard coordinates
 void CalcWinCoords (int& left, int& top, int& right, int& bottom);
+
+/// Creates another window right inside the list
+void AddWindow (XPLMWindowDecoration decoration = xplm_WindowDecorationRoundRectangle,
+                XPLMWindowLayer layer = xplm_WindowLayerFloatingWindows);
+
+// First-class X-Plane commands
+extern XPLMCommandRef s_cmdToggleDemo;
+#if defined(IMGEE_VERSION)
+extern XPLMCommandRef s_cmdToggleShowcase;
+#endif
+extern XPLMCommandRef s_cmdGatherWindows;
+
+// Plugin menu and command item indices
+extern XPLMMenuID g_hPluginMenu;
+extern int g_menuItemDemo;
+extern int g_menuItemShowcase;
+extern int g_menuItemGather;
 
 #endif // #ifndef IMGUI4XP_H

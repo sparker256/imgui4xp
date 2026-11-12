@@ -12,6 +12,7 @@
 #define SRC_IMGUIWIDGET_H_
 
 #include "../src/ImgWindow/ImgWindow.h"
+#include "contrib.h"
 #include <vector>
 
 // Configure one-time setup like fonts
@@ -28,6 +29,135 @@ inline ImFont* Font6 = nullptr;
 inline ImFont* Font7 = nullptr;
 inline ImFont* Font8 = nullptr;
 inline ImFont* Font9 = nullptr;
+inline ImFont* FontBold = nullptr;
+inline ImFont* FontItalic = nullptr;
+inline ImFont* FontBoldItalic = nullptr;
+inline ImFont* FontItalicH1 = nullptr;
+inline ImFont* FontItalicH2 = nullptr;
+inline ImFont* FontMono = nullptr;
+inline ImFont* FontSmall = nullptr;
+inline ImFont* FontTiny = nullptr;
+
+#if defined(IMGEE_VERSION)
+// Dedicated fixed-size, non-scrollable window showcasing ImGee UX suite (ImgWindow/contrib/)
+class ImGeeShowcaseWidget: public ImgWindow {
+public:
+    ImGeeShowcaseWidget(int width = 680, int height = 596,
+                        XPLMWindowDecoration decoration = xplm_WindowDecorationRoundRectangle,
+                        XPLMWindowLayer layer = xplm_WindowLayerFloatingWindows);
+    ~ImGeeShowcaseWidget() override;
+
+protected:
+    ImGuiWindowFlags_ beforeBegin() override {
+        return static_cast<ImGuiWindowFlags_>(ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+    }
+
+    // Dynamic UI Zoom multiplier (Responsive UI Scaling Math)
+    float getFontAdjust() const override { return _fontAdjust; }
+
+    void buildInterface() override;
+
+    static float cbFlightLoop(float inElapsedSinceLastCall,
+                             float inElapsedTimeSinceLastFlightLoop,
+                             int   inCounter,
+                             void* inRefcon);
+
+private:
+    XPLMFlightLoopID flId = nullptr;
+    bool requestSwapDecoration = false;
+    XPLMWindowPositioningMode nextWinPosMode = -1;
+    float mWindowOpacity = 0.80f;
+    bool mIsGlassHUD = false;
+    int mSavedSimLeft = 0;
+    int mSavedSimTop = 0;
+    int mSavedSimRight = 0;
+    int mSavedSimBottom = 0;
+    bool mHasSavedSimGeometry = false;
+
+    // Tab 1 state: Knobs, Sliders & Procedural Dials
+    float       headingBug      = 180.0f;
+    float       altitudeTarget  = 5500.0f;
+    float       verticalSpeed   = 0.0f;
+    float       throttlePct     = 0.65f;
+    int         navSourceIdx    = 0;
+    float       fuelRemaining   = 0.74f;
+    float       holdTimerSec    = 42.0f;
+    const float holdTimerMaxSec = 60.0f;
+    char        transponderCode[5] = "4721";
+
+    // Tab 2 state: Switches & Toggles
+    bool        avionicsMaster  = true;
+    bool        flightDirector  = true;
+    bool        pitotHeat       = false;
+    bool        yawDamper       = false;
+
+    // Tab 3 state: Typography & Markdown
+    std::string pilotCallsign   = "N172SP";
+
+    // Tab 4 state: Live Scratchpad & Toolbar Demo
+    std::string scratchpadText;
+    bool        has_active_selection = false;
+    int         cached_sel_start     = -1;
+    int         cached_sel_end       = -1;
+    int         cached_cur_pos       = -1;
+    bool        syncScroll           = true;
+
+    // File Dialog & Picker State (imgui_file_dialog.h integration)
+    std::string currentNoteFilename  = "flight_briefing.md";
+    std::string noteStatusMsg;
+    float       noteStatusTimer      = 0.0f;
+    bool        showOpenDialog       = false;
+    bool        showSaveDialog       = false;
+    std::string dialogFilePath;
+
+    // Shields.io & Badge Generator Modal State
+    bool        showShieldModal      = false;
+    char        shieldLabel[64]      = "X-Plane";
+    char        shieldMessage[64]    = "12.00+";
+    int         shieldColorIdx       = 0; // 0=blue, 1=green, 2=orange, 3=red, 4=purple
+    int         shieldStyleIdx       = 0; // 0=Shields.io Image, 1=Native ImGee Badge, 2=Native ImGee Pill
+
+    void LoadNote(const std::string& path);
+    void SaveNote(const std::string& path);
+
+    // Window-level UI zoom factor (Responsive UI Scaling Math)
+    float       _fontAdjust     = 1.0f;
+    float       _lastZoom       = 1.0f;
+    int         _decRepeatCount = 0;
+    int         _incRepeatCount = 0;
+    float       _sliderStartZoom = 1.0f;
+    std::vector<ImGui::MarkdownTableState> pendingTableStates;
+
+    struct WindowRectSnapshot {
+        int  l = 0;
+        int  t = 0;
+        int  r = 0;
+        int  b = 0;
+        bool valid = false;
+    };
+    WindowRectSnapshot _baselineRect;
+    WindowRectSnapshot _priorZoomRect;
+
+    void RestoreWindowRect(const WindowRectSnapshot& rect);
+};
+
+// Backwards-compatible alias for showcase window
+typedef ImGeeShowcaseWidget ContribShowcaseWidget;
+
+// Opens or focuses the dedicated ImGee Showcase Window
+void ShowImGeeShowcaseWindow();
+inline void ShowContribShowcaseWindow() { ShowImGeeShowcaseWindow(); }
+inline std::shared_ptr<ImGeeShowcaseWidget> s_pShowcaseWidget = nullptr;
+void ToggleImGeeShowcaseWindow();
+#else
+inline void ToggleImGeeShowcaseWindow() {}
+#endif
+
+class ImguiWidget;
+inline std::shared_ptr<ImguiWidget> s_pStarterWidget = nullptr;
+void UpdateMenuCheckmarks();
+void ToggleStarterWindow();
+void GatherAllWindows();
 
 // Our own class defining our own UI
 class ImguiWidget: public ImgWindow {
@@ -42,6 +172,15 @@ protected:
     const int       myWinNum;
     // Note to myself that a change of window mode is requested
     XPLMWindowPositioningMode nextWinPosMode = -1;
+    // Request dynamic swap between Solid Native Bezel and Modern Glass HUD
+    bool requestSwapDecoration = false;
+    float mWindowOpacity = 0.80f;
+    bool mIsGlassHUD = false;
+    int mSavedSimLeft = 0;
+    int mSavedSimTop = 0;
+    int mSavedSimRight = 0;
+    int mSavedSimBottom = 0;
+    bool mHasSavedSimGeometry = false;
     // Our flight loop callback in case we need one
     XPLMFlightLoopID flId = nullptr;
     // Values in node "Buttons" / "Checkboxes"
