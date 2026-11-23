@@ -39,11 +39,11 @@ inline ImFont* FontSmall = nullptr;
 inline ImFont* FontTiny = nullptr;
 
 #if defined(IMGEE_VERSION)
-// Dedicated fixed-size, non-scrollable window showcasing ImGee UX suite (ImgWindow/contrib/)
+// Dedicated fixed-size, non-scrollable window showcasing the ImGee v1.1.0 UX suite (ImgWindow/contrib/ImGee/)
 class ImGeeShowcaseWidget: public ImgWindow {
 public:
     ImGeeShowcaseWidget(int width = 680, int height = 596,
-                        XPLMWindowDecoration decoration = xplm_WindowDecorationRoundRectangle,
+                        XPLMWindowDecoration decoration = xplm_WindowDecorationSelfDecoratedResizable,
                         XPLMWindowLayer layer = xplm_WindowLayerFloatingWindows);
     ~ImGeeShowcaseWidget() override;
 
@@ -72,6 +72,7 @@ private:
     int mSavedSimTop = 0;
     int mSavedSimRight = 0;
     int mSavedSimBottom = 0;
+    float mSavedSimZoom = 1.0f;
     bool mHasSavedSimGeometry = false;
 
     // Tab 1 state: Knobs, Sliders & Procedural Dials
@@ -135,9 +136,17 @@ private:
         int  b = 0;
         bool valid = false;
     };
-    WindowRectSnapshot _baselineRect;
-    WindowRectSnapshot _priorZoomRect;
+    WindowRectSnapshot _simBaselineRect;
+    WindowRectSnapshot _osBaselineRect;
+    WindowRectSnapshot _vrBaselineRect;
+    WindowRectSnapshot _simPriorZoomRect;
+    WindowRectSnapshot _osPriorZoomRect;
+    WindowRectSnapshot _vrPriorZoomRect;
 
+    WindowRectSnapshot& ActiveBaselineRect();
+    WindowRectSnapshot& ActivePriorZoomRect();
+    void CaptureCurrentWindowRect(WindowRectSnapshot& rect) const;
+    void ApplyZoomTransition(float from_scale, float to_scale);
     void RestoreWindowRect(const WindowRectSnapshot& rect);
 };
 

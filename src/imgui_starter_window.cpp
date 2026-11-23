@@ -856,12 +856,12 @@ void ImguiWidget::buildInterface() {
     ImGui::Spacing();
 
 #if defined(IMGEE_VERSION)
-    bool tree_open = ImGui::TreeNodeEx("ImGee UX & Modern Cockpit Suite", ImGuiTreeNodeFlags_None);
+    bool tree_open = ImGui::TreeNodeEx("ImGee Modern Sim UX Toolkit", ImGuiTreeNodeFlags_None);
     ImGui::SameLine(0.0f, 8.0f);
     bool is_showcase_open = (s_pShowcaseWidget && s_pShowcaseWidget->GetVisible());
     const char* btn_label = is_showcase_open
         ? "Close ImGee Showcase Window##imgee_showcase_btn"
-        : "Open ImGee Cockpit Showcase Window...##imgee_showcase_btn";
+        : "Open ImGee UX Showcase Window...##imgee_showcase_btn";
     if (ImGui::SmallButton(btn_label)) {
         ImGuiContext* curCtx = ImGui::GetCurrentContext();
         if (s_cmdToggleShowcase) {
@@ -877,13 +877,13 @@ void ImguiWidget::buildInterface() {
 
     if (tree_open) {
         ImGui::TextMD("# ImGee UX Showcase");
-        ImGui::TextMD("Turnkey ImGee extensions from `ImgWindow/contrib/` (`#include \"ImgWindow/contrib.h\"`) for modern cockpit plugins:");
+        ImGui::TextMD("Turnkey **ImGee v1.1.0** extensions (`#include \"ImgWindow/contrib/imgee.h\"` or `#include \"ImgWindow/contrib.h\"`) for modern cockpit plugins:");
         
         ImGui::Bullet();
         ImGui::TextMD("**Semantic Markdown:** `# H1`, `## H2`, `**bold**`, `*italic*`, and `monospace`.");
         
         ImGui::Bullet();
-        ImGui::TextMD("**Interactive Tags:** <pill color=#2ecc71>ONLINE</pill>  <pill color=#e74c3c>WARNING</pill>  <badge>v2.3.0</badge>  <kbd>Alt</kbd>+<kbd>Click</kbd>");
+        ImGui::TextMD("**Interactive Tags:** <pill color=#2ecc71>ONLINE</pill>  <pill color=#e74c3c>WARNING</pill>  <badge>v2.5.0</badge>  <kbd>Alt</kbd>+<kbd>Click</kbd>");
         
         ImGui::Bullet();
         ImGui::TextMD("**Stationary TimedTooltips:** Polite, zero-jitter hover tooltips with dwell timeouts.");
@@ -1051,7 +1051,7 @@ void ImguiWidget::buildInterface() {
     if (ImGui::TreeNode("Plots")) {
         static float values[] = {1, 3, 2, 5, 0, 6, -3};
         ImGui::PlotLines("Value Plot", values, IM_ARRAYSIZE(values));
-        ImGui::PlotLines("", values, IM_ARRAYSIZE(values) - 1, 1, "Plot", -10, FLT_MAX, ImVec2(win_width, 100));
+        ImGui::PlotLines("##PlotLines2", values, IM_ARRAYSIZE(values) - 1, 1, "Plot", -10, FLT_MAX, ImVec2(win_width, 100));
         ImGui::PlotHistogram("Value Histogram", values, IM_ARRAYSIZE(values));
         ImGui::TreePop();
     }
@@ -1700,7 +1700,7 @@ float ImguiWidget::cbFlightLoop(float, float, int, void* inRefcon)
 
         if (was_popped_out) {
             new_wnd->SetWindowPositioningMode(xplm_WindowPopOut, -1);
-            if (osR > osL && osT > osB) {
+            if (osR > osL && osT != osB) {
                 new_wnd->SetWindowGeometryOS(osL, osT, osR, osB);
             }
         }
@@ -1739,12 +1739,15 @@ float ImguiWidget::cbFlightLoop(float, float, int, void* inRefcon)
                 wnd.SetWindowGeometry(wnd.mSavedSimLeft, wnd.mSavedSimTop, wnd.mSavedSimRight, wnd.mSavedSimBottom);
             } else {
                 int left, top, right, bottom;
-                wnd.GetCurrentWindowGeometry(left, top, right, bottom);
+                wnd.GetWindowGeometry(left, top, right, bottom);
                 const int width  = right - left;
                 const int height = top - bottom;
                 CalcWinCoords(left, top, right, bottom);
-                right  = left + width;
-                bottom = top  - height;
+                if (width > 0 && height > 0) {
+                    right  = left + width;
+                    bottom = top  - height;
+                }
+                ImgWindow::ClampGeometryToScreen(left, top, right, bottom, 100, 100, 1024, 1024, wnd.GetEffectiveTopMargin());
                 wnd.SetWindowGeometry(left, top, right, bottom);
             }
         }
@@ -1835,14 +1838,10 @@ ImGeeShowcaseWidget::ImGeeShowcaseWidget(int width, int height,
                                          XPLMWindowLayer layer) :
     ImgWindow(WindowGeometry::Centered(width, height), decoration, layer, true /* cursors */)
 {
-    mIsGlassHUD = (decoration == xplm_WindowDecorationSelfDecoratedResizable ||
-                   decoration == xplm_WindowDecorationSelfDecorated);
-    if (mIsGlassHUD)
+    mIsGlassHUD = false;
+    if (IsSelfDecorated())
     {
-        // Modern Avionics Glass HUD: 80% smoked glass backdrop with subtle border
         ImGuiStyle& style = ImGui::GetStyle();
-        style.Colors[ImGuiCol_WindowBg] = ImVec4(0.12f, 0.14f, 0.17f, mWindowOpacity);
-        style.Colors[ImGuiCol_Border]   = ImVec4(0.35f, 0.42f, 0.50f, 0.70f);
         style.WindowBorderSize = 1.0f;
         style.WindowRounding   = 6.0f;
         // Drag area centered on top grip handle (120px wide, 16px high)
@@ -1858,7 +1857,7 @@ ImGeeShowcaseWidget::ImGeeShowcaseWidget(int width, int height,
     };
     flId = XPLMCreateFlightLoop(&flDef);
 
-    SetWindowTitle("ImGee Cockpit Showcase");
+    SetWindowTitle("ImGee UX Toolkit Showcase");
     SetWindowResizingLimits(340, 320, 2560, 1440);
     SetUnscaledChrome(0, 80);
     // Pre-load default note from disk if available
@@ -1882,14 +1881,15 @@ ImGeeShowcaseWidget::ImGeeShowcaseWidget(int width, int height,
                          "}\n"
                          "```";
     }
-    // Latch initial window geometry as 100% baseline snapshot
-    GetCurrentWindowGeometry(_baselineRect.l, _baselineRect.t, _baselineRect.r, _baselineRect.b);
-    _baselineRect.valid = true;
-    mSavedSimLeft = _baselineRect.l;
-    mSavedSimTop = _baselineRect.t;
-    mSavedSimRight = _baselineRect.r;
-    mSavedSimBottom = _baselineRect.b;
-    mHasSavedSimGeometry = true;
+    // Latch initial in-sim window geometry as 100% boxel baseline snapshot
+    GetWindowGeometry(_simBaselineRect.l, _simBaselineRect.t, _simBaselineRect.r, _simBaselineRect.b);
+    _simBaselineRect.valid = (_simBaselineRect.r > _simBaselineRect.l && _simBaselineRect.t > _simBaselineRect.b);
+    mSavedSimLeft = _simBaselineRect.l;
+    mSavedSimTop = _simBaselineRect.t;
+    mSavedSimRight = _simBaselineRect.r;
+    mSavedSimBottom = _simBaselineRect.b;
+    mSavedSimZoom = _fontAdjust;
+    mHasSavedSimGeometry = _simBaselineRect.valid;
 }
 
 ImGeeShowcaseWidget::~ImGeeShowcaseWidget()
@@ -1911,10 +1911,17 @@ float ImGeeShowcaseWidget::cbFlightLoop(float, float, int, void* inRefcon)
         if (was_popped_out) {
             wnd.GetWindowGeometryOS(osL, osT, osR, osB);
         }
-        int left, top, right, bottom;
-        wnd.GetWindowGeometry(left, top, right, bottom);
-        if (right <= left || top <= bottom) {
-            CalcWinCoords(left, top, right, bottom);
+        int left = 0, top = 0, right = 0, bottom = 0;
+        if (was_popped_out && wnd.mHasSavedSimGeometry && wnd.mSavedSimRight > wnd.mSavedSimLeft && wnd.mSavedSimTop > wnd.mSavedSimBottom) {
+            left = wnd.mSavedSimLeft;
+            top = wnd.mSavedSimTop;
+            right = wnd.mSavedSimRight;
+            bottom = wnd.mSavedSimBottom;
+        } else {
+            wnd.GetWindowGeometry(left, top, right, bottom);
+            if (right <= left || top <= bottom) {
+                CalcWinCoords(left, top, right, bottom);
+            }
         }
         bool is_vis = wnd.GetVisible();
         XPLMWindowDecoration cur_dec = wnd.GetWindowDecoration();
@@ -1930,8 +1937,12 @@ float ImGeeShowcaseWidget::cbFlightLoop(float, float, int, void* inRefcon)
         new_wnd->mWindowOpacity = wnd.mWindowOpacity;
         new_wnd->_fontAdjust = wnd._fontAdjust;
         new_wnd->_lastZoom = wnd._lastZoom;
-        new_wnd->_baselineRect = wnd._baselineRect;
-        new_wnd->_priorZoomRect = wnd._priorZoomRect;
+        new_wnd->_simBaselineRect = wnd._simBaselineRect;
+        new_wnd->_osBaselineRect = wnd._osBaselineRect;
+        new_wnd->_vrBaselineRect = wnd._vrBaselineRect;
+        new_wnd->_simPriorZoomRect = wnd._simPriorZoomRect;
+        new_wnd->_osPriorZoomRect = wnd._osPriorZoomRect;
+        new_wnd->_vrPriorZoomRect = wnd._vrPriorZoomRect;
 
         int base_w = 0, base_h = 0;
         wnd.GetBaselineWindowSize(base_w, base_h);
@@ -1942,11 +1953,12 @@ float ImGeeShowcaseWidget::cbFlightLoop(float, float, int, void* inRefcon)
         new_wnd->mSavedSimTop = wnd.mSavedSimTop;
         new_wnd->mSavedSimRight = wnd.mSavedSimRight;
         new_wnd->mSavedSimBottom = wnd.mSavedSimBottom;
+        new_wnd->mSavedSimZoom = wnd.mSavedSimZoom;
         new_wnd->mHasSavedSimGeometry = wnd.mHasSavedSimGeometry;
 
         if (was_popped_out) {
             new_wnd->SetWindowPositioningMode(xplm_WindowPopOut, -1);
-            if (osR > osL && osT > osB) {
+            if (osR > osL && osT != osB) {
                 new_wnd->SetWindowGeometryOS(osL, osT, osR, osB);
             }
         }
@@ -1974,20 +1986,42 @@ float ImGeeShowcaseWidget::cbFlightLoop(float, float, int, void* inRefcon)
         XPLMWindowPositioningMode targetMode = wnd.nextWinPosMode;
         if (targetMode == xplm_WindowPopOut && !wnd.IsPoppedOut()) {
             wnd.GetWindowGeometry(wnd.mSavedSimLeft, wnd.mSavedSimTop, wnd.mSavedSimRight, wnd.mSavedSimBottom);
+            wnd.mSavedSimZoom = wnd._fontAdjust;
             wnd.mHasSavedSimGeometry = (wnd.mSavedSimRight > wnd.mSavedSimLeft && wnd.mSavedSimTop > wnd.mSavedSimBottom);
         }
         wnd.SetWindowPositioningMode(targetMode);
         if (targetMode == xplm_WindowPositionFree) {
             if (wnd.mHasSavedSimGeometry && wnd.mSavedSimRight > wnd.mSavedSimLeft && wnd.mSavedSimTop > wnd.mSavedSimBottom) {
-                wnd.SetWindowGeometry(wnd.mSavedSimLeft, wnd.mSavedSimTop, wnd.mSavedSimRight, wnd.mSavedSimBottom);
+                int sl = wnd.mSavedSimLeft;
+                int st = wnd.mSavedSimTop;
+                int sr = wnd.mSavedSimRight;
+                int sb = wnd.mSavedSimBottom;
+                if (std::abs(wnd._fontAdjust - wnd.mSavedSimZoom) > 0.001f) {
+                    int target_w = 0, target_h = 0;
+                    ImgWindow::ConvertSizeForScale(sr - sl, st - sb, wnd.mSavedSimZoom, wnd._fontAdjust,
+                                                   target_w, target_h,
+                                                   wnd.GetUnscaledChromeWidth(), wnd.GetUnscaledChromeHeight());
+                    sr = sl + target_w;
+                    sb = st - target_h;
+                }
+                ImgWindow::ClampGeometryToScreen(sl, st, sr, sb, 340, 320, 2560, 1440, wnd.GetEffectiveTopMargin());
+                wnd.SetWindowGeometry(sl, st, sr, sb);
             } else {
-                int left, top, right, bottom;
-                wnd.GetCurrentWindowGeometry(left, top, right, bottom);
-                const int width  = right - left;
-                const int height = top - bottom;
+                int left = 0, top = 0, right = 0, bottom = 0;
                 CalcWinCoords(left, top, right, bottom);
-                right  = left + width;
-                bottom = top  - height;
+                int base_w = 0, base_h = 0;
+                wnd.GetBaselineWindowSize(base_w, base_h);
+                if (base_w <= 0 || base_h <= 0) {
+                    base_w = 680;
+                    base_h = 596;
+                }
+                int target_w = base_w, target_h = base_h;
+                ImgWindow::ConvertSizeForScale(base_w, base_h, 1.0f, wnd._fontAdjust,
+                                               target_w, target_h,
+                                               wnd.GetUnscaledChromeWidth(), wnd.GetUnscaledChromeHeight());
+                right  = left + target_w;
+                bottom = top  - target_h;
+                ImgWindow::ClampGeometryToScreen(left, top, right, bottom, 340, 320, 2560, 1440, wnd.GetEffectiveTopMargin());
                 wnd.SetWindowGeometry(left, top, right, bottom);
             }
         }
@@ -1995,6 +2029,44 @@ float ImGeeShowcaseWidget::cbFlightLoop(float, float, int, void* inRefcon)
         UpdateMenuCheckmarks();
     }
     return 0.0f;
+}
+
+ImGeeShowcaseWidget::WindowRectSnapshot& ImGeeShowcaseWidget::ActiveBaselineRect()
+{
+    if (IsInVR()) return _vrBaselineRect;
+    if (IsPoppedOut()) return _osBaselineRect;
+    return _simBaselineRect;
+}
+
+ImGeeShowcaseWidget::WindowRectSnapshot& ImGeeShowcaseWidget::ActivePriorZoomRect()
+{
+    if (IsInVR()) return _vrPriorZoomRect;
+    if (IsPoppedOut()) return _osPriorZoomRect;
+    return _simPriorZoomRect;
+}
+
+void ImGeeShowcaseWidget::CaptureCurrentWindowRect(WindowRectSnapshot& rect) const
+{
+    GetCurrentWindowGeometry(rect.l, rect.t, rect.r, rect.b);
+    if (IsInVR()) {
+        rect.valid = (rect.r > 0 && rect.t > 0);
+    } else if (IsPoppedOut()) {
+        rect.valid = (rect.r > rect.l && rect.t != rect.b);
+    } else {
+        rect.valid = (rect.r > rect.l && rect.t > rect.b);
+    }
+}
+
+void ImGeeShowcaseWidget::ApplyZoomTransition(float from_scale, float to_scale)
+{
+    if (std::abs(to_scale - 1.0f) < 0.001f) {
+        const WindowRectSnapshot& base = ActiveBaselineRect();
+        if (base.valid) {
+            RestoreWindowRect(base);
+            return;
+        }
+    }
+    ScaleWindowGeometry(from_scale, to_scale);
 }
 
 void ImGeeShowcaseWidget::RestoreWindowRect(const WindowRectSnapshot& rect)
@@ -2013,11 +2085,16 @@ void ImGeeShowcaseWidget::RestoreWindowRect(const WindowRectSnapshot& rect)
     }
 
     if (IsPoppedOut()) {
-        SetWindowGeometryOS(rect.l, rect.t, rect.r, rect.b);
+        if (rect.r > rect.l && rect.t != rect.b) {
+            SetWindowGeometryOS(rect.l, rect.t, rect.r, rect.b);
+        }
         return;
     }
 
-    // Standard in-simulator 2D window:
+    // Standard in-simulator 2D window (strictly global desktop boxels):
+    if (rect.r <= rect.l || rect.t <= rect.b) {
+        return;
+    }
     int l = rect.l;
     int t = rect.t;
     int r = rect.r;
@@ -2057,7 +2134,7 @@ void ImGeeShowcaseWidget::buildInterface()
         float avail_w = ImGui::GetWindowWidth();
         int center_local = int(avail_w * 0.5f);
         // Calculate responsive title and zoom suite layout boundaries to protect controls
-        const char* t_plain = (avail_w > 540.0f) ? "ImGee UX & Modern Cockpit Suite"
+        const char* t_plain = (avail_w > 540.0f) ? "ImGee Modern Sim UX Toolkit"
                             : (avail_w > 400.0f) ? "ImGee Showcase"
                             : "ImGee";
         const float t_w = Font9 ? Font9->CalcTextSizeA(Font9->LegacySize, FLT_MAX, -1.0f, t_plain).x : 315.0f;
@@ -2127,10 +2204,12 @@ void ImGeeShowcaseWidget::buildInterface()
             case 4: ImGui::StyleColorsLight(); break;
             default: break;
         }
-        if (mIsGlassHUD || IsSelfDecorated()) {
+        if (IsSelfDecorated()) {
             ImGuiStyle& st = ImGui::GetStyle();
-            st.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
-            st.Colors[ImGuiCol_Border].w = std::min(1.0f, mWindowOpacity * 0.8f + 0.2f);
+            st.Colors[ImGuiCol_WindowBg].w = mIsGlassHUD ? mWindowOpacity : 1.0f;
+            st.Colors[ImGuiCol_Border].w   = mIsGlassHUD ? std::min(1.0f, mWindowOpacity * 0.8f + 0.2f) : 0.85f;
+            st.WindowBorderSize = 1.0f;
+            st.WindowRounding   = 6.0f;
         }
     }
 
@@ -2138,10 +2217,10 @@ void ImGeeShowcaseWidget::buildInterface()
     ImGui::SetWindowFontScale(1.0f);
 
     // Title on left (responsive title length prevents right-clipping on compact zoom)
-    const char* title_md = (ImGui::GetWindowWidth() > 540.0f) ? "# ImGee UX & Modern Cockpit Suite"
+    const char* title_md = (ImGui::GetWindowWidth() > 540.0f) ? "# ImGee Modern Sim UX Toolkit"
                          : (ImGui::GetWindowWidth() > 400.0f) ? "# ImGee Showcase"
                          : "# ImGee";
-    const char* title_plain = (ImGui::GetWindowWidth() > 540.0f) ? "ImGee UX & Modern Cockpit Suite"
+    const char* title_plain = (ImGui::GetWindowWidth() > 540.0f) ? "ImGee Modern Sim UX Toolkit"
                             : (ImGui::GetWindowWidth() > 400.0f) ? "ImGee Showcase"
                             : "ImGee";
     ImGui::TextMD(title_md);
@@ -2184,11 +2263,7 @@ void ImGeeShowcaseWidget::buildInterface()
             float old_z = _fontAdjust;
             _fontAdjust = ImMax(0.50f, _fontAdjust - 0.05f);
             if (std::abs(_fontAdjust - old_z) > 0.001f) {
-                if (std::abs(_fontAdjust - 1.0f) < 0.001f && _baselineRect.valid) {
-                    RestoreWindowRect(_baselineRect);
-                } else {
-                    ScaleWindowGeometry(old_z, _fontAdjust);
-                }
+                ApplyZoomTransition(old_z, _fontAdjust);
             }
         }
     }
@@ -2210,11 +2285,7 @@ void ImGeeShowcaseWidget::buildInterface()
     }
     if (ImGui::IsItemDeactivatedAfterEdit()) {
         if (std::abs(_fontAdjust - _sliderStartZoom) > 0.001f) {
-            if (std::abs(_fontAdjust - 1.0f) < 0.001f && _baselineRect.valid) {
-                RestoreWindowRect(_baselineRect);
-            } else {
-                ScaleWindowGeometry(_sliderStartZoom, _fontAdjust);
-            }
+            ApplyZoomTransition(_sliderStartZoom, _fontAdjust);
             _sliderStartZoom = _fontAdjust;
         }
     }
@@ -2222,11 +2293,7 @@ void ImGeeShowcaseWidget::buildInterface()
     float wheel_old = _fontAdjust;
     if (ImGui::AdjustItemOnMouseWheel(&_fontAdjust, 0.50f, 2.00f, 0.02f)) {
         if (std::abs(_fontAdjust - wheel_old) > 0.001f) {
-            if (std::abs(_fontAdjust - 1.0f) < 0.001f && _baselineRect.valid) {
-                RestoreWindowRect(_baselineRect);
-            } else {
-                ScaleWindowGeometry(wheel_old, _fontAdjust);
-            }
+            ApplyZoomTransition(wheel_old, _fontAdjust);
         }
     }
     ImGui::TimedTooltip::MD::Text("Interactive UI Zoom: roll mouse wheel (2%%) or drag thumb.\n\n*Window resizes proportionally to match.*");
@@ -2258,11 +2325,7 @@ void ImGeeShowcaseWidget::buildInterface()
             float old_z = _fontAdjust;
             _fontAdjust = ImMin(2.00f, _fontAdjust + 0.05f);
             if (std::abs(_fontAdjust - old_z) > 0.001f) {
-                if (std::abs(_fontAdjust - 1.0f) < 0.001f && _baselineRect.valid) {
-                    RestoreWindowRect(_baselineRect);
-                } else {
-                    ScaleWindowGeometry(old_z, _fontAdjust);
-                }
+                ApplyZoomTransition(old_z, _fontAdjust);
             }
         }
     }
@@ -2285,20 +2348,16 @@ void ImGeeShowcaseWidget::buildInterface()
         if (is_modified) {
             // State A -> Reset to 100% baseline:
             // Snapshot active zoomed geometry so 1-click toggle can restore it with 100% fidelity
-            GetCurrentWindowGeometry(_priorZoomRect.l, _priorZoomRect.t, _priorZoomRect.r, _priorZoomRect.b);
-            _priorZoomRect.valid = true;
+            CaptureCurrentWindowRect(ActivePriorZoomRect());
             _lastZoom = _fontAdjust;
             _fontAdjust = 1.0f;
-            if (_baselineRect.valid) {
-                RestoreWindowRect(_baselineRect);
-            } else {
-                ScaleWindowGeometry(old_z, 1.0f);
-            }
+            ApplyZoomTransition(old_z, 1.0f);
         } else if (can_restore) {
             // State B -> 1-click Toggle back to prior zoom:
             _fontAdjust = _lastZoom;
-            if (_priorZoomRect.valid) {
-                RestoreWindowRect(_priorZoomRect);
+            const WindowRectSnapshot& prior = ActivePriorZoomRect();
+            if (prior.valid) {
+                RestoreWindowRect(prior);
             } else {
                 ScaleWindowGeometry(1.0f, _fontAdjust);
             }
@@ -2347,6 +2406,7 @@ void ImGeeShowcaseWidget::buildInterface()
         ImGui::SameLine(0.0f, 4.0f);
         if (ToolbarButton(ICON_FA_WINDOW_RESTORE "##sc_popout", "Pop out into separate OS desktop window", ImVec2(24.0f, 0.0f))) {
             GetWindowGeometry(mSavedSimLeft, mSavedSimTop, mSavedSimRight, mSavedSimBottom);
+            mSavedSimZoom = _fontAdjust;
             mHasSavedSimGeometry = true;
             nextWinPosMode = xplm_WindowPopOut;
             XPLMScheduleFlightLoop(flId, -1.0, 1);
@@ -2373,12 +2433,12 @@ void ImGeeShowcaseWidget::buildInterface()
 
     // Row 2: Cockpit Environment & Theme Controls (scales smoothly with window zoom ratio)
     ImGui::AlignTextToFramePadding();
-    ImGui::TextDisabled("Cockpit Suite Reference:");
+    ImGui::TextDisabled("ImGee UX Toolkit Reference:");
     if (ImGui::IsItemHovered()) {
-        ImGui::TimedTooltip::MD::Text("Dedicated showcase for avionics controls, dials, continuous opacity, and CommonMark.");
+        ImGui::TimedTooltip::MD::Text("Dedicated showcase for tactile controls, dials, continuous opacity, and CommonMark.");
     }
 
-    bool is_sc_trans = IsSelfDecorated();
+    bool is_sc_trans = mIsGlassHUD;
     bool is_sc_popped = IsPoppedOut();
     const char* sc_toggle_name = is_sc_popped ? "Custom##sc_trans" : "Transparent##sc_trans";
     const char* sc_slider_label = is_sc_popped ? "Saturation:" : "Opacity:";
@@ -2431,16 +2491,17 @@ void ImGeeShowcaseWidget::buildInterface()
 
     // 2. Transparent / Custom HUD Toggle (rock-solid invariant position!)
     const char* sc_off_tip = is_sc_popped
-        ? "Custom HUD: <pill color=#7f8c8d>OFF</pill> <pill color=#1a252f fg=#555555>ON</pill>\n\nStandard desktop OS styling.\nClick to switch to custom frameless HUD."
-        : "Transparent HUD: <pill color=#7f8c8d>OFF</pill> <pill color=#1a252f fg=#555555>ON</pill>\n\nStandard X-Plane rounded rectangle bezel.\nClick to switch to frameless Glass HUD.";
+        ? "Custom Opacity: <pill color=#7f8c8d>OFF</pill> <pill color=#1a252f fg=#555555>ON</pill>\n\nSolid 100% opaque theme backdrop.\nClick to enable continuous saturation controls."
+        : "Transparent HUD: <pill color=#7f8c8d>OFF</pill> <pill color=#1a252f fg=#555555>ON</pill>\n\nSolid 100% opaque theme backdrop.\nClick to enable translucent Glass HUD (preserves active tab & edits).";
     const char* sc_on_tip = is_sc_popped
-        ? "Custom HUD: <pill color=#1a252f fg=#555555>OFF</pill> <pill color=#2ecc71>ON</pill>\n\nCustom HUD with continuous saturation controls.\nClick to restore standard desktop styling."
-        : "Transparent HUD: <pill color=#1a252f fg=#555555>OFF</pill> <pill color=#2ecc71>ON</pill>\n\nModern Glass HUD panel with continuous opacity controls.\nClick to restore native X-Plane bezel.";
+        ? "Custom Opacity: <pill color=#1a252f fg=#555555>OFF</pill> <pill color=#2ecc71>ON</pill>\n\nContinuous background saturation controls active.\nClick to restore solid 100% opaque backdrop."
+        : "Transparent HUD: <pill color=#1a252f fg=#555555>OFF</pill> <pill color=#2ecc71>ON</pill>\n\nTranslucent Glass HUD with continuous opacity controls.\nClick to restore solid 100% opaque backdrop.";
 
-    if (ImGui::ToggleButton(sc_toggle_name, &is_sc_trans, sc_off_tip, sc_on_tip))
+    if (ImGui::ToggleButton(sc_toggle_name, &mIsGlassHUD, sc_off_tip, sc_on_tip))
     {
-        requestSwapDecoration = true;
-        XPLMScheduleFlightLoop(flId, -1.0, 1);
+        ImGuiStyle& st = ImGui::GetStyle();
+        st.Colors[ImGuiCol_WindowBg].w = mIsGlassHUD ? mWindowOpacity : 1.0f;
+        st.Colors[ImGuiCol_Border].w   = mIsGlassHUD ? std::min(1.0f, mWindowOpacity * 0.8f + 0.2f) : 0.85f;
     }
 
     static const char* const theme_names[] = {
@@ -2473,10 +2534,12 @@ void ImGeeShowcaseWidget::buildInterface()
             case 4: ImGui::StyleColorsLight(); break;
             default: break;
         }
-        if (mIsGlassHUD || IsSelfDecorated()) {
+        if (IsSelfDecorated()) {
             ImGuiStyle& st = ImGui::GetStyle();
-            st.Colors[ImGuiCol_WindowBg].w = mWindowOpacity;
-            st.Colors[ImGuiCol_Border].w = std::min(1.0f, mWindowOpacity * 0.8f + 0.2f);
+            st.Colors[ImGuiCol_WindowBg].w = mIsGlassHUD ? mWindowOpacity : 1.0f;
+            st.Colors[ImGuiCol_Border].w   = mIsGlassHUD ? std::min(1.0f, mWindowOpacity * 0.8f + 0.2f) : 0.85f;
+            st.WindowBorderSize = 1.0f;
+            st.WindowRounding   = 6.0f;
         }
     }
     ImGui::TimedTooltip::MD::Text(
@@ -2673,8 +2736,9 @@ void ImGeeShowcaseWidget::buildInterface()
             ImGui::TextMD("**Custom Style Tags:** Camera offsets: <cam>pitch</cam> and <cam>yaw</cam> (auto-styled as green bold mono).");
             ImGui::TextMD("**Template Aliases:** <tip>Verify altimeter before descent</tip>   |   Press <hotkey>Shift+C</hotkey> to recenter.");
             ImGui::TextMD("**Hotkeys:** <kbd>AP DISC</kbd> or <kbd>Z</kbd>   |   <kdb>Ctrl</kdb>+<kdb>Shift</kdb>+<kdb>F12</kdb>");
-            ImGui::TextMD("**Release:** Core: <badge>v2.3.0</badge>   Platform: <badge>macOS Universal</badge>");
-            ImGui::TextMD("**Tags & Icons Inside Emphasis:** **Reset (↺ 100%)**   |   *Caution: ⚠ Engine Master*   |   *Status: <badge red>CRITICAL</badge>*   |   **Dual Icons: ↺ and ↻**");
+            ImGui::TextMD("**Release:** ImgWindow: <badge>v2.5.0</badge>   ImGee: <badge>v1.1.0</badge>");
+            ImGui::TextMD("**Tags & Icons Inside Emphasis:** **Reset (↺ 100%)**   |   *Caution: ⚠ Engine Master*");
+            ImGui::TextMD("**Nested Badges & Dual Icons:** *Status: <badge red>CRITICAL</badge>*   |   **Dual Icons: ↺ and ↻**");
 
             ImGui::Spacing();
             ImGui::TextMD("#### GitHub Flavored Markdown (GFM) Tables");
@@ -2784,7 +2848,7 @@ void ImGeeShowcaseWidget::buildInterface()
             ImGui::Spacing();
             ImGui::Separator();
             ImGui::TextMD("#### Canonical Markdown Buttons & Rich Button Faces (`ImGui::MD::Button`)");
-            ImGui::TextMD("Mirrors native `ImGui::Button(label, size)` with full Markdown parsing on button faces, standalone pills, and vector icons:");
+            ImGui::TextWrappedMD("Mirrors native `ImGui::Button(label, size)` with full Markdown parsing on button faces, standalone pills, and vector icons:");
             ImGui::Spacing();
 
             // 1. Standalone Pill & Badge buttons (renders styled oval directly without ugly gray rectangle box!)
@@ -2802,7 +2866,7 @@ void ImGeeShowcaseWidget::buildInterface()
             ImGui::TimedTooltip::MD::Text("**Dynamic State Pill Button**:\nClick to toggle status pill.");
 
             ImGui::SameLine();
-            if (ImGui::MD::Button("<badge blue>v2.4.0 Release</badge>##badge_btn")) {
+            if (ImGui::MD::Button("<badge blue>v2.5.0 Release</badge>##badge_btn")) {
                 // Clicked
             }
             ImGui::TimedTooltip::MD::Text("**Standalone Badge Button**:\nRenders direct clickable release badge.");
@@ -3004,7 +3068,7 @@ void ImGeeShowcaseWidget::buildInterface()
 
             ImGui::SameLine();
             if (ToolbarButton("Badge", "Wrap selection in `<badge>` release chip")) {
-                wrap_or_insert("<badge>", "</badge>", "v2.3.0", false);
+                wrap_or_insert("<badge>", "</badge>", "v2.5.0", false);
             }
 
             ImGui::SameLine();
@@ -3179,7 +3243,6 @@ void ImGeeShowcaseWidget::buildInterface()
                                  "}\n"
                                  "```";
             }
-            ImGui::TimedTooltip::MD::Text("Restores the flight briefing sample");
 
             if (!noteStatusMsg.empty() && noteStatusTimer > 0.0f) {
                 ImGui::SameLine();
@@ -3461,10 +3524,16 @@ void ImGeeShowcaseWidget::buildInterface()
     ImGui::SetWindowFontScale(1.0f);
     if (ImGui::Button("Close")) {
         SetVisible(false);
+        UpdateMenuCheckmarks();
     }
 
     ImGui::SameLine();
-    if (ImGui::MD::Button("Quick Status ▲")) {
+    const bool qs_open = ImGui::IsPopupOpen("##QuickStatusPopup");
+    if (qs_open) ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyle().Colors[ImGuiCol_ButtonHovered]);
+    const bool qs_clicked = ImGui::MD::Button(qs_open ? "Quick Status ▼###QuickStatusBtn" : "Quick Status ▲###QuickStatusBtn");
+    if (qs_open) ImGui::PopStyleColor();
+    if (qs_open && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup)) ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+    if (qs_clicked) {
         ImGui::OpenPopupAtItem("##QuickStatusPopup", ImGui::ImGuiPopupAnchor_AboveItem, ImGui::ImGuiPopupAlign_Left);
     }
     ImGui::TimedTooltip::MD::Text("**Anchored Popup (AboveItem)**:\nClick to toggle status popup blossoming upward above button.\nMuscle-memory safe: click button again while open to close.");
@@ -3512,10 +3581,23 @@ void ImGeeShowcaseWidget::buildInterface()
         "Pops up above status bar with inverted procedural vector caret.",
         dockCamItems[s_DockCamMode]);
 
-    // Continuously preserve user's customized 100% baseline window layout (position & dimensions)
+    // Continuously preserve inside-sim boxel position & zoom so native pop-out/in keeps accurate sim restore state
+    if (IsInsideSim()) {
+        int sl = 0, st = 0, sr = 0, sb = 0;
+        GetWindowGeometry(sl, st, sr, sb);
+        if (sr > sl && st > sb) {
+            mSavedSimLeft = sl;
+            mSavedSimTop = st;
+            mSavedSimRight = sr;
+            mSavedSimBottom = sb;
+            mSavedSimZoom = _fontAdjust;
+            mHasSavedSimGeometry = true;
+        }
+    }
+
+    // Continuously preserve user's customized 100% baseline window layout for the active coordinate mode
     if (std::abs(_fontAdjust - 1.0f) < 0.001f) {
-        GetCurrentWindowGeometry(_baselineRect.l, _baselineRect.t, _baselineRect.r, _baselineRect.b);
-        _baselineRect.valid = true;
+        CaptureCurrentWindowRect(ActiveBaselineRect());
     }
 }
 

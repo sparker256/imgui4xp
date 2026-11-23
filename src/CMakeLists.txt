@@ -16,6 +16,57 @@ endif ()
 
 set(CMAKE_CXX_STANDARD 17)
 
+# ------------------------------------------------------------------------------
+# Self-Healing Submodule Initialization (ImgWindow & ImGee)
+# ------------------------------------------------------------------------------
+find_package(Git QUIET)
+if(GIT_FOUND)
+    # Resolve ImgWindow path (supports both ./ImgWindow and ./src/ImgWindow layouts)
+    set(_IMGWINDOW_CHECK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/ImgWindow")
+    if(NOT EXISTS "${_IMGWINDOW_CHECK_DIR}")
+        set(_IMGWINDOW_CHECK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/ImgWindow")
+    endif()
+
+    # Resolve enclosing git repository root (handles both top-level and src/ CMakeLists.txt)
+    set(_GIT_REPO_ROOT "")
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
+        set(_GIT_REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}")
+    elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../.git")
+        get_filename_component(_GIT_REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/.." ABSOLUTE)
+    endif()
+
+    # Case 1: ImgWindow itself is not yet initialized (e.g., fresh clone without --recursive)
+    if(_GIT_REPO_ROOT AND NOT EXISTS "${_IMGWINDOW_CHECK_DIR}/ImgWindow.h")
+        message(STATUS "[ImgWindow] Submodule missing -- initializing recursively...")
+        execute_process(
+            COMMAND "${GIT_EXECUTABLE}" submodule update --init --recursive
+            WORKING_DIRECTORY "${_GIT_REPO_ROOT}"
+            RESULT_VARIABLE _GIT_SUBMOD_RESULT
+        )
+        if(NOT _GIT_SUBMOD_RESULT EQUAL "0")
+            message(WARNING "[ImgWindow] Automatic submodule update failed. Please run 'git submodule update --init --recursive' manually.")
+        else()
+            message(STATUS "[ImgWindow] Submodules successfully initialized!")
+        endif()
+    # Case 2: ImgWindow is present, but nested contrib/ImGee submodule is uninitialized.
+    # Run inside ImgWindow itself so we initialize ImGee without reverting a local ImgWindow checkout.
+    elseif(EXISTS "${_IMGWINDOW_CHECK_DIR}/.git"
+           AND EXISTS "${_IMGWINDOW_CHECK_DIR}/.gitmodules"
+           AND NOT EXISTS "${_IMGWINDOW_CHECK_DIR}/contrib/ImGee/imgee.h")
+        message(STATUS "[ImgWindow] contrib/ImGee submodule missing -- initializing recursively...")
+        execute_process(
+            COMMAND "${GIT_EXECUTABLE}" submodule update --init --recursive
+            WORKING_DIRECTORY "${_IMGWINDOW_CHECK_DIR}"
+            RESULT_VARIABLE _GIT_SUBMOD_RESULT
+        )
+        if(NOT _GIT_SUBMOD_RESULT EQUAL "0")
+            message(WARNING "[ImgWindow] Automatic contrib/ImGee submodule update failed. Please run 'git -C \"${_IMGWINDOW_CHECK_DIR}\" submodule update --init --recursive' manually.")
+        else()
+            message(STATUS "[ImgWindow] contrib/ImGee submodule successfully initialized!")
+        endif()
+    endif()
+endif()
+
 # Set include directories used by our code and dependencies.
 include_directories("${CMAKE_SOURCE_DIR}/")
 include_directories("${CMAKE_SOURCE_DIR}/imgui")

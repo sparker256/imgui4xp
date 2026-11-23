@@ -29,18 +29,15 @@ bool vr_is_enabled = false;
 // managed in the form of smart pointers.
 ImgWindowSPtrVecTy gWndList;
 
-/// Calculate window's standard coordinates
+/// Calculate window's standard coordinates on X-Plane's Main Monitor
 void CalcWinCoords (int& left, int& top, int& right, int& bottom)
 {
-    // Screen coordinates
-    int screenLeft, screenTop;
-    XPLMGetScreenBoundsGlobal(&screenLeft, &screenTop, nullptr, nullptr);
-
-    // Coordinates of our window
-    left    = screenLeft    + WIN_PAD;
-    right   = left          + WIN_WIDTH;
-    top     = screenTop     - WIN_PAD;
-    bottom  = top           - WIN_HEIGHT;
+    const WindowGeometry geom = WindowGeometry::FromMainMonitorTopLeft(
+        WIN_PAD, WIN_PAD, WIN_WIDTH, WIN_HEIGHT);
+    left   = geom.left;
+    top    = geom.top;
+    right  = geom.right;
+    bottom = geom.bottom;
 }
 
 // Command references
@@ -56,34 +53,80 @@ int g_menuItemDemo = -1;
 int g_menuItemShowcase = -1;
 int g_menuItemGather = -1;
 
+// Lightweight flight loop to keep Plugins menu checkmarks synced when the user
+// closes a window via X-Plane's native close box or a popped-out OS window's
+// close button (which hide the XPLMWindowID without notifying the plugin).
+static XPLMFlightLoopID s_flMenuSync = nullptr;
+static bool s_flMenuSyncActive = false;
+static int s_lastDemoCheck = -1;
+static int s_lastShowcaseCheck = -1;
+
+static float MenuSyncFlightLoopCB(float /*inElapsedSinceLastCall*/,
+                                  float /*inElapsedTimeSinceLastFlightLoop*/,
+                                  int   /*inCounter*/,
+                                  void* /*inRefcon*/)
+{
+    UpdateMenuCheckmarks();
+    const bool demoVis = (s_pStarterWidget && s_pStarterWidget->GetVisible());
+#if defined(IMGEE_VERSION)
+    const bool showcaseVis = (s_pShowcaseWidget && s_pShowcaseWidget->GetVisible());
+#else
+    const bool showcaseVis = false;
+#endif
+    if (demoVis || showcaseVis) {
+        return 0.15f;
+    }
+    s_flMenuSyncActive = false;
+    return 0.0f;
+}
+
 /// Creates another window right inside the list
 void AddWindow (XPLMWindowDecoration decoration,
                 XPLMWindowLayer layer)
 {
-    int left, top, right, bottom;
-    CalcWinCoords(left, top, right, bottom);
-    // This creates a ImguiWidget object inside the list,
-    // which in turn creates the actual window through its constructor
-    auto w = std::make_shared<ImguiWidget>(left, top, right, bottom,
-                                           decoration,
-                                           layer);
+    // Create the window using ImgWindow's modern WindowGeometry constructor,
+    // anchored relative to X-Plane's Main Monitor usable top-left corner.
+    auto w = std::make_shared<ImguiWidget>(
+        WindowGeometry::FromMainMonitorTopLeft(WIN_PAD, WIN_PAD, WIN_WIDTH, WIN_HEIGHT, decoration),
+        decoration,
+        layer);
     gWndList.emplace_back(w);
     s_pStarterWidget = w;
+    UpdateMenuCheckmarks();
 }
 
 void UpdateMenuCheckmarks()
 {
-    if (!g_hPluginMenu) return;
-    if (g_menuItemDemo >= 0) {
-        bool vis = (s_pStarterWidget && s_pStarterWidget->GetVisible());
-        XPLMCheckMenuItem(g_hPluginMenu, g_menuItemDemo, vis ? xplm_Menu_Checked : xplm_Menu_Unchecked);
-    }
+    const bool demoVis = (s_pStarterWidget && s_pStarterWidget->GetVisible());
 #if defined(IMGEE_VERSION)
-    if (g_menuItemShowcase >= 0) {
-        bool vis = (s_pShowcaseWidget && s_pShowcaseWidget->GetVisible());
-        XPLMCheckMenuItem(g_hPluginMenu, g_menuItemShowcase, vis ? xplm_Menu_Checked : xplm_Menu_Unchecked);
-    }
+    const bool showcaseVis = (s_pShowcaseWidget && s_pShowcaseWidget->GetVisible());
+#else
+    const bool showcaseVis = false;
 #endif
+
+    if (g_hPluginMenu) {
+        if (g_menuItemDemo >= 0) {
+            const int check = demoVis ? xplm_Menu_Checked : xplm_Menu_Unchecked;
+            if (check != s_lastDemoCheck) {
+                XPLMCheckMenuItem(g_hPluginMenu, g_menuItemDemo, check);
+                s_lastDemoCheck = check;
+            }
+        }
+#if defined(IMGEE_VERSION)
+        if (g_menuItemShowcase >= 0) {
+            const int check = showcaseVis ? xplm_Menu_Checked : xplm_Menu_Unchecked;
+            if (check != s_lastShowcaseCheck) {
+                XPLMCheckMenuItem(g_hPluginMenu, g_menuItemShowcase, check);
+                s_lastShowcaseCheck = check;
+            }
+        }
+#endif
+    }
+
+    if ((demoVis || showcaseVis) && s_flMenuSync && !s_flMenuSyncActive) {
+        XPLMScheduleFlightLoop(s_flMenuSync, 0.15f, 1);
+        s_flMenuSyncActive = true;
+    }
 }
 
 void ToggleStarterWindow()
@@ -212,6 +255,11 @@ PLUGIN_API int XPluginStart(char * outName, char * outSig, char * outDesc) {
 }
 
 PLUGIN_API void XPluginStop(void) {
+    if (s_flMenuSync) {
+        XPLMDestroyFlightLoop(s_flMenuSync);
+        s_flMenuSync = nullptr;
+        s_flMenuSyncActive = false;
+    }
     if (s_cmdToggleDemo) {
         XPLMUnregisterCommandHandler(s_cmdToggleDemo, CommandHandlerCB, 1, nullptr);
         s_cmdToggleDemo = nullptr;
@@ -230,10 +278,17 @@ PLUGIN_API void XPluginStop(void) {
         XPLMDestroyMenu(g_hPluginMenu);
         g_hPluginMenu = nullptr;
     }
+    s_lastDemoCheck = -1;
+    s_lastShowcaseCheck = -1;
     cleanupAfterImgWindow();
 }
 
 PLUGIN_API void XPluginDisable(void) {
+    if (s_flMenuSync) {
+        XPLMDestroyFlightLoop(s_flMenuSync);
+        s_flMenuSync = nullptr;
+        s_flMenuSyncActive = false;
+    }
     // Destroy all window object in order to properly clean up.
     // (Can't use ImgWindow::SafeDelete here as that would wait for a
     //  flight loop callback, which won't be delivered any longer.
@@ -252,6 +307,19 @@ PLUGIN_API void XPluginDisable(void) {
 PLUGIN_API int XPluginEnable(void) {
     // Some general ImGui setup
     configureImgWindow();
+
+    if (!s_flMenuSync) {
+        XPLMCreateFlightLoop_t flDef = {
+            sizeof(flDef),
+            xplm_FlightLoop_Phase_BeforeFlightModel,
+            MenuSyncFlightLoopCB,
+            nullptr,
+        };
+        s_flMenuSync = XPLMCreateFlightLoop(&flDef);
+        s_flMenuSyncActive = false;
+    }
+    s_lastDemoCheck = -1;
+    s_lastShowcaseCheck = -1;
     
     // Create a first window
     if (!s_pStarterWidget) {
